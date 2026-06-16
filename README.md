@@ -1,16 +1,185 @@
-# React + Vite
+# কথাসেতু — KothaSetu
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Kotha** (কথা) = Words/Talk &nbsp;•&nbsp; **Setu** (সেতু) = Bridge
+>
+> *Bridging words across Bengali, Nepali, and Hindi.*
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What is KothaSetu?
 
-## React Compiler
+KothaSetu is a free, open-source voice and text translation app built specifically for the South Asian community. It supports three languages that share millions of speakers across Bangladesh, Nepal, India, and the diaspora worldwide — yet rarely have a dedicated tool built just for them.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Speak in Bengali. Hear it in Hindi. Reply in Nepali. KothaSetu handles it all in real time.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Features
+
+### Voice Translation
+- One-tap microphone — speak naturally, hear the translation automatically
+- Live speech recognition powered by the Web Speech API
+- Auto-speaks the translated result aloud
+- Voice waveform animation while listening
+
+### Conversation Mode
+The flagship feature. Two people, two languages, one screen.
+- Person A taps their mic and speaks Bengali
+- The app translates and speaks it in Hindi (or Nepali)
+- Person B taps their mic and replies
+- Full bilingual conversation displayed in a chat-style interface
+- Replay any message with one tap
+
+### Translation Modes
+| Mode | Description |
+|------|-------------|
+| Voice to Voice | Speak and hear the translation |
+| Text to Text | Type and read the translation |
+| Voice to Text | Speak and read the translation |
+| Text to Speak | Type and hear the translation |
+
+### History & Favorites
+- Every translation saved automatically
+- Search through past translations
+- Star your favorites for quick access
+- Export your history as JSON
+
+---
+
+## Supported Languages
+
+| Language | Script | Region |
+|----------|--------|--------|
+| Bengali (বাংলা) | Bengali | Bangladesh, West Bengal |
+| Nepali (नेपाली) | Devanagari | Nepal, Sikkim, Darjeeling |
+| Hindi (हिन्दी) | Devanagari | India |
+
+All 6 language pairs supported:
+Bengali to Nepali, Bengali to Hindi, Nepali to Hindi, and all reverse pairs.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React + Vite |
+| Styling | Tailwind CSS |
+| State | Zustand (with localStorage persistence) |
+| Speech Recognition | Web Speech API (built into Chrome) |
+| Speech Synthesis | Web Speech Synthesis API (built into Chrome) |
+| Translation | MyMemory API (free, no API key needed) |
+| Deployment | Vercel |
+
+**No backend. No database. No API keys required.**
+Everything runs in the browser — completely free to use and deploy.
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js v18 or higher
+- Google Chrome (required for voice features)
+
+### Installation
+
+```bash
+# Clone the repo
+git clone https://github.com/Dey70/WB-voice-translator.git
+cd WB-voice-translator
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+Open http://localhost:5173 in Chrome.
+
+### Build for Production
+
+```bash
+npm run build
+```
+
+---
+
+## Deployment
+
+This project is configured for one-click deployment on Vercel.
+
+1. Fork this repository
+2. Go to vercel.com and import the repo
+3. Click Deploy — no environment variables needed
+
+A vercel.json is included for proper SPA routing.
+
+---
+
+## Browser Support
+
+| Browser | Voice Features | Translation |
+|---------|---------------|-------------|
+| Chrome | Full support | Yes |
+| Edge | Full support | Yes |
+| Firefox | Not supported | Yes |
+| Safari | Partial | Yes |
+
+Recommended: Google Chrome
+
+---
+
+## Project Structure
+
+```
+src/
+├── components/
+│   ├── layout/
+│   │   └── Navbar.jsx
+│   └── translation/
+│       ├── LanguageSelector.jsx
+│       └── Waveform.jsx
+├── hooks/
+│   ├── useSpeechRecognition.js
+│   └── useSpeechSynthesis.js
+├── pages/
+│   ├── Translator.jsx      # Main translation page
+│   ├── Conversation.jsx    # Bilingual conversation mode
+│   ├── History.jsx         # Translation history
+│   └── Favorites.jsx       # Saved translations
+├── services/
+│   └── translation.js      # MyMemory API integration
+├── store/
+│   └── appStore.js         # Zustand global state
+└── utils/
+    └── constants.js        # Language definitions
+```
+
+---
+
+## Roadmap
+
+- [ ] Offline translation support
+- [ ] Mobile PWA
+- [ ] More South Asian languages (Odia, Assamese, Maithili)
+- [ ] Shareable conversation links
+
+---
+
+## Contributing
+
+Contributions are welcome. If you speak Bengali, Nepali, or Hindi and want to help improve translation quality or add features, please open an issue or pull request.
+
+---
+
+## License
+
+MIT License — free to use, modify, and distribute.
+
+---
+
+Built with love for the South Asian community.
+
+Speak words. Build bridges.
