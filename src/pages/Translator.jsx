@@ -14,26 +14,24 @@ export default function Translator() {
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
   const [isTranslating, setIsTranslating] = useState(false)
-  const [mode, setMode] = useState('voice-voice') // voice-voice | text-text
+  const [mode, setMode] = useState('voice-voice')
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState(null)
 
-  const { transcript, isListening, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition()
+  const { transcript, interimText, isListening, startListening, stopListening, resetTranscript, isSupported, error: speechError } = useSpeechRecognition()
   const { speak, isSpeaking, stop } = useSpeechSynthesis()
   const { addToHistory } = useAppStore()
 
   const fromLangData = getLanguage(fromLang)
   const toLangData = getLanguage(toLang)
 
-  // When speech transcript arrives, put it in input
   useEffect(() => {
     if (transcript) setInputText(transcript)
   }, [transcript])
 
-  // Auto-translate when input changes (debounced)
   useEffect(() => {
     if (!inputText.trim()) { setOutputText(''); return }
-    const timer = setTimeout(() => handleTranslate(inputText), 800)
+    const timer = setTimeout(() => handleTranslate(inputText), 900)
     return () => clearTimeout(timer)
   }, [inputText, fromLang, toLang])
 
@@ -44,9 +42,14 @@ export default function Translator() {
     try {
       const result = await translateText(text, fromLang, toLang)
       setOutputText(result)
-      addToHistory({ fromLang, toLang, originalText: text, translatedText: result })
-
-      // Auto-speak if in voice mode
+      addToHistory({
+        fromLang,
+        toLang,
+        originalText: text,
+        translatedText: result,
+        fromLangName: fromLangData.name,
+        toLangName: toLangData.name,
+      })
       if (mode === 'voice-voice' || mode === 'text-voice') {
         speak(result, toLang)
       }
@@ -64,13 +67,15 @@ export default function Translator() {
       resetTranscript()
       setInputText('')
       setOutputText('')
-      startListening(fromLangData.speechCode)
+      startListening(fromLang)
     }
   }
 
   const handleSwapLanguages = () => {
-    setFromLang(toLang)
-    setToLang(fromLang)
+    const prevFrom = fromLang
+    const prevTo = toLang
+    setFromLang(prevTo)
+    setToLang(prevFrom)
     setInputText(outputText)
     setOutputText('')
   }
@@ -81,10 +86,11 @@ export default function Translator() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const displayInput = inputText || (isListening && interimText ? interimText : '')
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
 
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8 }}>
           <span className="gradient-text">Voice & Text</span> Translator
@@ -95,7 +101,7 @@ export default function Translator() {
       </div>
 
       {/* Mode selector */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 32 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}>
         {[
           { id: 'voice-voice', label: 'Voice to Voice' },
           { id: 'text-text', label: 'Text to Text' },
@@ -115,7 +121,7 @@ export default function Translator() {
         ))}
       </div>
 
-      {/* Language selectors + swap */}
+      {/* Language selectors */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 200 }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
@@ -123,8 +129,7 @@ export default function Translator() {
         </div>
 
         <button onClick={handleSwapLanguages} style={{
-          marginTop: 24,
-          width: 44, height: 44, borderRadius: 22,
+          marginTop: 24, width: 44, height: 44, borderRadius: 22,
           background: 'var(--bg-card)', border: '1px solid var(--border)',
           color: 'var(--text-secondary)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -153,22 +158,29 @@ export default function Translator() {
           </div>
 
           <textarea
-            value={inputText}
+            value={isListening && interimText && !inputText ? interimText : inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder={"Type or speak in " + fromLangData.name + "..."}
             style={{
               width: '100%', minHeight: 160, background: 'transparent',
               border: 'none', outline: 'none', resize: 'vertical',
-              color: 'var(--text-primary)', fontSize: 18, lineHeight: 1.6,
-              fontFamily: 'inherit',
+              color: isListening && interimText && !inputText ? 'var(--text-muted)' : 'var(--text-primary)',
+              fontSize: 18, lineHeight: 1.6, fontFamily: 'inherit',
             }}
           />
 
+          {speechError && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 13 }}>
+              {speechError}
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{inputText.length} characters</span>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              {isListening ? 'Listening...' : inputText.length + ' characters'}
+            </span>
             <button onClick={() => { setInputText(''); setOutputText('') }} style={{
-              background: 'none', border: 'none', color: 'var(--text-muted)',
-              cursor: 'pointer', fontSize: 12,
+              background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12,
             }}>Clear</button>
           </div>
         </div>
@@ -180,7 +192,12 @@ export default function Translator() {
               <span style={{ fontSize: 20 }}>{toLangData.flag}</span>
               <span style={{ fontWeight: 600, color: toLangData.color }}>{toLangData.nativeName}</span>
             </div>
-            {isTranslating && <Loader size={16} style={{ color: 'var(--accent-primary)', animation: 'spin 1s linear infinite' }} />}
+            {isTranslating && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-primary)', fontSize: 13 }}>
+                <Loader size={14} className="spin" />
+                Translating...
+              </div>
+            )}
           </div>
 
           <div style={{
@@ -188,7 +205,7 @@ export default function Translator() {
             color: outputText ? 'var(--text-primary)' : 'var(--text-muted)',
             fontStyle: outputText ? 'normal' : 'italic',
           }}>
-            {outputText || (isTranslating ? 'Translating...' : 'Translation will appear here')}
+            {outputText || (isTranslating ? '' : 'Translation will appear here')}
           </div>
 
           {error && (
@@ -219,6 +236,11 @@ export default function Translator() {
               {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
               {isSpeaking ? 'Stop' : 'Speak'}
             </button>
+            {isSpeaking && (
+              <div style={{ display: 'flex', alignItems: 'center', marginLeft: 4 }}>
+                <Waveform active={true} color={toLangData.color} />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -228,7 +250,7 @@ export default function Translator() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
           {!isSupported && (
             <div style={{ color: '#f87171', fontSize: 14, textAlign: 'center' }}>
-              ⚠️ Please use Chrome browser for voice features
+              Please use Chrome browser for voice features
             </div>
           )}
           <button
@@ -243,16 +265,25 @@ export default function Translator() {
               border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.3s',
-              boxShadow: isListening
-                ? '0 0 40px rgba(248,113,113,0.4)'
-                : '0 0 30px rgba(108,99,255,0.3)',
+              boxShadow: isListening ? '0 0 40px rgba(248,113,113,0.4)' : '0 0 30px rgba(108,99,255,0.3)',
             }}
           >
             {isListening ? <MicOff size={32} color="white" /> : <Mic size={32} color="white" />}
           </button>
           <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-            {'isListening' && isListening ? 'Listening in ' + fromLangData.name + '... tap to stop' : 'Tap to speak in ' + fromLangData.name}
+            {isListening
+              ? 'Listening in ' + fromLangData.name + '... tap to stop'
+              : 'Tap to speak in ' + fromLangData.name}
           </p>
+          {isListening && interimText && (
+            <div style={{
+              padding: '10px 20px', background: 'var(--bg-card)',
+              borderRadius: 10, border: '1px solid var(--border)',
+              color: 'var(--text-muted)', fontSize: 15, maxWidth: 500, textAlign: 'center',
+            }}>
+              {interimText}
+            </div>
+          )}
         </div>
       )}
     </div>
