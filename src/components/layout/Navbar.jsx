@@ -4,9 +4,9 @@ import { useAppStore } from '../../store/appStore'
 
 const navItems = [
   { to: '/', icon: Mic, label: 'Translate' },
-  { to: '/conversation', icon: MessageSquare, label: 'Conversation' },
+  { to: '/conversation', icon: MessageSquare, label: 'Chat' },
   { to: '/history', icon: History, label: 'History' },
-  { to: '/favorites', icon: Star, label: 'Favorites' },
+  { to: '/favorites', icon: Star, label: 'Saved' },
 ]
 
 export default function Navbar() {
@@ -15,7 +15,7 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Top navbar - desktop */}
+      {/* Top navbar */}
       <nav style={{
         background: 'rgba(10, 10, 15, 0.92)',
         backdropFilter: 'blur(20px)',
@@ -43,19 +43,19 @@ export default function Navbar() {
             </div>
           </Link>
 
-          {/* Nav links - hidden on mobile */}
-          <div className="desktop-nav" style={{ display: 'flex', gap: 2, flex: 1 }}>
+          {/* Desktop nav links */}
+          <div style={{ display: 'flex', gap: 2, flex: 1 }} className="desktop-nav">
             {navItems.map(({ to, icon: Icon, label }) => {
               const active = location.pathname === to
               return (
                 <Link key={to} to={to} style={{
                   textDecoration: 'none',
                   display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '7px 12px', borderRadius: 8,
+                  padding: '7px 14px', borderRadius: 8,
                   fontSize: 14, fontWeight: active ? 600 : 400,
                   color: active ? 'var(--accent-secondary)' : 'var(--text-secondary)',
                   background: active ? 'rgba(108, 99, 255, 0.1)' : 'transparent',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.2s', whiteSpace: 'nowrap',
                 }}>
                   <Icon size={15} />
                   <span>{label}</span>
@@ -64,7 +64,7 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Mobile: show page title */}
+          {/* Mobile: centered page title */}
           <div className="mobile-nav" style={{ display: 'none', flex: 1, justifyContent: 'center' }}>
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
               {navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
@@ -82,7 +82,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Bottom tab bar - mobile only */}
+      {/* Mobile bottom tab bar */}
       <div className="mobile-nav" style={{
         display: 'none',
         position: 'fixed', bottom: 0, left: 0, right: 0,
@@ -90,27 +90,32 @@ export default function Navbar() {
         backdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border)',
         zIndex: 50,
-        padding: '6px 0 10px',
+        paddingBottom: 'env(safe-area-inset-bottom, 8px)',
       }}>
-        <div style={{ display: 'flex' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
           {navItems.map(({ to, icon: Icon, label }) => {
             const active = location.pathname === to
             return (
               <Link key={to} to={to} style={{
-                textDecoration: 'none', flex: 1,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                padding: '6px 0',
+                textDecoration: 'none',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: 4, padding: '10px 4px 8px',
                 color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
               }}>
                 <div style={{
-                  width: 32, height: 32, borderRadius: 10,
-                  background: active ? 'rgba(108,99,255,0.15)' : 'transparent',
+                  width: 36, height: 28, borderRadius: 10,
+                  background: active ? 'rgba(108,99,255,0.2)' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.2s',
                 }}>
-                  <Icon size={19} />
+                  <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
                 </div>
-                <span style={{ fontSize: 10, fontWeight: active ? 600 : 400 }}>{label}</span>
+                <span style={{
+                  fontSize: 11, fontWeight: active ? 600 : 400,
+                  letterSpacing: 0.2, textAlign: 'center',
+                  whiteSpace: 'nowrap',
+                }}>{label}</span>
               </Link>
             )
           })}

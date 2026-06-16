@@ -153,7 +153,7 @@ body {
   transform: translate(-50%, -50%);
 }
 
-/* Mobile responsive */
+/* Mobile responsive - override */
 @media (max-width: 768px) {
   .mobile-nav {
     display: flex !important;
@@ -162,7 +162,16 @@ body {
     display: none !important;
   }
   body {
-    padding-bottom: 70px;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-nav {
+    display: none !important;
+  }
+  .desktop-nav {
+    display: flex !important;
   }
 }
 
@@ -172,12 +181,12 @@ body {
   }
   .lang-selector-row {
     flex-direction: column !important;
-    gap: 12px !important;
+    align-items: stretch !important;
   }
   .swap-btn {
-    transform: rotate(90deg);
-    align-self: center;
+    align-self: center !important;
     margin-top: 0 !important;
+    transform: rotate(90deg);
   }
   .mode-buttons {
     gap: 6px !important;
