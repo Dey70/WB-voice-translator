@@ -4,7 +4,7 @@ export const LANGUAGES = [
     name: 'Bengali',
     nativeName: 'বাংলা',
     speechCode: 'bn-BD',
-    flag: '🇧🇩',
+    label: 'BN',
     color: '#2dd4bf',
   },
   {
@@ -12,7 +12,7 @@ export const LANGUAGES = [
     name: 'Nepali',
     nativeName: 'नेपाली',
     speechCode: 'ne-NP',
-    flag: '🇳🇵',
+    label: 'NE',
     color: '#6c63ff',
   },
   {
@@ -20,7 +20,7 @@ export const LANGUAGES = [
     name: 'Hindi',
     nativeName: 'हिन्दी',
     speechCode: 'hi-IN',
-    flag: '🇮🇳',
+    label: 'HI',
     color: '#f87171',
   },
 ]
@@ -30,10 +30,3 @@ export const getLanguage = (code) =>
 
 export const getOtherLanguages = (code) =>
   LANGUAGES.filter((l) => l.code !== code)
-
-export const TRANSLATION_MODES = [
-  { id: 'voice-voice', label: 'Voice → Voice', icon: '🎙️' },
-  { id: 'voice-text', label: 'Voice → Text', icon: '🎙️➡️📝' },
-  { id: 'text-voice', label: 'Text → Voice', icon: '📝➡️🔊' },
-  { id: 'text-text', label: 'Text → Text', icon: '📝' },
-]

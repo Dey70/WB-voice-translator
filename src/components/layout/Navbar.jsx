@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageSquare, Mic, History, Star, Settings, Moon, Sun } from 'lucide-react'
+import { MessageSquare, Mic, History, Star, Sun, Moon } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
@@ -14,90 +14,108 @@ export default function Navbar() {
   const { darkMode, toggleDarkMode } = useAppStore()
 
   return (
-    <nav style={{
-      background: 'rgba(10, 10, 15, 0.9)',
-      backdropFilter: 'blur(20px)',
-      borderBottom: '1px solid var(--border)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 50,
-    }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', height: 64 }}>
-        
-        {/* Logo */}
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginRight: 40 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, #6c63ff, #2dd4bf)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18,
-          }}>KS</div>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
-              কথাসেতু
+    <>
+      {/* Top navbar - desktop */}
+      <nav style={{
+        background: 'rgba(10, 10, 15, 0.92)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid var(--border)',
+        position: 'sticky', top: 0, zIndex: 50,
+      }}>
+        <div style={{
+          maxWidth: 1100, margin: '0 auto',
+          padding: '0 16px',
+          display: 'flex', alignItems: 'center', height: 60,
+        }}>
+          {/* Logo */}
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginRight: 32, flexShrink: 0 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 9,
+              background: 'linear-gradient(135deg, #6c63ff, #2dd4bf)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, fontWeight: 700, color: 'white',
+            }}>K</div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>
+                কথাসেতু
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1.5 }}>KOTHASETU</div>
             </div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', letterSpacing: 1 }}>KOTHASETU</div>
-          </div>
-        </Link>
+          </Link>
 
-        {/* Nav links */}
-        <div style={{ display: 'flex', gap: 4, flex: 1 }}>
+          {/* Nav links - hidden on mobile */}
+          <div className="desktop-nav" style={{ display: 'flex', gap: 2, flex: 1 }}>
+            {navItems.map(({ to, icon: Icon, label }) => {
+              const active = location.pathname === to
+              return (
+                <Link key={to} to={to} style={{
+                  textDecoration: 'none',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '7px 12px', borderRadius: 8,
+                  fontSize: 14, fontWeight: active ? 600 : 400,
+                  color: active ? 'var(--accent-secondary)' : 'var(--text-secondary)',
+                  background: active ? 'rgba(108, 99, 255, 0.1)' : 'transparent',
+                  transition: 'all 0.2s',
+                }}>
+                  <Icon size={15} />
+                  <span>{label}</span>
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* Mobile: show page title */}
+          <div className="mobile-nav" style={{ display: 'none', flex: 1, justifyContent: 'center' }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
+              {navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
+            </span>
+          </div>
+
+          <button onClick={toggleDarkMode} style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 8, padding: '7px', cursor: 'pointer',
+            color: 'var(--text-secondary)', display: 'flex', alignItems: 'center',
+            flexShrink: 0,
+          }}>
+            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
+        </div>
+      </nav>
+
+      {/* Bottom tab bar - mobile only */}
+      <div className="mobile-nav" style={{
+        display: 'none',
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        background: 'rgba(10, 10, 15, 0.97)',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid var(--border)',
+        zIndex: 50,
+        padding: '6px 0 10px',
+      }}>
+        <div style={{ display: 'flex' }}>
           {navItems.map(({ to, icon: Icon, label }) => {
             const active = location.pathname === to
             return (
               <Link key={to} to={to} style={{
-                textDecoration: 'none',
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '8px 14px', borderRadius: 8,
-                fontSize: 14, fontWeight: active ? 600 : 400,
-                color: active ? 'var(--accent-secondary)' : 'var(--text-secondary)',
-                background: active ? 'rgba(108, 99, 255, 0.1)' : 'transparent',
-                transition: 'all 0.2s',
+                textDecoration: 'none', flex: 1,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                padding: '6px 0',
+                color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
               }}>
-                <Icon size={16} />
-                <span>{label}</span>
+                <div style={{
+                  width: 32, height: 32, borderRadius: 10,
+                  background: active ? 'rgba(108,99,255,0.15)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.2s',
+                }}>
+                  <Icon size={19} />
+                </div>
+                <span style={{ fontSize: 10, fontWeight: active ? 600 : 400 }}>{label}</span>
               </Link>
             )
           })}
         </div>
-
-        {/* Theme toggle */}
-        <button onClick={toggleDarkMode} style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: 8, padding: '8px', cursor: 'pointer',
-          color: 'var(--text-secondary)', display: 'flex', alignItems: 'center',
-        }}>
-          {darkMode ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
       </div>
-
-      {/* Mobile bottom nav */}
-      <div style={{
-        display: 'none',
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: 'rgba(10, 10, 15, 0.95)',
-        backdropFilter: 'blur(20px)',
-        borderTop: '1px solid var(--border)',
-        padding: '8px 0',
-        zIndex: 50,
-      }} className="mobile-nav">
-        {navItems.map(({ to, icon: Icon, label }) => {
-          const active = location.pathname === to
-          return (
-            <Link key={to} to={to} style={{
-              textDecoration: 'none', flex: 1,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-              padding: '6px 0',
-              color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
-              fontSize: 10,
-            }}>
-              <Icon size={20} />
-              <span>{label}</span>
-            </Link>
-          )
-        })}
-      </div>
-    </nav>
+    </>
   )
 }

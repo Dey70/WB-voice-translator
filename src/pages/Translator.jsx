@@ -25,9 +25,7 @@ export default function Translator() {
   const fromLangData = getLanguage(fromLang)
   const toLangData = getLanguage(toLang)
 
-  useEffect(() => {
-    if (transcript) setInputText(transcript)
-  }, [transcript])
+  useEffect(() => { if (transcript) setInputText(transcript) }, [transcript])
 
   useEffect(() => {
     if (!inputText.trim()) { setOutputText(''); return }
@@ -42,17 +40,8 @@ export default function Translator() {
     try {
       const result = await translateText(text, fromLang, toLang)
       setOutputText(result)
-      addToHistory({
-        fromLang,
-        toLang,
-        originalText: text,
-        translatedText: result,
-        fromLangName: fromLangData.name,
-        toLangName: toLangData.name,
-      })
-      if (mode === 'voice-voice' || mode === 'text-voice') {
-        speak(result, toLang)
-      }
+      addToHistory({ fromLang, toLang, originalText: text, translatedText: result, fromLangName: fromLangData.name, toLangName: toLangData.name })
+      if (mode === 'voice-voice' || mode === 'text-voice') speak(result, toLang)
     } catch (err) {
       setError('Translation failed. Check your internet connection.')
     } finally {
@@ -61,23 +50,14 @@ export default function Translator() {
   }
 
   const handleMicClick = () => {
-    if (isListening) {
-      stopListening()
-    } else {
-      resetTranscript()
-      setInputText('')
-      setOutputText('')
-      startListening(fromLang)
-    }
+    if (isListening) { stopListening() }
+    else { resetTranscript(); setInputText(''); setOutputText(''); startListening(fromLang) }
   }
 
-  const handleSwapLanguages = () => {
-    const prevFrom = fromLang
-    const prevTo = toLang
-    setFromLang(prevTo)
-    setToLang(prevFrom)
-    setInputText(outputText)
-    setOutputText('')
+  const handleSwap = () => {
+    const pf = fromLang, pt = toLang
+    setFromLang(pt); setToLang(pf)
+    setInputText(outputText); setOutputText('')
   }
 
   const handleCopy = () => {
@@ -86,22 +66,21 @@ export default function Translator() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const displayInput = inputText || (isListening && interimText ? interimText : '')
-
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
+    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
 
-      <div style={{ textAlign: 'center', marginBottom: 40 }}>
-        <h1 style={{ fontSize: 36, fontWeight: 700, marginBottom: 8 }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+        <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 700, marginBottom: 6 }}>
           <span className="gradient-text">Voice & Text</span> Translator
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 16 }}>
-          Speak or type in Bengali, Nepali, or Hindi - get instant translation
+        <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(13px, 2vw, 16px)' }}>
+          Speak or type in Bengali, Nepali, or Hindi
         </p>
       </div>
 
       {/* Mode selector */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 32, flexWrap: 'wrap' }}>
+      <div className="mode-buttons" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {[
           { id: 'voice-voice', label: 'Voice to Voice' },
           { id: 'text-text', label: 'Text to Text' },
@@ -109,7 +88,7 @@ export default function Translator() {
           { id: 'text-voice', label: 'Text to Speak' },
         ].map((m) => (
           <button key={m.id} onClick={() => setMode(m.id)} style={{
-            padding: '8px 16px', borderRadius: 20,
+            padding: '7px 14px', borderRadius: 20,
             border: mode === m.id ? '1px solid var(--accent-primary)' : '1px solid var(--border)',
             background: mode === m.id ? 'rgba(108,99,255,0.15)' : 'var(--bg-card)',
             color: mode === m.id ? 'var(--accent-secondary)' : 'var(--text-secondary)',
@@ -122,37 +101,40 @@ export default function Translator() {
       </div>
 
       {/* Language selectors */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
+      <div className="lang-selector-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
           <LanguageSelector value={fromLang} onChange={(v) => { setFromLang(v); if (v === toLang) setToLang(fromLang) }} />
         </div>
-
-        <button onClick={handleSwapLanguages} style={{
-          marginTop: 24, width: 44, height: 44, borderRadius: 22,
+        <button className="swap-btn" onClick={handleSwap} style={{
+          marginTop: 20, width: 40, height: 40, borderRadius: 20,
           background: 'var(--bg-card)', border: '1px solid var(--border)',
           color: 'var(--text-secondary)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all 0.2s', flexShrink: 0,
+          flexShrink: 0, transition: 'all 0.2s',
         }}>
-          <ArrowLeftRight size={18} />
+          <ArrowLeftRight size={16} />
         </button>
-
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>To</div>
+        <div style={{ flex: 1, minWidth: 180 }}>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>To</div>
           <LanguageSelector value={toLang} onChange={(v) => { setToLang(v); if (v === fromLang) setFromLang(toLang) }} exclude={fromLang} />
         </div>
       </div>
 
       {/* Translation panels */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 32 }}>
+      <div className="translation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
 
-        {/* Input panel */}
-        <div className="glass" style={{ borderRadius: 16, padding: 24 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        {/* Input */}
+        <div className="glass" style={{ borderRadius: 14, padding: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 20 }}>{fromLangData.flag}</span>
-              <span style={{ fontWeight: 600, color: fromLangData.color }}>{fromLangData.nativeName}</span>
+              <div style={{
+                width: 26, height: 26, borderRadius: 7,
+                background: fromLangData.color + '25',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 700, color: fromLangData.color,
+              }}>{fromLangData.label || fromLang.toUpperCase()}</div>
+              <span style={{ fontWeight: 600, color: fromLangData.color, fontSize: 14 }}>{fromLangData.nativeName}</span>
             </div>
             {isListening && <Waveform active={true} color={fromLangData.color} />}
           </div>
@@ -162,22 +144,22 @@ export default function Translator() {
             onChange={(e) => setInputText(e.target.value)}
             placeholder={"Type or speak in " + fromLangData.name + "..."}
             style={{
-              width: '100%', minHeight: 160, background: 'transparent',
-              border: 'none', outline: 'none', resize: 'vertical',
-              color: isListening && interimText && !inputText ? 'var(--text-muted)' : 'var(--text-primary)',
-              fontSize: 18, lineHeight: 1.6, fontFamily: 'inherit',
+              width: '100%', minHeight: 'clamp(120px, 20vw, 160px)',
+              background: 'transparent', border: 'none', outline: 'none',
+              resize: 'vertical', color: 'var(--text-primary)',
+              fontSize: 'clamp(15px, 2vw, 18px)', lineHeight: 1.6, fontFamily: 'inherit',
             }}
           />
 
           {speechError && (
-            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 13 }}>
+            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 12 }}>
               {speechError}
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-              {isListening ? 'Listening...' : inputText.length + ' characters'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              {isListening ? 'Listening...' : inputText.length + ' chars'}
             </span>
             <button onClick={() => { setInputText(''); setOutputText('') }} style={{
               background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12,
@@ -185,71 +167,68 @@ export default function Translator() {
           </div>
         </div>
 
-        {/* Output panel */}
-        <div className="glass" style={{ borderRadius: 16, padding: 24, position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        {/* Output */}
+        <div className="glass" style={{ borderRadius: 14, padding: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 20 }}>{toLangData.flag}</span>
-              <span style={{ fontWeight: 600, color: toLangData.color }}>{toLangData.nativeName}</span>
+              <div style={{
+                width: 26, height: 26, borderRadius: 7,
+                background: toLangData.color + '25',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 700, color: toLangData.color,
+              }}>{toLangData.label || toLang.toUpperCase()}</div>
+              <span style={{ fontWeight: 600, color: toLangData.color, fontSize: 14 }}>{toLangData.nativeName}</span>
             </div>
-            {isTranslating && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--accent-primary)', fontSize: 13 }}>
-                <Loader size={14} className="spin" />
-                Translating...
-              </div>
-            )}
+            {isTranslating && <Loader size={14} style={{ color: 'var(--accent-primary)' }} />}
           </div>
 
           <div style={{
-            minHeight: 160, fontSize: 18, lineHeight: 1.6,
+            minHeight: 'clamp(120px, 20vw, 160px)',
+            fontSize: 'clamp(15px, 2vw, 18px)', lineHeight: 1.6,
             color: outputText ? 'var(--text-primary)' : 'var(--text-muted)',
             fontStyle: outputText ? 'normal' : 'italic',
           }}>
-            {outputText || (isTranslating ? '' : 'Translation will appear here')}
+            {outputText || (isTranslating ? 'Translating...' : 'Translation will appear here')}
           </div>
 
           {error && (
-            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 13 }}>
+            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 12 }}>
               {error}
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', gap: 6, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
             <button onClick={handleCopy} disabled={!outputText} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px', borderRadius: 8,
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '6px 11px', borderRadius: 8,
               background: 'var(--bg-secondary)', border: '1px solid var(--border)',
               color: copied ? '#2dd4bf' : 'var(--text-secondary)',
-              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 13,
+              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12,
             }}>
-              {copied ? <CheckCheck size={14} /> : <Copy size={14} />}
+              {copied ? <CheckCheck size={13} /> : <Copy size={13} />}
               {copied ? 'Copied!' : 'Copy'}
             </button>
             <button onClick={() => isSpeaking ? stop() : speak(outputText, toLang)} disabled={!outputText} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px', borderRadius: 8,
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '6px 11px', borderRadius: 8,
               background: isSpeaking ? 'rgba(108,99,255,0.2)' : 'var(--bg-secondary)',
               border: '1px solid ' + (isSpeaking ? 'var(--accent-primary)' : 'var(--border)'),
               color: isSpeaking ? 'var(--accent-secondary)' : 'var(--text-secondary)',
-              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 13,
+              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12,
             }}>
-              {isSpeaking ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
               {isSpeaking ? 'Stop' : 'Speak'}
             </button>
-            {isSpeaking && (
-              <div style={{ display: 'flex', alignItems: 'center', marginLeft: 4 }}>
-                <Waveform active={true} color={toLangData.color} />
-              </div>
-            )}
+            {isSpeaking && <Waveform active={true} color={toLangData.color} />}
           </div>
         </div>
       </div>
 
       {/* Mic button */}
       {(mode === 'voice-voice' || mode === 'voice-text') && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           {!isSupported && (
-            <div style={{ color: '#f87171', fontSize: 14, textAlign: 'center' }}>
+            <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center' }}>
               Please use Chrome browser for voice features
             </div>
           )}
@@ -258,7 +237,7 @@ export default function Translator() {
             disabled={!isSupported}
             className={isListening ? 'pulse-record' : ''}
             style={{
-              width: 80, height: 80, borderRadius: 40,
+              width: 72, height: 72, borderRadius: 36,
               background: isListening
                 ? 'linear-gradient(135deg, #f87171, #fb923c)'
                 : 'linear-gradient(135deg, #6c63ff, #a78bfa)',
@@ -268,18 +247,19 @@ export default function Translator() {
               boxShadow: isListening ? '0 0 40px rgba(248,113,113,0.4)' : '0 0 30px rgba(108,99,255,0.3)',
             }}
           >
-            {isListening ? <MicOff size={32} color="white" /> : <Mic size={32} color="white" />}
+            {isListening ? <MicOff size={28} color="white" /> : <Mic size={28} color="white" />}
           </button>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center' }}>
             {isListening
               ? 'Listening in ' + fromLangData.name + '... tap to stop'
               : 'Tap to speak in ' + fromLangData.name}
           </p>
           {isListening && interimText && (
             <div style={{
-              padding: '10px 20px', background: 'var(--bg-card)',
+              padding: '10px 18px', background: 'var(--bg-card)',
               borderRadius: 10, border: '1px solid var(--border)',
-              color: 'var(--text-muted)', fontSize: 15, maxWidth: 500, textAlign: 'center',
+              color: 'var(--text-muted)', fontSize: 14,
+              maxWidth: '90%', textAlign: 'center',
             }}>
               {interimText}
             </div>

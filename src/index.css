@@ -152,3 +152,38 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .mobile-nav {
+    display: flex !important;
+  }
+  .desktop-nav {
+    display: none !important;
+  }
+  body {
+    padding-bottom: 70px;
+  }
+}
+
+@media (max-width: 640px) {
+  .translation-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .lang-selector-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+  .swap-btn {
+    transform: rotate(90deg);
+    align-self: center;
+    margin-top: 0 !important;
+  }
+  .mode-buttons {
+    gap: 6px !important;
+  }
+  .mode-buttons button {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+  }
+}
