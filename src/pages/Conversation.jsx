@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Mic, MicOff, Volume2, Trash2 } from 'lucide-react'
+import { Mic, Volume2, Trash2 } from 'lucide-react'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { translateText } from '../services/translation'
@@ -38,7 +38,6 @@ export default function Conversation() {
     startListening(fromLang)
   }
 
-  // Process when listening ends and we have transcript
   useEffect(() => {
     if (!isListening && transcript && activeSpeakerRef.current) {
       const speaker = activeSpeakerRef.current
@@ -48,10 +47,7 @@ export default function Conversation() {
   }, [isListening])
 
   const processMessage = async (text, speaker) => {
-    if (!text.trim()) {
-      setActiveSpeaker(null)
-      return
-    }
+    if (!text.trim()) { setActiveSpeaker(null); return }
 
     const fromLang = speaker === 'A' ? langA : langB
     const toLang = speaker === 'A' ? langB : langA
@@ -60,12 +56,8 @@ export default function Conversation() {
 
     const msgId = Date.now()
     setMessages((prev) => [...prev, {
-      id: msgId,
-      speaker,
-      fromLang,
-      toLang,
-      originalText: text,
-      translatedText: null,
+      id: msgId, speaker, fromLang, toLang,
+      originalText: text, translatedText: null,
       timestamp: new Date().toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' }),
       translating: true,
     }])
@@ -74,22 +66,13 @@ export default function Conversation() {
 
     try {
       const translated = await translateText(text, fromLang, toLang)
-      
       setMessages((prev) => prev.map((m) => m.id === msgId
-        ? { ...m, translatedText: translated, translating: false }
-        : m
+        ? { ...m, translatedText: translated, translating: false } : m
       ))
-
-      // Speak the translated text in the TARGET language
-      // Small delay to ensure state is updated first
-      setTimeout(() => {
-        speak(translated, toLang)
-      }, 300)
-
+      setTimeout(() => speak(translated, toLang), 300)
     } catch {
       setMessages((prev) => prev.map((m) => m.id === msgId
-        ? { ...m, translatedText: 'Translation failed - check internet', translating: false }
-        : m
+        ? { ...m, translatedText: 'Translation failed - check internet', translating: false } : m
       ))
     } finally {
       setIsTranslating(false)
@@ -98,18 +81,55 @@ export default function Conversation() {
   }
 
   const replayMessage = (msg) => {
-    if (msg.translatedText) {
-      stop()
-      setTimeout(() => speak(msg.translatedText, msg.toLang), 100)
-    }
+    if (msg.translatedText) { stop(); setTimeout(() => speak(msg.translatedText, msg.toLang), 100) }
   }
 
   const clearConversation = () => setMessages([])
 
-  const isButtonDisabled = (speaker) => {
-    if (isTranslating) return true
-    if (isListening && activeSpeaker !== speaker) return true
-    return false
+  const isButtonDisabled = (speaker) =>
+    isTranslating || (isListening && activeSpeaker !== speaker)
+
+  const MicButton = ({ speaker, langData }) => {
+    const active = isListening && activeSpeaker === speaker
+    const disabled = isButtonDisabled(speaker)
+    const gradientColor = speaker === 'A'
+      ? 'linear-gradient(135deg, ' + langAData.color + ', #6c63ff)'
+      : 'linear-gradient(135deg, ' + langBData.color + ', #2dd4bf)'
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+        <button
+          onClick={() => handleSpeak(speaker)}
+          disabled={disabled}
+          className={active ? 'pulse-record' : ''}
+          style={{
+            width: 76, height: 76, borderRadius: 38,
+            background: active ? 'linear-gradient(135deg, #f87171, #fb923c)' : gradientColor,
+            border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            opacity: disabled ? 0.4 : 1,
+            transition: 'all 0.3s',
+            boxShadow: active ? '0 0 30px rgba(248,113,113,0.4)' : '0 0 20px ' + langData.color + '40',
+          }}
+        >
+          {/* Bug 5: Always show Mic — never MicOff. Color/animation shows state instead */}
+          <Mic size={28} color="white" />
+        </button>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: langData.color }}>
+            {langData.flag + ' Person ' + speaker}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            {active ? 'Tap to stop' : langData.nativeName}
+          </div>
+          {active && (
+            <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center' }}>
+              <Waveform active color={langData.color} />
+            </div>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -124,7 +144,6 @@ export default function Conversation() {
         </p>
       </div>
 
-      {/* Language pickers */}
       <div className="glass" style={{ borderRadius: 16, padding: 20, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Person A speaks</div>
@@ -137,14 +156,12 @@ export default function Conversation() {
         </div>
       </div>
 
-      {/* Error display */}
       {speechError && (
         <div style={{ marginBottom: 12, padding: '10px 16px', background: 'rgba(248,113,113,0.1)', borderRadius: 10, color: '#f87171', fontSize: 13 }}>
           {speechError}
         </div>
       )}
 
-      {/* Chat messages */}
       <div className="glass" style={{
         borderRadius: 16, flex: 1, minHeight: 300, maxHeight: 420,
         overflowY: 'auto', padding: 20, marginBottom: 20,
@@ -154,7 +171,7 @@ export default function Conversation() {
           <div style={{ textAlign: 'center', color: 'var(--text-muted)', margin: 'auto', padding: 40 }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
             <div style={{ fontSize: 16, marginBottom: 6 }}>Start the conversation</div>
-            <div style={{ fontSize: 13 }}>Person A or B taps their mic button below to speak</div>
+            <div style={{ fontSize: 13 }}>Person A or B taps their mic button below</div>
           </div>
         ) : messages.map((msg) => {
           const fromData = getLanguage(msg.fromLang)
@@ -163,14 +180,10 @@ export default function Conversation() {
           const accentColor = isA ? langAData.color : langBData.color
 
           return (
-            <div key={msg.id} className="fade-in" style={{
-              display: 'flex', flexDirection: 'column',
-              alignItems: isA ? 'flex-start' : 'flex-end',
-            }}>
+            <div key={msg.id} className="fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: isA ? 'flex-start' : 'flex-end' }}>
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, paddingLeft: isA ? 4 : 0, paddingRight: isA ? 0 : 4 }}>
                 {'Person ' + (isA ? 'A' : 'B') + ' · ' + fromData.flag + ' ' + fromData.nativeName + ' · ' + msg.timestamp}
               </div>
-
               <div style={{
                 maxWidth: '85%',
                 background: isA ? 'rgba(108,99,255,0.10)' : 'rgba(45,212,191,0.08)',
@@ -178,14 +191,10 @@ export default function Conversation() {
                 borderRadius: isA ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
                 padding: '14px 18px',
               }}>
-                {/* Original text */}
                 <div style={{ fontSize: 16, color: 'var(--text-primary)', marginBottom: 10, lineHeight: 1.5 }}>
                   {msg.originalText}
                 </div>
-
                 <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
-
-                {/* Translation */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                   <span style={{ fontSize: 14, flexShrink: 0 }}>{toData.flag}</span>
                   <div style={{ flex: 1 }}>
@@ -203,7 +212,6 @@ export default function Conversation() {
                     <button onClick={() => replayMessage(msg)} style={{
                       background: 'none', border: 'none', cursor: 'pointer',
                       color: 'var(--text-muted)', padding: 2, flexShrink: 0,
-                      transition: 'color 0.2s',
                     }}>
                       <Volume2 size={14} />
                     </button>
@@ -214,14 +222,12 @@ export default function Conversation() {
           )
         })}
 
-        {/* Live interim text */}
         {isListening && interimText && (
           <div style={{
             padding: '10px 16px',
             background: 'rgba(108,99,255,0.05)',
             border: '1px dashed var(--border)',
-            borderRadius: 10,
-            color: 'var(--text-muted)',
+            borderRadius: 10, color: 'var(--text-muted)',
             fontSize: 14, fontStyle: 'italic',
             alignSelf: activeSpeaker === 'A' ? 'flex-start' : 'flex-end',
             maxWidth: '80%',
@@ -233,98 +239,25 @@ export default function Conversation() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Mic buttons */}
       {!isSupported ? (
-        <div style={{ textAlign: 'center', color: '#f87171', padding: 16 }}>
-          Please use Chrome for voice features
+        <div style={{ textAlign: 'center', color: '#f87171', padding: 16, fontSize: 13 }}>
+          Voice requires Chrome or Edge on desktop.
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center' }}>
-
-          {/* Person A */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-            <button
-              onClick={() => handleSpeak('A')}
-              disabled={isButtonDisabled('A')}
-              className={isListening && activeSpeaker === 'A' ? 'pulse-record' : ''}
-              style={{
-                width: 76, height: 76, borderRadius: 38,
-                background: isListening && activeSpeaker === 'A'
-                  ? 'linear-gradient(135deg, #f87171, #fb923c)'
-                  : 'linear-gradient(135deg, ' + langAData.color + ', #6c63ff)',
-                border: 'none', cursor: isButtonDisabled('A') ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: isButtonDisabled('A') ? 0.4 : 1,
-                transition: 'all 0.3s',
-                boxShadow: isListening && activeSpeaker === 'A'
-                  ? '0 0 30px rgba(248,113,113,0.4)'
-                  : '0 0 20px ' + langAData.color + '40',
-              }}
-            >
-              {isListening && activeSpeaker === 'A' ? <MicOff size={28} color="white" /> : <Mic size={28} color="white" />}
-            </button>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: langAData.color }}>
-                {langAData.flag + ' Person A'}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{langAData.nativeName}</div>
-              {isListening && activeSpeaker === 'A' && (
-                <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center' }}>
-                  <Waveform active color={langAData.color} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Clear */}
+          <MicButton speaker="A" langData={langAData} />
           <button onClick={clearConversation} title="Clear conversation" style={{
             width: 44, height: 44, borderRadius: 22,
             background: 'var(--bg-card)', border: '1px solid var(--border)',
             color: 'var(--text-muted)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'all 0.2s',
           }}>
             <Trash2 size={16} />
           </button>
-
-          {/* Person B */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-            <button
-              onClick={() => handleSpeak('B')}
-              disabled={isButtonDisabled('B')}
-              className={isListening && activeSpeaker === 'B' ? 'pulse-record' : ''}
-              style={{
-                width: 76, height: 76, borderRadius: 38,
-                background: isListening && activeSpeaker === 'B'
-                  ? 'linear-gradient(135deg, #f87171, #fb923c)'
-                  : 'linear-gradient(135deg, ' + langBData.color + ', #2dd4bf)',
-                border: 'none', cursor: isButtonDisabled('B') ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: isButtonDisabled('B') ? 0.4 : 1,
-                transition: 'all 0.3s',
-                boxShadow: isListening && activeSpeaker === 'B'
-                  ? '0 0 30px rgba(248,113,113,0.4)'
-                  : '0 0 20px ' + langBData.color + '40',
-              }}
-            >
-              {isListening && activeSpeaker === 'B' ? <MicOff size={28} color="white" /> : <Mic size={28} color="white" />}
-            </button>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: langBData.color }}>
-                {langBData.flag + ' Person B'}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{langBData.nativeName}</div>
-              {isListening && activeSpeaker === 'B' && (
-                <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center' }}>
-                  <Waveform active color={langBData.color} />
-                </div>
-              )}
-            </div>
-          </div>
+          <MicButton speaker="B" langData={langBData} />
         </div>
       )}
 
-      {/* Speaking indicator */}
       {isSpeaking && (
         <div style={{ textAlign: 'center', marginTop: 16, color: 'var(--accent-secondary)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <Waveform active color="var(--accent-secondary)" />

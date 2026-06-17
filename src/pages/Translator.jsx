@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Mic, MicOff, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck } from 'lucide-react'
+import { Mic, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck } from 'lucide-react'
 import LanguageSelector from '../components/translation/LanguageSelector'
 import Waveform from '../components/translation/Waveform'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
@@ -69,7 +69,6 @@ export default function Translator() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
 
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 700, marginBottom: 6 }}>
           <span className="gradient-text">Voice & Text</span> Translator
@@ -79,7 +78,6 @@ export default function Translator() {
         </p>
       </div>
 
-      {/* Mode selector */}
       <div className="mode-buttons" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {[
           { id: 'voice-voice', label: 'Voice to Voice' },
@@ -100,7 +98,6 @@ export default function Translator() {
         ))}
       </div>
 
-      {/* Language selectors */}
       <div className="lang-selector-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
@@ -121,10 +118,7 @@ export default function Translator() {
         </div>
       </div>
 
-      {/* Translation panels */}
       <div className="translation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
-
-        {/* Input */}
         <div className="glass" style={{ borderRadius: 14, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -146,7 +140,7 @@ export default function Translator() {
             style={{
               width: '100%', minHeight: 'clamp(120px, 20vw, 160px)',
               background: 'transparent', border: 'none', outline: 'none',
-              resize: 'vertical', color: 'var(--text-primary)',
+              resize: 'vertical', color: isListening && interimText && !inputText ? 'var(--text-muted)' : 'var(--text-primary)',
               fontSize: 'clamp(15px, 2vw, 18px)', lineHeight: 1.6, fontFamily: 'inherit',
             }}
           />
@@ -167,7 +161,6 @@ export default function Translator() {
           </div>
         </div>
 
-        {/* Output */}
         <div className="glass" style={{ borderRadius: 14, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -224,12 +217,11 @@ export default function Translator() {
         </div>
       </div>
 
-      {/* Mic button */}
       {(mode === 'voice-voice' || mode === 'voice-text') && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           {!isSupported && (
             <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center', padding: '12px 16px', background: 'rgba(248,113,113,0.08)', borderRadius: 10, border: '1px solid rgba(248,113,113,0.2)', maxWidth: 340 }}>
-              Voice input is not supported in this browser. Please try Chrome or Edge.
+              Voice input requires Chrome or Edge browser on desktop.
             </div>
           )}
           <button
@@ -241,13 +233,14 @@ export default function Translator() {
               background: isListening
                 ? 'linear-gradient(135deg, #f87171, #fb923c)'
                 : 'linear-gradient(135deg, #6c63ff, #a78bfa)',
-              border: 'none', cursor: 'pointer',
+              border: 'none', cursor: isSupported ? 'pointer' : 'not-allowed',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.3s',
               boxShadow: isListening ? '0 0 40px rgba(248,113,113,0.4)' : '0 0 30px rgba(108,99,255,0.3)',
             }}
           >
-            {isListening ? <MicOff size={28} color="white" /> : <Mic size={28} color="white" />}
+            {/* Bug 5: Always show Mic icon — MicOff confused users into thinking mic was off */}
+            <Mic size={28} color="white" />
           </button>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center' }}>
             {isListening
