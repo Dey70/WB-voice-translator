@@ -17,9 +17,10 @@ const SILENCE_TIMEOUTS = {
   hi: 2500,
 }
 
-// iOS (Safari / WKWebView) requires continuous = false.
-// Forcing continuous = true causes an immediate recognition error on iOS.
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+// Both iOS and Android struggle with continuous = true:
+// iOS crashes outright; Android emits progressive refinements of the same
+// phrase as multiple isFinal results, which snowballs into duplication.
+const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent)
 
 export function useSpeechRecognition() {
   const [transcript, setTranscript] = useState('')
@@ -54,8 +55,9 @@ export function useSpeechRecognition() {
     // iOS WebKit requires a proper BCP-47 tag or it crashes immediately.
     recognition.lang = LANG_CODES[langCode] || langCode + '-IN'
 
-    // iOS crashes with continuous = true — disable it on iOS only.
-    recognition.continuous = !isIOS
+    // Mobile browsers (iOS + Android) mis-behave with continuous = true:
+    // iOS crashes, Android snowballs progressive refinements as duplicate finals.
+    recognition.continuous = !isMobile
 
     recognition.interimResults = true
     recognition.maxAlternatives = 5
@@ -75,38 +77,52 @@ export function useSpeechRecognition() {
         silenceTimerRef.current = null
       }
 
-      // ── Bulletproof Android approach ──────────────────────────────────────
-      // The browser's event.results array IS the authoritative transcript
-      // store. It accumulates the full session history natively.
+      // ── Android deduplication strategy ────────────────────────────────────
+      // Android Chrome (especially with continuous=true, but sometimes even
+      // without it) stores multiple isFinal results in event.results that are
+      // progressive refinements of the same utterance, e.g.:
+      //   [0] "Amar"            isFinal
+      //   [1] "Amar naam"       isFinal
+      //   [2] "Amar naam Rajdeep" isFinal
       //
-      // Strategy: on every event, walk ALL results from index 0, rebuild
-      // both strings entirely from scratch, then OVERWRITE state — never
-      // append. This eliminates every class of duplication bug because we
-      // never maintain our own copy of the growing text.
+      // Naively concatenating all three produces "AmarAmar naamAmar naam Rajdeep".
+      //
+      // Fix: collect all final strings, then drop any string that is fully
+      // contained inside a longer sibling. Only the survivors are joined
+      // (with explicit spaces) to form the clean transcript.
       // ─────────────────────────────────────────────────────────────────────
-      let finalTranscript = ''
+      const finals = []
       let interimTranscript = ''
 
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i]
-        const text = result[0].transcript
+        const text = result[0].transcript.trim()
+        if (!text) continue
 
         if (result.isFinal) {
-          finalTranscript += text
+          finals.push(text)
         } else {
-          interimTranscript += text
+          interimTranscript += result[0].transcript
         }
       }
 
-      // Normalise whitespace — browsers sometimes emit leading/trailing
-      // spaces inside transcript strings.
-      finalTranscript = finalTranscript.trim()
+      // Remove any final that is a substring of any other (longer) final.
+      // This eliminates the progressive-refinement snowball without touching
+      // genuinely distinct phrases the user spoke one after another.
+      const deduped = finals.filter((candidate, i) =>
+        !finals.some((other, j) => j !== i && other.length > candidate.length && other.includes(candidate))
+      )
+
+      const finalTranscript = deduped.join(' ').trim()
       interimTranscript = interimTranscript.trim()
 
-      console.log('[KothaSetu] onresult — final:', JSON.stringify(finalTranscript), '| interim:', JSON.stringify(interimTranscript))
+      console.log(
+        '[KothaSetu] onresult — raw finals:', JSON.stringify(finals),
+        '| deduped:', JSON.stringify(deduped),
+        '| interim:', JSON.stringify(interimTranscript)
+      )
 
       if (finalTranscript) {
-        // Mirror into ref so onend can read it without touching state.
         lastFinalRef.current = finalTranscript
         accumulatedRef.current = finalTranscript
 
@@ -116,7 +132,7 @@ export function useSpeechRecognition() {
         // Restart the silence timer each time new finals arrive.
         const timeout = SILENCE_TIMEOUTS[langCode] || 1500
         silenceTimerRef.current = setTimeout(() => {
-          console.log('[KothaSetu] Silence timeout — stopping. Transcript:', finalTranscript)
+          console.log('[KothaSetu] Silence timeout — stopping. Transcript:', lastFinalRef.current)
           if (recognitionRef.current && isRunningRef.current) {
             recognitionRef.current.stop()
           }
