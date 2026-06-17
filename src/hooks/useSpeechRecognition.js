@@ -31,9 +31,9 @@ export function useSpeechRecognition() {
   const silenceTimerRef = useRef(null)
   const currentLangRef = useRef('hi')
   const isRunningRef = useRef(false)
-  // Android deduplication: track the last final string we accepted so we
-  // can drop exact re-emissions before they reach state.
-  const lastFinalTextRef = useRef('')
+  // lastFinalRef mirrors the final transcript so onend can read it
+  // without touching React state synchronously.
+  const lastFinalRef = useRef('')
 
   const isSupported = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window
 
@@ -45,7 +45,7 @@ export function useSpeechRecognition() {
 
     currentLangRef.current = langCode
     accumulatedRef.current = ''
-    lastFinalTextRef.current = ''
+    lastFinalRef.current = ''
     isRunningRef.current = true
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -75,84 +75,54 @@ export function useSpeechRecognition() {
         silenceTimerRef.current = null
       }
 
-      // ── Android-safe onresult strategy ───────────────────────────────────
-      // Android Chrome grows event.results cumulatively across firings.
-      // Walking from index 0 every time re-processes old finals and inflates
-      // the string. Walking only from event.resultIndex gives us the truly
-      // *new* chunks delivered in this specific callback.
+      // ── Bulletproof Android approach ──────────────────────────────────────
+      // The browser's event.results array IS the authoritative transcript
+      // store. It accumulates the full session history natively.
       //
-      // Spacing: results[i].transcript has no trailing space, so we join
-      // with an explicit ' ' to prevent characters from mashing together.
-      //
-      // Deduplication: Android sometimes re-emits the exact same final
-      // string in back-to-back events. We track the last accepted string
-      // in lastFinalTextRef and silently drop identical re-emissions.
+      // Strategy: on every event, walk ALL results from index 0, rebuild
+      // both strings entirely from scratch, then OVERWRITE state — never
+      // append. This eliminates every class of duplication bug because we
+      // never maintain our own copy of the growing text.
       // ─────────────────────────────────────────────────────────────────────
-      let interim = ''
-      let gotNewFinal = false
+      let finalTranscript = ''
+      let interimTranscript = ''
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i]
+        const text = result[0].transcript
 
         if (result.isFinal) {
-          // Pick the highest-confidence alternative.
-          let bestText = result[0].transcript
-          let bestConf = result[0].confidence || 0
-          for (let j = 1; j < result.length; j++) {
-            const conf = result[j].confidence || 0
-            if (conf > bestConf) {
-              bestText = result[j].transcript
-              bestConf = conf
-            }
-          }
-
-          const chunk = bestText.trim()
-          if (!chunk) continue
-
-          // ── Deduplication gate ──────────────────────────────────────────
-          // Drop the chunk if it is identical to the last one we accepted,
-          // or if the running transcript already ends with it (Android
-          // sometimes re-fires the same segment as a new "final" result).
-          const isDuplicate =
-            chunk === lastFinalTextRef.current ||
-            accumulatedRef.current.endsWith(chunk)
-
-          if (isDuplicate) {
-            console.log('[KothaSetu] Duplicate final dropped:', JSON.stringify(chunk))
-            continue
-          }
-
-          lastFinalTextRef.current = chunk
-
-          // Join with an explicit space so words never mash together.
-          accumulatedRef.current = accumulatedRef.current
-            ? accumulatedRef.current + ' ' + chunk
-            : chunk
-
-          gotNewFinal = true
-          console.log('[KothaSetu] Final accepted:', JSON.stringify(chunk), '→', JSON.stringify(accumulatedRef.current))
+          finalTranscript += text
         } else {
-          // Only the first (highest-ranked) alternative for the live preview.
-          interim += result[0].transcript
+          interimTranscript += text
         }
       }
 
-      if (gotNewFinal) {
-        setTranscript(accumulatedRef.current)
+      // Normalise whitespace — browsers sometimes emit leading/trailing
+      // spaces inside transcript strings.
+      finalTranscript = finalTranscript.trim()
+      interimTranscript = interimTranscript.trim()
+
+      console.log('[KothaSetu] onresult — final:', JSON.stringify(finalTranscript), '| interim:', JSON.stringify(interimTranscript))
+
+      if (finalTranscript) {
+        // Mirror into ref so onend can read it without touching state.
+        lastFinalRef.current = finalTranscript
+        accumulatedRef.current = finalTranscript
+
+        setTranscript(finalTranscript)
         setInterimText('')
 
-        // Set silence timer — auto-stop after N ms of no new input.
+        // Restart the silence timer each time new finals arrive.
         const timeout = SILENCE_TIMEOUTS[langCode] || 1500
         silenceTimerRef.current = setTimeout(() => {
-          console.log('[KothaSetu] Silence timeout — stopping. Full transcript:', accumulatedRef.current)
+          console.log('[KothaSetu] Silence timeout — stopping. Transcript:', finalTranscript)
           if (recognitionRef.current && isRunningRef.current) {
             recognitionRef.current.stop()
           }
         }, timeout)
-      }
-
-      if (interim) {
-        setInterimText(interim.trim())
+      } else if (interimTranscript) {
+        setInterimText(interimTranscript)
       }
     }
 
@@ -175,12 +145,14 @@ export function useSpeechRecognition() {
     }
 
     recognition.onend = () => {
-      console.log('[KothaSetu] Recognition ended. Accumulated:', accumulatedRef.current)
+      console.log('[KothaSetu] Recognition ended. Final transcript:', lastFinalRef.current)
       isRunningRef.current = false
       setIsListening(false)
       setInterimText('')
-      if (accumulatedRef.current) {
-        setTranscript(accumulatedRef.current)
+      // Ensure state reflects the last known final even if onresult fired
+      // just before onend (race condition on some browsers).
+      if (lastFinalRef.current) {
+        setTranscript(lastFinalRef.current)
       }
     }
 
