@@ -140,7 +140,7 @@ export default function Translator() {
           </div>
 
           <textarea
-            value={isListening && interimText && !inputText ? interimText : inputText}
+            value={interimText && isListening ? interimText : inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder={"Type or speak in " + fromLangData.name + "..."}
             style={{
@@ -247,14 +247,14 @@ export default function Translator() {
               boxShadow: isListening ? '0 0 40px rgba(248,113,113,0.4)' : '0 0 30px rgba(108,99,255,0.3)',
             }}
           >
-            {isListening ? <MicOff size={28} color="white" /> : <Mic size={28} color="white" />}
+            {isListening ? <Mic size={28} color="white" /> : <Mic size={28} color="white" />}
           </button>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center' }}>
             {isListening
               ? 'Listening in ' + fromLangData.name + '... tap to stop'
               : 'Tap to speak in ' + fromLangData.name}
           </p>
-          {isListening && interimText && (
+          {interimText && (
             <div style={{
               padding: '10px 18px', background: 'var(--bg-card)',
               borderRadius: 10, border: '1px solid var(--border)',

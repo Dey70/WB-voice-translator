@@ -164,9 +164,10 @@ export function useSpeechRecognition() {
       console.log('[KothaSetu] Recognition ended. Final transcript:', lastFinalRef.current)
       isRunningRef.current = false
       setIsListening(false)
-      setInterimText('')
-      // Ensure state reflects the last known final even if onresult fired
-      // just before onend (race condition on some browsers).
+      // Do NOT clear interimText here — on mobile (continuous=false) the session
+      // ends immediately after the final result, so clearing interim here would
+      // erase the live preview before the user sees it. onstart clears it on
+      // the next tap, which is the right time.
       if (lastFinalRef.current) {
         setTranscript(lastFinalRef.current)
       }
