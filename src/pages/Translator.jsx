@@ -19,7 +19,6 @@ export default function Translator() {
   const [error, setError] = useState(null)
 
   const { transcript, interimText, isListening, startListening, stopListening, resetTranscript, isSupported, error: speechError } = useSpeechRecognition()
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
   const { speak, isSpeaking, stop } = useSpeechSynthesis()
   const { addToHistory } = useAppStore()
 
@@ -228,9 +227,9 @@ export default function Translator() {
       {/* Mic button */}
       {(mode === 'voice-voice' || mode === 'voice-text') && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-          {(!isSupported || isMobile) && (
+          {!isSupported && (
             <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center', padding: '12px 16px', background: 'rgba(248,113,113,0.08)', borderRadius: 10, border: '1px solid rgba(248,113,113,0.2)', maxWidth: 340 }}>
-              Voice input requires Chrome on desktop. On mobile, please use the text input below.
+              Voice input is not supported in this browser. Please try Chrome or Edge.
             </div>
           )}
           <button
