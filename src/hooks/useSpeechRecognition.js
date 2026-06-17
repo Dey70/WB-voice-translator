@@ -1,18 +1,25 @@
 import { useState, useRef, useCallback } from 'react'
 
+// BCP-47 tags required by Apple WebKit (iOS Safari / WKWebView).
+// Standard two-letter codes like 'bn' cause an immediate crash on iOS.
 const LANG_CODES = {
-  bn: 'bn-BD',
+  bn: 'bn-IN',
   ne: 'ne-NP',
   hi: 'hi-IN',
+  en: 'en-US',
 }
 
-// Hindi needs longer silence timeout because names/compound words
-// can have micro-pauses that trigger early finalization
+// Hindi needs a longer silence timeout because compound words and names
+// can have micro-pauses that trigger early finalization.
 const SILENCE_TIMEOUTS = {
   bn: 1500,
   ne: 1500,
   hi: 2500,
 }
+
+// iOS (Safari / WKWebView) requires continuous = false.
+// Forcing continuous = true causes an immediate recognition error on iOS.
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
 
 export function useSpeechRecognition() {
   const [transcript, setTranscript] = useState('')
@@ -29,7 +36,7 @@ export function useSpeechRecognition() {
 
   const startListening = useCallback((langCode) => {
     if (!isSupported) {
-      setError('Please use Chrome browser for voice features.')
+      setError('Please use Chrome or Safari for voice features.')
       return
     }
 
@@ -40,13 +47,17 @@ export function useSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
 
-    recognition.lang = LANG_CODES[langCode] || langCode
-    recognition.continuous = true
+    // iOS WebKit requires a proper BCP-47 tag or it crashes immediately.
+    recognition.lang = LANG_CODES[langCode] || langCode + '-IN'
+
+    // iOS crashes with continuous = true — disable it on iOS only.
+    recognition.continuous = !isIOS
+
     recognition.interimResults = true
     recognition.maxAlternatives = 5
 
     recognition.onstart = () => {
-      console.log('[KothaSetu] Recognition started:', LANG_CODES[langCode])
+      console.log('[KothaSetu] Recognition started:', recognition.lang, '| iOS:', isIOS)
       setIsListening(true)
       setError(null)
       setTranscript('')
@@ -54,19 +65,30 @@ export function useSpeechRecognition() {
     }
 
     recognition.onresult = (event) => {
-      // Clear any pending silence timer — user is still speaking
+      // Clear any pending silence timer — user is still speaking.
       if (silenceTimerRef.current) {
         clearTimeout(silenceTimerRef.current)
         silenceTimerRef.current = null
       }
 
+      // ── Rebuild transcript correctly ──────────────────────────────────────
+      // Android Chrome fires onresult with overlapping interim/final chunks.
+      // The old approach of appending deltas caused severe text duplication.
+      //
+      // Correct approach:
+      //   • Walk ALL results from 0 to event.results.length.
+      //   • Collect every *final* result into a "committed" string.
+      //   • Collect every *interim* result into a separate preview string.
+      //   • The committed string is the authoritative source of truth.
+      // ─────────────────────────────────────────────────────────────────────
+      let committed = ''
       let interim = ''
 
-      for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i]
 
         if (result.isFinal) {
-          // Pick highest confidence from all alternatives
+          // Pick the highest-confidence alternative.
           let bestText = result[0].transcript
           let bestConf = result[0].confidence || 0
           for (let j = 1; j < result.length; j++) {
@@ -76,31 +98,33 @@ export function useSpeechRecognition() {
               bestConf = conf
             }
           }
-
-          const word = bestText.trim()
-          console.log('[KothaSetu] Final chunk:', JSON.stringify(word), 'conf:', bestConf.toFixed(2))
-
-          // Append to accumulated — this handles "Subham" + "ika" as two chunks
-          accumulatedRef.current = (accumulatedRef.current + ' ' + word).trim()
-          setTranscript(accumulatedRef.current)
-          setInterimText('')
-
-          // Set silence timer — stop after N ms of no new input
-          const timeout = SILENCE_TIMEOUTS[langCode] || 1500
-          silenceTimerRef.current = setTimeout(() => {
-            console.log('[KothaSetu] Silence timeout — stopping. Full transcript:', accumulatedRef.current)
-            if (recognitionRef.current && isRunningRef.current) {
-              recognitionRef.current.stop()
-            }
-          }, timeout)
-
+          committed += bestText
         } else {
+          // Only the first (highest-ranked) alternative for interim.
           interim += result[0].transcript
         }
       }
 
+      // Keep accumulatedRef in sync with every final chunk so stopListening
+      // and the onend handler can read the definitive transcript.
+      if (committed) {
+        accumulatedRef.current = committed.trim()
+        setTranscript(accumulatedRef.current)
+        setInterimText('')
+        console.log('[KothaSetu] Final committed:', JSON.stringify(accumulatedRef.current))
+
+        // Set silence timer — auto-stop after N ms of no new input.
+        const timeout = SILENCE_TIMEOUTS[langCode] || 1500
+        silenceTimerRef.current = setTimeout(() => {
+          console.log('[KothaSetu] Silence timeout — stopping. Full transcript:', accumulatedRef.current)
+          if (recognitionRef.current && isRunningRef.current) {
+            recognitionRef.current.stop()
+          }
+        }, timeout)
+      }
+
       if (interim) {
-        setInterimText(interim)
+        setInterimText(interim.trim())
       }
     }
 
@@ -113,7 +137,7 @@ export function useSpeechRecognition() {
       } else if (event.error === 'network') {
         setError('Network error. Check your internet connection.')
       } else if (event.error === 'aborted') {
-        // Manual stop — not an error
+        // Manual stop via stopListening() — not a real error.
         return
       } else {
         setError('Could not recognize speech. Please try again.')
