@@ -23,6 +23,14 @@ export const LANGUAGES = [
     label: 'HI',
     color: '#f87171',
   },
+  {
+    code: 'en',
+    name: 'English',
+    nativeName: 'English',
+    speechCode: 'en-US',
+    label: 'EN',
+    color: '#fbbf24',
+  },
 ]
 
 export const getLanguage = (code) =>

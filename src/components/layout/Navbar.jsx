@@ -1,10 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageSquare, Mic, History, BookOpen, HeartHandshake, MapPinned, ShieldAlert, Sun, Moon } from 'lucide-react'
+import { MessageSquare, Mic, History, BookOpen, HeartHandshake, MapPinned, ShieldAlert, Sun, Moon, ScanLine } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
   { to: '/', icon: Mic, label: 'Translate' },
   { to: '/conversation', icon: MessageSquare, label: 'Chat' },
+  { to: '/lens', icon: ScanLine, label: 'Lens' },
   { to: '/history', icon: History, label: 'History' },
   { to: '/phrases', icon: BookOpen, label: 'Phrases' },
   { to: '/places', icon: MapPinned, label: 'Places' },
@@ -72,9 +73,11 @@ export default function Navbar() {
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
               {location.pathname === '/emergency'
                 ? 'Emergency'
-                : location.pathname.startsWith('/places')
-                  ? 'Places'
-                  : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
+                : location.pathname === '/lens'
+                  ? 'Lens Scanner'
+                  : location.pathname.startsWith('/places')
+                    ? 'Places'
+                    : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
             </span>
           </div>
 

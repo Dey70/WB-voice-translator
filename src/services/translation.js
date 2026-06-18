@@ -7,6 +7,7 @@ const AZURE_LANG_MAP = {
   bn: 'bn',
   hi: 'hi',
   ne: 'ne',
+  en: 'en',
 }
 
 export async function translateText(text, fromLang, toLang) {
