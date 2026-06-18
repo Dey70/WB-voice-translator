@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle2, HeartHandshake, Search, Sparkles } from 'lucide-react'
+import { AlertCircle, CalendarDays, CheckCircle2, HeartHandshake, Search, Sparkles } from 'lucide-react'
 import { CULTURAL_GUIDE_ITEMS, CULTURE_CATEGORIES, CULTURE_LOCALE, CULTURE_REGIONS } from '../data/culturalGuide'
 import { CULTURAL_GUIDE_EXPANSION } from '../data/culturalGuideExpansion'
+import { FESTIVAL_TIMINGS, FESTIVAL_TIME_LABELS } from '../data/festivalTimings'
 
 const ALL_CULTURAL_ITEMS = [...CULTURAL_GUIDE_ITEMS, ...CULTURAL_GUIDE_EXPANSION]
 
@@ -64,6 +65,9 @@ export default function CulturalGuide() {
                 <small>{copy[entry.region]}</small>
               </div>
               <h2>{entry.title[language]}</h2>
+              {entry.category === 'festivals' && FESTIVAL_TIMINGS[entry.id] && (
+                <div className="festival-timing"><CalendarDays size={15} /><div><strong>{FESTIVAL_TIME_LABELS[language]}</strong><span>{FESTIVAL_TIMINGS[entry.id][language]}</span></div></div>
+              )}
               <p>{entry.description[language]}</p>
             </article>
           )

@@ -685,6 +685,11 @@ body {
 .tone-know .culture-card-heading>span { color:#a78bfa; }
 .culture-card-heading small { color:var(--text-muted); font-size:9px; }
 .culture-card h2 { margin:12px 0 7px; font-size:18px; }
+.festival-timing { display:flex; align-items:flex-start; gap:8px; margin:9px 0 11px; padding:9px 10px; border:1px solid rgba(167,139,250,.2); border-radius:9px; background:rgba(167,139,250,.07); }
+.festival-timing>svg { flex-shrink:0; margin-top:1px; color:var(--accent-secondary); }
+.festival-timing strong,.festival-timing span { display:block; }
+.festival-timing strong { margin-bottom:3px; color:var(--accent-secondary); font-size:9px; letter-spacing:.5px; text-transform:uppercase; }
+.festival-timing span { color:var(--text-secondary); font-size:11px; line-height:1.5; }
 .culture-card p { color:var(--text-secondary); font-size:13px; line-height:1.6; }
 .culture-empty { padding:42px 16px; border:1px dashed var(--border); border-radius:14px; color:var(--text-muted); text-align:center; }
 
