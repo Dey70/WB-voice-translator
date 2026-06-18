@@ -17,10 +17,11 @@ export default function Navbar() {
     <>
       {/* Top navbar */}
       <nav style={{
-        background: 'rgba(10, 10, 15, 0.92)',
+        background: darkMode ? 'rgba(10, 10, 15, 0.92)' : 'rgba(244, 244, 248, 0.92)',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border)',
         position: 'sticky', top: 0, zIndex: 50,
+        transition: 'background 0.3s',
       }}>
         <div style={{
           maxWidth: 1100, margin: '0 auto',
@@ -71,28 +72,33 @@ export default function Navbar() {
             </span>
           </div>
 
-          <button onClick={toggleDarkMode} style={{
+          <button onClick={toggleDarkMode} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} style={{
             background: 'var(--bg-card)', border: '1px solid var(--border)',
             borderRadius: 8, padding: '7px', cursor: 'pointer',
             color: 'var(--text-secondary)', display: 'flex', alignItems: 'center',
-            flexShrink: 0,
+            flexShrink: 0, transition: 'all 0.2s',
           }}>
             {darkMode ? <Sun size={15} /> : <Moon size={15} />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile bottom tab bar */}
-      <div className="mobile-nav" style={{
+      {/* Fix 2: Mobile bottom tab bar — proper equal grid, no cramping */}
+      <div className="mobile-nav mobile-nav-bar" style={{
         display: 'none',
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: 'rgba(10, 10, 15, 0.97)',
+        background: darkMode ? 'rgba(10, 10, 15, 0.97)' : 'rgba(244, 244, 248, 0.97)',
         backdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border)',
         zIndex: 50,
         paddingBottom: 'env(safe-area-inset-bottom, 8px)',
+        transition: 'background 0.3s',
       }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr 1fr', // Fix 2: equal 4-column grid
+          width: '100%',
+        }}>
           {navItems.map(({ to, icon: Icon, label }) => {
             const active = location.pathname === to
             return (
@@ -100,21 +106,21 @@ export default function Navbar() {
                 textDecoration: 'none',
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                gap: 4, padding: '10px 4px 8px',
+                gap: 3, padding: '10px 0 8px',
                 color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
               }}>
                 <div style={{
                   width: 36, height: 28, borderRadius: 10,
-                  background: active ? 'rgba(108,99,255,0.2)' : 'transparent',
+                  background: active ? 'rgba(108,99,255,0.15)' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.2s',
                 }}>
                   <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
                 </div>
                 <span style={{
-                  fontSize: 11, fontWeight: active ? 600 : 400,
-                  letterSpacing: 0.2, textAlign: 'center',
-                  whiteSpace: 'nowrap',
+                  fontSize: 10, fontWeight: active ? 600 : 400,
+                  textAlign: 'center', whiteSpace: 'nowrap',
+                  color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
                 }}>{label}</span>
               </Link>
             )

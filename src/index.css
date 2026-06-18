@@ -196,3 +196,39 @@ body {
     padding: 6px 10px !important;
   }
 }
+
+/* Light mode */
+[data-theme="light"] {
+  --bg-primary: #f4f4f8;
+  --bg-secondary: #eaeaf0;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f8;
+  --accent-primary: #6c63ff;
+  --accent-secondary: #5046e4;
+  --accent-teal: #0d9488;
+  --accent-coral: #e53e3e;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a6a;
+  --text-muted: #9090aa;
+  --border: #d8d8e8;
+  --border-light: #c0c0d8;
+}
+
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--border);
+}
+
+[data-theme="light"] .orb-1,
+[data-theme="light"] .orb-2,
+[data-theme="light"] .orb-3 {
+  opacity: 0.07;
+}
+
+[data-theme="light"] nav {
+  background: rgba(244, 244, 248, 0.92) !important;
+}
+
+[data-theme="light"] .mobile-nav-bar {
+  background: rgba(244, 244, 248, 0.97) !important;
+}
