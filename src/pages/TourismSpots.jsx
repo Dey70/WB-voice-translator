@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Clock3, ExternalLink, IndianRupee, MapPinned, Navigation, Search } from 'lucide-react'
 import { TOURISM_DETAIL_TRANSLATIONS, TOURISM_REGIONS, TOURISM_SPOTS } from '../data/tourismSpots'
 import { TOURISM_ENGLISH_DESCRIPTIONS, TOURISM_ENGLISH_DETAILS } from '../data/tourismEnglish'
@@ -6,6 +7,7 @@ import { HIDDEN_TOURISM_SPOTS } from '../data/hiddenTourismSpots'
 import { REGIONAL_EXPANSION_SPOTS } from '../data/regionalExpansionSpots'
 import { CATEGORY_NAMES, getPlaceCategory, REGION_NAMES, TOURISM_LOCALE } from '../data/tourismLocale'
 import { getTourismPlaceName } from '../data/tourismPlaceNames'
+import PlacesSubnav from '../components/places/PlacesSubnav'
 
 const ALL_TOURISM_SPOTS = [...TOURISM_SPOTS, ...HIDDEN_TOURISM_SPOTS, ...REGIONAL_EXPANSION_SPOTS]
 const INFORMATION_LANGUAGES = [
@@ -25,7 +27,11 @@ const googleMapsDirectionsUrl = (spot) => {
 }
 
 export default function TourismSpots() {
-  const [region, setRegion] = useState('darjeeling')
+  const [searchParams] = useSearchParams()
+  const [region, setRegion] = useState(() => {
+    const requested = searchParams.get('region')
+    return TOURISM_REGIONS.some((item) => item.id === requested) ? requested : 'darjeeling'
+  })
   const [language, setLanguage] = useState('en')
   const [query, setQuery] = useState('')
   const [discovery, setDiscovery] = useState('all')
@@ -55,6 +61,7 @@ export default function TourismSpots() {
 
   return (
     <main className="tourism-page">
+      <PlacesSubnav language={language} />
       <header className="tourism-hero">
         <span><MapPinned size={15} /> {copy.eyebrow}</span>
         <h1><span className="gradient-text">{copy.titleLead}</span> {copy.titleTail}</h1>

@@ -49,7 +49,7 @@ export default function Navbar() {
           {/* Desktop nav links */}
           <div style={{ display: 'flex', gap: 2, flex: 1 }} className="desktop-nav">
             {navItems.map(({ to, icon: Icon, label }) => {
-              const active = location.pathname === to
+              const active = to === '/places' ? location.pathname.startsWith('/places') : location.pathname === to
               return (
                 <Link key={to} to={to} style={{
                   textDecoration: 'none',
@@ -72,7 +72,7 @@ export default function Navbar() {
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
               {location.pathname === '/emergency'
                 ? 'Emergency'
-                : location.pathname === '/places'
+                : location.pathname.startsWith('/places')
                   ? 'Places'
                   : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
             </span>
