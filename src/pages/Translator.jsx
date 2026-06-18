@@ -18,7 +18,7 @@ export default function Translator() {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState(null)
 
-  const { transcript, interimText, isListening, startListening, stopListening, resetTranscript, isSupported, isVoiceReliable, error: speechError } = useSpeechRecognition()
+  const { transcript, interimText, isListening, startListening, stopListening, resetTranscript, isSupported, isIOS, error: speechError } = useSpeechRecognition()
   const { speak, isSpeaking, stop, noVoiceAvailable } = useSpeechSynthesis()
   const { addToHistory } = useAppStore()
 
@@ -146,8 +146,13 @@ export default function Translator() {
           />
 
           {speechError && (
-            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 12 }}>
-              {speechError}
+            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span>{speechError}</span>
+              <button onClick={handleMicClick} style={{
+                background: 'rgba(248,113,113,0.2)', border: '1px solid rgba(248,113,113,0.4)',
+                borderRadius: 6, color: '#f87171', cursor: 'pointer', fontSize: 12,
+                padding: '4px 10px', flexShrink: 0, fontWeight: 600,
+              }}>Try again</button>
             </div>
           )}
 
@@ -214,11 +219,7 @@ export default function Translator() {
             </button>
             {isSpeaking && <Waveform active={true} color={toLangData.color} />}
           </div>
-          {noVoiceAvailable && (
-            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(251,191,36,0.1)', borderRadius: 8, color: '#fbbf24', fontSize: 12 }}>
-              No voice available for {toLangData.name} on this device. Text translation still works.
-            </div>
-          )}
+
         </div>
       </div>
 
@@ -229,7 +230,7 @@ export default function Translator() {
               Voice input requires Chrome or Edge browser on desktop.
             </div>
           )}
-          {isSupported && !isVoiceReliable && (
+          {isSupported && isIOS && (
             <div style={{ color: '#fbbf24', fontSize: 12, textAlign: 'center', padding: '8px 14px', background: 'rgba(251,191,36,0.08)', borderRadius: 8, border: '1px solid rgba(251,191,36,0.2)', maxWidth: 340 }}>
               Voice on iPhone may be limited. If it fails, please type in the box above.
             </div>

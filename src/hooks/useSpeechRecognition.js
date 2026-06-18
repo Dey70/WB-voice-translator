@@ -262,6 +262,7 @@ export function useSpeechRecognition() {
     isListening,
     error,
     isSupported,
+    isIOS: isIOS(),
     startListening,
     stopListening,
     resetTranscript,
