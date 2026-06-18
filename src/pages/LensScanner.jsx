@@ -113,32 +113,64 @@ export default function LensScanner() {
     setOcrProgress(0)
 
     try {
-      // Init worker with Bengali + English + Nepali (cached after first load)
+      // Init worker with Bengali + English + Hindi/Devanagari (cached after first load)
       if (!workerRef.current) {
-        workerRef.current = await createWorker('ben+eng+nep', 1, {
-          logger: (m) => {
-            if (m.status === 'recognizing text') {
-              setOcrProgress(Math.round((m.progress || 0) * 80))
-              setOcrStatus('Reading text...')
-            } else if (m.status === 'loading tesseract core') {
-              setOcrStatus('Loading OCR engine...')
-            } else if (m.status === 'loading language traineddata') {
-              setOcrStatus('Loading language data...')
-            }
-          },
-        })
+        try {
+          workerRef.current = await createWorker('ben+eng+hin', 1, {
+            logger: (m) => {
+              if (m.status === 'recognizing text') {
+                setOcrProgress(Math.round((m.progress || 0) * 80))
+                setOcrStatus('Reading text...')
+              } else if (m.status === 'loading tesseract core') {
+                setOcrStatus('Loading OCR engine...')
+              } else if (m.status === 'loading language traineddata') {
+                setOcrStatus('Loading language data...')
+              }
+            },
+          })
+        } catch (workerErr) {
+          console.error('[Lens] Worker init failed, falling back to eng only:', workerErr)
+          workerRef.current = await createWorker('eng', 1, {
+            logger: (m) => {
+              if (m.status === 'recognizing text') {
+                setOcrProgress(Math.round((m.progress || 0) * 80))
+                setOcrStatus('Reading text...')
+              }
+            },
+          })
+        }
       }
 
       setOcrStatus('Recognising text...')
       const { data } = await workerRef.current.recognize(imageDataUrl)
 
-      // Split into non-empty meaningful blocks — no script restriction
-      const blocks = (data.paragraphs || [])
+      console.log('[Lens] OCR raw text:', data.text)
+      console.log('[Lens] OCR paragraphs:', data.paragraphs?.length)
+
+      const nonEmpty = (t) => t.replace(/[\s\n\r]+/g, '').length > 2
+
+      // Primary: structured paragraphs
+      let blocks = (data.paragraphs || [])
         .map(p => p.text.trim())
-        .filter(t => t.replace(/[\s\n\r]+/g, '').length > 3) // at least 4 non-whitespace chars
+        .filter(nonEmpty)
+
+      // Fallback 1: split raw text by blank lines
+      if (blocks.length === 0 && data.text) {
+        blocks = data.text.split(/\n{2,}/).map(t => t.trim()).filter(nonEmpty)
+      }
+
+      // Fallback 2: split by single newlines
+      if (blocks.length === 0 && data.text) {
+        blocks = data.text.split(/\n/).map(t => t.trim()).filter(nonEmpty)
+      }
+
+      // Fallback 3: entire text as one block
+      if (blocks.length === 0 && data.text?.trim()) {
+        blocks = [data.text.trim()]
+      }
 
       if (blocks.length === 0) {
-        setResults([{ original: '', translated: '', context: 'general', allergens: [], error: 'No text found in this image. Try better lighting, hold steady, and make sure the text fills the frame.' }])
+        setResults([{ original: '', translated: '', context: 'general', allergens: [], error: 'No text detected. Make sure the text is well-lit, in focus, and fills the frame. Check browser console for OCR debug output.' }])
         setMode('results')
         return
       }
