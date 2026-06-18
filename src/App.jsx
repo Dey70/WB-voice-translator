@@ -7,6 +7,7 @@ import History from './pages/History'
 import PhraseBank from './pages/PhraseBank'
 import EmergencyMode from './pages/EmergencyMode'
 import TourismSpots from './pages/TourismSpots'
+import CulturalGuide from './pages/CulturalGuide'
 import { useAppStore } from './store/appStore'
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/phrases" element={<PhraseBank />} />
           <Route path="/emergency" element={<EmergencyMode />} />
           <Route path="/places" element={<TourismSpots />} />
+          <Route path="/culture" element={<CulturalGuide />} />
         </Routes>
       </div>
     </BrowserRouter>

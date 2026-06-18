@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageSquare, Mic, History, BookOpen, MapPinned, ShieldAlert, Sun, Moon } from 'lucide-react'
+import { MessageSquare, Mic, History, BookOpen, HeartHandshake, MapPinned, ShieldAlert, Sun, Moon } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/history', icon: History, label: 'History' },
   { to: '/phrases', icon: BookOpen, label: 'Phrases' },
   { to: '/places', icon: MapPinned, label: 'Places' },
+  { to: '/culture', icon: HeartHandshake, label: 'Culture' },
 ]
 
 export default function Navbar() {

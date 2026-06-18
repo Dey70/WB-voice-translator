@@ -653,3 +653,48 @@ body {
   .tourism-select-grid { grid-template-columns:1fr; }
   .tourism-language-options button span { display:none; }
 }
+
+/* Cultural guide */
+.culture-page { max-width:1000px; margin:0 auto; padding:28px 16px 48px; }
+.culture-hero { text-align:center; margin-bottom:20px; }
+.culture-hero>span { display:inline-flex; align-items:center; gap:7px; color:var(--accent-teal); font-size:11px; font-weight:700; letter-spacing:.7px; text-transform:uppercase; }
+.culture-hero h1 { margin:7px 0 6px; font-size:clamp(28px,5vw,40px); }
+.culture-hero p { max-width:680px; margin:0 auto; color:var(--text-secondary); font-size:14px; line-height:1.5; }
+.culture-controls { padding:16px; border-radius:16px; }
+.culture-languages { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+.culture-languages button { display:flex; align-items:center; gap:6px; padding:7px 9px; border:1px solid var(--border); border-radius:9px; background:var(--bg-secondary); color:var(--text-secondary); cursor:pointer; }
+.culture-languages strong { width:25px; height:25px; display:grid; place-items:center; border-radius:7px; background:var(--bg-card); color:var(--text-muted); font-size:10px; }
+.culture-languages span { font-family:inherit; font-size:11px; }
+.culture-languages button.active { border-color:var(--accent-primary); background:rgba(108,99,255,.12); color:var(--accent-secondary); }
+.culture-languages button.active strong { background:rgba(108,99,255,.2); color:var(--accent-secondary); }
+.culture-selects { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.culture-selects label>span { display:block; margin-bottom:6px; color:var(--text-muted); font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; }
+.culture-selects select { width:100%; min-height:42px; padding:9px 10px; border:1px solid var(--border); border-radius:10px; outline:none; background:var(--bg-secondary); color:var(--text-primary); font:inherit; font-size:12px; }
+.culture-search { display:flex; align-items:center; gap:8px; margin-top:10px; padding:9px 11px; border:1px solid var(--border); border-radius:10px; background:var(--bg-secondary); color:var(--text-muted); }
+.culture-search input { width:100%; border:0; outline:0; background:transparent; color:var(--text-primary); font:inherit; font-size:13px; }
+.culture-count { margin:14px 0 9px; color:var(--text-muted); font-size:11px; }
+.culture-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; }
+.culture-card { padding:18px; border-radius:15px; border-left-width:3px; }
+.culture-card.tone-do { border-left-color:#2dd4bf; }
+.culture-card.tone-avoid { border-left-color:#f87171; }
+.culture-card.tone-know { border-left-color:#a78bfa; }
+.culture-card-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.culture-card-heading>span { display:flex; align-items:center; gap:6px; font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; }
+.tone-do .culture-card-heading>span { color:#2dd4bf; }
+.tone-avoid .culture-card-heading>span { color:#f87171; }
+.tone-know .culture-card-heading>span { color:#a78bfa; }
+.culture-card-heading small { color:var(--text-muted); font-size:9px; }
+.culture-card h2 { margin:12px 0 7px; font-size:18px; }
+.culture-card p { color:var(--text-secondary); font-size:13px; line-height:1.6; }
+.culture-empty { padding:42px 16px; border:1px dashed var(--border); border-radius:14px; color:var(--text-muted); text-align:center; }
+
+@media (max-width:700px) {
+  .culture-page { padding-top:20px; }
+  .culture-grid { grid-template-columns:1fr; }
+}
+
+@media (max-width:520px) {
+  .culture-selects { grid-template-columns:1fr; }
+  .culture-languages button span { display:none; }
+  .mobile-nav-bar span { font-size:9px !important; }
+}
