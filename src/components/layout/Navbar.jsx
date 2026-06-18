@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageSquare, Mic, History, BookOpen, Sun, Moon } from 'lucide-react'
+import { MessageSquare, Mic, History, BookOpen, ShieldAlert, Sun, Moon } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
@@ -68,9 +68,15 @@ export default function Navbar() {
           {/* Mobile: centered page title */}
           <div className="mobile-nav" style={{ display: 'none', flex: 1, justifyContent: 'center' }}>
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
-              {navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
+              {location.pathname === '/emergency'
+                ? 'Emergency'
+                : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
             </span>
           </div>
+
+          <Link className="desktop-sos" to="/emergency" title="Open Emergency Mode">
+            <ShieldAlert size={15} /> SOS
+          </Link>
 
           <button onClick={toggleDarkMode} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} style={{
             background: 'var(--bg-card)', border: '1px solid var(--border)',
@@ -127,6 +133,10 @@ export default function Navbar() {
           })}
         </div>
       </div>
+
+      <Link className="mobile-sos" to="/emergency" aria-label="Open Emergency Mode">
+        <ShieldAlert size={17} /> SOS
+      </Link>
     </>
   )
 }
