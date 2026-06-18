@@ -1,3 +1,5 @@
+import { PHRASE_EXPANSIONS } from './phraseExpansions.js'
+
 export const PHRASE_CATEGORIES = [
   { id: 'greetings', name: 'Greetings' },
   { id: 'food', name: 'Food' },
@@ -9,7 +11,7 @@ export const PHRASE_CATEGORIES = [
   { id: 'emergency', name: 'Emergency' },
 ]
 
-export const TOURIST_PHRASES = [
+const BASE_TOURIST_PHRASES = [
   {
     id: 'hello', category: 'greetings', title: 'Hello',
     translations: { bn: 'নমস্কার', ne: 'नमस्ते', hi: 'नमस्ते' },
@@ -306,3 +308,8 @@ export const TOURIST_PHRASES = [
     translations: { bn: 'আমার খুব ব্যথা হচ্ছে', ne: 'मलाई दुखिरहेको छ', hi: 'मुझे दर्द हो रहा है' },
   },
 ]
+
+export const TOURIST_PHRASES = PHRASE_CATEGORIES.flatMap((category) => [
+  ...BASE_TOURIST_PHRASES.filter((phrase) => phrase.category === category.id),
+  ...PHRASE_EXPANSIONS.filter((phrase) => phrase.category === category.id),
+].slice(0, 50))
