@@ -6,23 +6,22 @@ import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { useAppStore } from '../store/appStore'
 import { LANGUAGES } from '../utils/constants'
 
-// Target languages available in the scanner (not Bengali since that's the source)
-const TARGET_LANGS = LANGUAGES.filter(l => l.code !== 'bn')
+const ALL_LANGS = LANGUAGES // bn, ne, hi, en
+const SOURCE_OPTIONS = [{ code: 'auto', name: 'Auto-detect', label: 'AUTO', color: '#a78bfa' }, ...ALL_LANGS.filter(l => ['bn', 'en', 'ne'].includes(l.code))]
 
 // Allergen keywords to flag in translated text
 const ALLERGEN_WORDS = ['meat', 'fish', 'nut', 'peanut', 'egg', 'milk', 'dairy', 'shellfish', 'shrimp', 'prawn', 'crab', 'lobster', 'wheat', 'gluten', 'soy', 'pork', 'beef', 'chicken', 'mutton', 'lamb']
 
-// Context detection from OCR text
+// Context detection from OCR text (Bengali + English + Nepali cues)
 function detectContextType(text) {
   const lower = text.toLowerCase()
-  const bengaliPricePattern = /[০-৯\d]+\s*(?:টাকা|৳)/
-  const hasPrice = bengaliPricePattern.test(text) || /\d+\s*(?:tk|taka)/i.test(lower)
-  const foodWords = ['ভাত', 'রুটি', 'মাংস', 'মাছ', 'ডাল', 'তরকারি', 'বিরিয়ানি', 'খিচুড়ি', 'পোলাও', 'চাউল', 'চা', 'কফি', 'মিষ্টি', 'সন্দেশ', 'রসগোল্লা']
-  const hasFoodWord = foodWords.some(w => text.includes(w))
-  const medicineWords = ['ট্যাবলেট', 'ক্যাপসুল', 'সিরাপ', 'ওষুধ', 'mg', 'ml', 'injection']
+  const hasPrice = /[০-৯\d]+\s*(?:টাকা|৳|rs\.?|rupee|taka)/i.test(text) || /\d+\s*(?:tk|taka)/i.test(lower)
+  const foodWords = ['ভাত', 'রুটি', 'মাংস', 'মাছ', 'ডাল', 'তরকারি', 'বিরিয়ানি', 'খিচুড়ি', 'পোলাও', 'চাউল', 'চা', 'কফি', 'মিষ্টি', 'सन्देश', 'rice', 'curry', 'fish', 'chicken', 'mutton', 'biryani', 'dal', 'roti', 'menu', 'thali', 'खाना', 'दाल', 'भात']
+  const hasFoodWord = foodWords.some(w => lower.includes(w) || text.includes(w))
+  const medicineWords = ['ট্যাবলেট', 'ক্যাপসুল', 'সিরাপ', 'ওষুধ', 'tablet', 'capsule', 'syrup', 'medicine', 'mg', 'ml', 'injection', 'dose', 'औषधि']
   const hasMedicine = medicineWords.some(w => lower.includes(w) || text.includes(w))
-  const directionWords = ['রোড', 'স্ট্রিট', 'মোড়', 'বাজার', 'ঘাট', 'হাটি', 'নগর', 'পুর']
-  const hasDirection = directionWords.some(w => text.includes(w))
+  const directionWords = ['রোড', 'স্ট্রিট', 'মোড়', 'বাজার', 'ঘাট', 'নগর', 'road', 'street', 'market', 'bazar', 'ghat', 'marg', 'नगर', 'बाजार']
+  const hasDirection = directionWords.some(w => lower.includes(w) || text.includes(w))
 
   if (hasMedicine) return 'medicine'
   if (hasPrice || hasFoodWord) return 'menu'
@@ -47,6 +46,7 @@ export default function LensScanner() {
   const [cameraError, setCameraError] = useState(null)
   const [ocrProgress, setOcrProgress] = useState(0)
   const [ocrStatus, setOcrStatus] = useState('')
+  const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('en')
   const [results, setResults] = useState([]) // [{original, translated, context, allergens}]
   const [snappedImage, setSnappedImage] = useState(null)
@@ -62,7 +62,8 @@ export default function LensScanner() {
   const { speak, stop, isSpeaking } = useSpeechSynthesis()
   const { addToHistory, favorites, toggleFavorite } = useAppStore()
 
-  const targetLangData = TARGET_LANGS.find(l => l.code === targetLang) || TARGET_LANGS[0]
+  const targetLangData = ALL_LANGS.find(l => l.code === targetLang) || ALL_LANGS[0]
+  const sourceLangData = SOURCE_OPTIONS.find(l => l.code === sourceLang) || SOURCE_OPTIONS[0]
 
   // Start camera
   const startCamera = useCallback(async () => {
@@ -112,17 +113,17 @@ export default function LensScanner() {
     setOcrProgress(0)
 
     try {
-      // Init worker if needed
+      // Init worker with Bengali + English + Nepali (cached after first load)
       if (!workerRef.current) {
-        workerRef.current = await createWorker('ben', 1, {
+        workerRef.current = await createWorker('ben+eng+nep', 1, {
           logger: (m) => {
             if (m.status === 'recognizing text') {
               setOcrProgress(Math.round((m.progress || 0) * 80))
-              setOcrStatus('Reading Bengali text...')
+              setOcrStatus('Reading text...')
             } else if (m.status === 'loading tesseract core') {
               setOcrStatus('Loading OCR engine...')
             } else if (m.status === 'loading language traineddata') {
-              setOcrStatus('Loading Bengali language data...')
+              setOcrStatus('Loading language data...')
             }
           },
         })
@@ -131,13 +132,13 @@ export default function LensScanner() {
       setOcrStatus('Recognising text...')
       const { data } = await workerRef.current.recognize(imageDataUrl)
 
-      // Split into non-empty paragraphs / lines
+      // Split into non-empty meaningful blocks — no script restriction
       const blocks = (data.paragraphs || [])
         .map(p => p.text.trim())
-        .filter(t => t.length > 2 && /[ঀ-৿]/.test(t)) // must contain Bengali chars
+        .filter(t => t.replace(/[\s\n\r]+/g, '').length > 3) // at least 4 non-whitespace chars
 
       if (blocks.length === 0) {
-        setResults([{ original: '', translated: '', context: 'general', allergens: [], error: 'No Bengali text found in this image. Try adjusting the camera angle or lighting.' }])
+        setResults([{ original: '', translated: '', context: 'general', allergens: [], error: 'No text found in this image. Try better lighting, hold steady, and make sure the text fills the frame.' }])
         setMode('results')
         return
       }
@@ -145,9 +146,9 @@ export default function LensScanner() {
       setOcrProgress(85)
       setOcrStatus('Translating...')
 
-      // Translate all blocks
+      // Translate all blocks (sourceLang='auto' omits &from= so Azure auto-detects)
       const translated = await Promise.all(
-        blocks.map(text => translateText(text, 'bn', targetLang).catch(() => '[Translation failed]'))
+        blocks.map(text => translateText(text, sourceLang, targetLang).catch(() => '[Translation failed]'))
       )
 
       setOcrProgress(100)
@@ -165,10 +166,11 @@ export default function LensScanner() {
       resultItems.forEach(item => {
         if (!item.error) {
           addToHistory({
-            fromLang: 'bn', toLang: targetLang,
+            fromLang: sourceLang === 'auto' ? 'auto' : sourceLang,
+            toLang: targetLang,
             originalText: item.original,
             translatedText: item.translated,
-            fromLangName: 'Bengali',
+            fromLangName: sourceLang === 'auto' ? 'Auto-detected' : sourceLangData.name,
             toLangName: targetLangData.name,
             source: 'lens',
           })
@@ -240,26 +242,51 @@ export default function LensScanner() {
         </p>
       </div>
 
-      {/* Target language selector */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
-        <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Translate to:</span>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {TARGET_LANGS.map(lang => (
-            <button
-              key={lang.code}
-              onClick={() => setTargetLang(lang.code)}
-              style={{
-                padding: '6px 14px', borderRadius: 20,
-                border: `1px solid ${targetLang === lang.code ? lang.color : 'var(--border)'}`,
-                background: targetLang === lang.code ? lang.color + '20' : 'var(--bg-card)',
-                color: targetLang === lang.code ? lang.color : 'var(--text-secondary)',
-                cursor: 'pointer', fontSize: 13, fontWeight: targetLang === lang.code ? 600 : 400,
-                transition: 'all 0.2s',
-              }}
-            >
-              {lang.name}
-            </button>
-          ))}
+      {/* Language selectors */}
+      <div className="glass" style={{ borderRadius: 14, padding: '14px 16px', marginBottom: 20 }}>
+        {/* Source language */}
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Scan language</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {SOURCE_OPTIONS.map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => { setSourceLang(lang.code); if (lang.code !== 'auto' && lang.code === targetLang) setTargetLang('en') }}
+                style={{
+                  padding: '5px 12px', borderRadius: 20,
+                  border: `1px solid ${sourceLang === lang.code ? lang.color : 'var(--border)'}`,
+                  background: sourceLang === lang.code ? lang.color + '20' : 'var(--bg-secondary)',
+                  color: sourceLang === lang.code ? lang.color : 'var(--text-secondary)',
+                  cursor: 'pointer', fontSize: 12, fontWeight: sourceLang === lang.code ? 600 : 400,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {lang.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Target language */}
+        <div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Translate to</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {ALL_LANGS.filter(l => ['bn', 'en', 'ne', 'hi'].includes(l.code)).map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => setTargetLang(lang.code)}
+                style={{
+                  padding: '5px 12px', borderRadius: 20,
+                  border: `1px solid ${targetLang === lang.code ? lang.color : 'var(--border)'}`,
+                  background: targetLang === lang.code ? lang.color + '20' : 'var(--bg-secondary)',
+                  color: targetLang === lang.code ? lang.color : 'var(--text-secondary)',
+                  cursor: 'pointer', fontSize: 12, fontWeight: targetLang === lang.code ? 600 : 400,
+                  transition: 'all 0.2s',
+                }}
+              >
+                {lang.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

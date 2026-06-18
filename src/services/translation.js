@@ -19,13 +19,10 @@ export async function translateText(text, fromLang, toLang) {
     return 'Error: API Key missing. Check your .env file.'
   }
 
-  const from = AZURE_LANG_MAP[fromLang] || fromLang
   const to = AZURE_LANG_MAP[toLang] || toLang
 
-  // Fix 3: Add textType=plain and request formal/polite register
-  // Azure Translator supports profanityAction and textType params
   const url = AZURE_ENDPOINT +
-    '&from=' + from +
+    (fromLang && fromLang !== 'auto' ? '&from=' + (AZURE_LANG_MAP[fromLang] || fromLang) : '') +
     '&to=' + to +
     '&textType=plain'
 
