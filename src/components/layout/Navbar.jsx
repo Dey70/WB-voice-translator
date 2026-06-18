@@ -56,7 +56,7 @@ export default function Navbar() {
                   padding: '7px 14px', borderRadius: 8,
                   fontSize: 14, fontWeight: active ? 600 : 400,
                   color: active ? 'var(--accent-secondary)' : 'var(--text-secondary)',
-                  background: active ? 'rgba(108, 99, 255, 0.1)' : 'transparent',
+                  background: active ? 'rgba(200, 86, 10, 0.1)' : 'transparent',
                   transition: 'all 0.2s', whiteSpace: 'nowrap',
                 }}>
                   <Icon size={15} />
@@ -82,12 +82,15 @@ export default function Navbar() {
           </Link>
 
           <button onClick={toggleDarkMode} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 8, padding: '7px', cursor: 'pointer',
-            color: 'var(--text-secondary)', display: 'flex', alignItems: 'center',
-            flexShrink: 0, transition: 'all 0.2s',
+            background: darkMode ? 'rgba(200,86,10,0.15)' : 'rgba(200,150,12,0.12)',
+            border: darkMode ? '1px solid rgba(200,86,10,0.35)' : '1px solid rgba(200,150,12,0.35)',
+            borderRadius: 8, padding: '7px 9px', cursor: 'pointer',
+            color: darkMode ? '#E8872A' : '#C8960C',
+            display: 'flex', alignItems: 'center', gap: 5,
+            flexShrink: 0, transition: 'all 0.25s',
+            fontSize: 11, fontWeight: 600,
           }}>
-            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+            {darkMode ? <><Sun size={14} /> <span>Day</span></> : <><Moon size={14} /> <span>Night</span></>}
           </button>
         </div>
       </nav>
@@ -120,7 +123,7 @@ export default function Navbar() {
               }}>
                 <div style={{
                   width: 36, height: 28, borderRadius: 10,
-                  background: active ? 'rgba(108,99,255,0.15)' : 'transparent',
+                  background: active ? 'rgba(200,86,10,0.12)' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   transition: 'all 0.2s',
                 }}>

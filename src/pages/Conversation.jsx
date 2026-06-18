@@ -92,32 +92,77 @@ export default function Conversation() {
   const MicButton = ({ speaker, langData }) => {
     const active = isListening && activeSpeaker === speaker
     const disabled = isButtonDisabled(speaker)
-    const gradientColor = speaker === 'A'
-      ? 'linear-gradient(135deg, ' + langAData.color + ', #6c63ff)'
-      : 'linear-gradient(135deg, ' + langBData.color + ', #2dd4bf)'
+    // Person A = saffron/marigold side, Person B = teal/pine side
+    const idleGradient = speaker === 'A'
+      ? 'linear-gradient(145deg,#C8560A 0%,#E8872A 60%,#C8960C 100%)'
+      : 'linear-gradient(145deg,#0D7377 0%,#14A98A 60%,#2D6A4F 100%)'
+    const petalColorA = speaker === 'A' ? '#C8560A' : '#0D7377'
+    const petalColorB = speaker === 'A' ? '#C8960C' : '#2D6A4F'
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <button
-          onClick={() => handleSpeak(speaker)}
-          disabled={disabled}
-          className={active ? 'pulse-record' : ''}
-          style={{
-            width: 76, height: 76, borderRadius: 38,
-            background: active ? 'linear-gradient(135deg, #f87171, #fb923c)' : gradientColor,
-            border: 'none', cursor: disabled ? 'not-allowed' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: disabled ? 0.4 : 1,
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {/* Rangoli petal ring — idle only */}
+          {!active && !disabled && (
+            <svg width="136" height="136" viewBox="0 0 136 136"
+              style={{ position: 'absolute', pointerEvents: 'none', opacity: 0.5 }} aria-hidden="true">
+              {[0,45,90,135,180,225,270,315].map((deg, i) => (
+                <ellipse key={i} cx="68" cy="68" rx="7" ry="18"
+                  fill="none"
+                  stroke={i % 2 === 0 ? petalColorA : petalColorB}
+                  strokeWidth="1.4"
+                  transform={`rotate(${deg} 68 68) translate(0 -32)`}
+                />
+              ))}
+              <circle cx="68" cy="68" r="36" fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray="3 4"/>
+            </svg>
+          )}
+          {/* Active ripple rings */}
+          {active && [1,2,3].map(n => (
+            <span key={n} style={{
+              position: 'absolute',
+              width: 76 + n * 24, height: 76 + n * 24, borderRadius: '50%',
+              border: `${3 - n + 1}px solid rgba(192,57,43,${0.3 - n * 0.08})`,
+              animation: `micRipple ${0.9 + n * 0.28}s ease-out infinite`,
+              animationDelay: `${n * 0.18}s`, pointerEvents: 'none',
+            }}/>
+          ))}
+          <button
+            onClick={() => handleSpeak(speaker)}
+            disabled={disabled}
+            style={{
+              position: 'relative', zIndex: 1,
+              width: 76, height: 76, borderRadius: '50%',
+              background: active ? 'linear-gradient(135deg,#C0392B,#E8872A)' : idleGradient,
+              border: active ? '3px solid rgba(192,57,43,0.35)' : `3px solid ${petalColorB}55`,
+              cursor: disabled ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2,
+              opacity: disabled ? 0.35 : 1,
+              transition: 'all 0.3s cubic-bezier(.34,1.56,.64,1)',
+              boxShadow: active
+                ? '0 0 0 4px rgba(192,57,43,0.18),0 8px 28px rgba(192,57,43,0.4)'
+                : `0 0 0 4px ${petalColorB}18,0 6px 22px ${petalColorA}45`,
+              transform: active ? 'scale(1.07)' : 'scale(1)',
+            }}
+          >
+            <Mic size={26} color="white" strokeWidth={2} />
+            <div style={{ display: 'flex', gap: 3 }}>
+              {[0,1,2].map(i => <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}/>)}
+            </div>
+          </button>
+          {/* Bindi dot */}
+          <div style={{
+            position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)',
+            width: 7, height: 7, borderRadius: '50%',
+            background: active ? '#C0392B' : petalColorB,
+            boxShadow: `0 0 7px ${active ? 'rgba(192,57,43,0.7)' : petalColorB + '99'}`,
             transition: 'all 0.3s',
-            boxShadow: active ? '0 0 30px rgba(248,113,113,0.4)' : '0 0 20px ' + langData.color + '40',
-          }}
-        >
-          {/* Bug 5: Always show Mic — never MicOff. Color/animation shows state instead */}
-          <Mic size={28} color="white" />
-        </button>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: langData.color }}>
-            {langData.flag + ' Person ' + speaker}
+          }}/>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 6 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: langData.color, fontFamily: "'Hind',sans-serif" }}>
+            Person {speaker}
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
             {active ? 'Tap to stop' : langData.nativeName}
@@ -128,6 +173,7 @@ export default function Conversation() {
             </div>
           )}
         </div>
+        <style>{`@keyframes micRipple{0%{transform:scale(1);opacity:1}100%{transform:scale(1.6);opacity:0}}`}</style>
       </div>
     )
   }

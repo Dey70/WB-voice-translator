@@ -44,18 +44,18 @@ export default function History() {
           <button onClick={exportHistory} disabled={history.length === 0} style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 14px', borderRadius: 8,
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
-            color: 'var(--text-secondary)', cursor: history.length > 0 ? 'pointer' : 'not-allowed',
-            fontSize: 13, opacity: history.length === 0 ? 0.5 : 1,
+            background: 'rgba(13,115,119,0.1)', border: '1px solid rgba(13,115,119,0.3)',
+            color: '#0D7377', cursor: history.length > 0 ? 'pointer' : 'not-allowed',
+            fontSize: 13, fontWeight: 500, opacity: history.length === 0 ? 0.4 : 1,
           }}>
-            <Download size={14} /> Export JSON
+            <Download size={14} /> Export
           </button>
           <button onClick={clearHistory} disabled={history.length === 0} style={{
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 14px', borderRadius: 8,
-            background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.3)',
-            color: '#f87171', cursor: history.length > 0 ? 'pointer' : 'not-allowed',
-            fontSize: 13, opacity: history.length === 0 ? 0.5 : 1,
+            background: 'rgba(192,57,43,0.1)', border: '1px solid rgba(192,57,43,0.3)',
+            color: '#C0392B', cursor: history.length > 0 ? 'pointer' : 'not-allowed',
+            fontSize: 13, fontWeight: 500, opacity: history.length === 0 ? 0.4 : 1,
           }}>
             <Trash2 size={14} /> Clear All
           </button>
@@ -91,13 +91,20 @@ export default function History() {
       )}
 
       {filtered.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📜</div>
-          <div style={{ fontSize: 16, marginBottom: 8, color: 'var(--text-secondary)' }}>
+        <div className="glass" style={{ textAlign: 'center', padding: '56px 32px', borderRadius: 18, color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: 48, marginBottom: 14, filter: 'drop-shadow(0 4px 10px rgba(200,86,10,0.3))' }}>
+            {search ? '🔍' : '📖'}
+          </div>
+          <div style={{ fontSize: 16, marginBottom: 6, color: 'var(--text-secondary)', fontFamily: "'Playfair Display',serif" }}>
             {search ? 'No results found' : 'No translations yet'}
           </div>
-          <div style={{ fontSize: 13 }}>
+          <div style={{ fontSize: 13, lineHeight: 1.6 }}>
             {search ? 'Try a different search term' : 'Start translating and your history will appear here'}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 18 }}>
+            {['#C8560A','#C8960C','#0D7377','#C8960C','#C8560A'].map((c, i) => (
+              <div key={i} style={{ width: i === 2 ? 10 : 6, height: i === 2 ? 10 : 6, borderRadius: '50%', background: c, opacity: 0.55 }}/>
+            ))}
           </div>
         </div>
       ) : (
@@ -133,28 +140,34 @@ export default function History() {
 
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <button onClick={() => toggleFavorite(item.id)} title={fav ? 'Remove from favorites' : 'Add to favorites'} style={{
+                    <button onClick={() => toggleFavorite(item.id)} title={fav ? 'Remove from favorites' : 'Save to favorites'} style={{
                       width: 32, height: 32, borderRadius: 8,
-                      background: fav ? 'rgba(251,191,36,0.1)' : 'transparent',
-                      border: '1px solid ' + (fav ? 'rgba(251,191,36,0.3)' : 'var(--border)'),
-                      cursor: 'pointer', color: fav ? '#fbbf24' : 'var(--text-muted)',
+                      background: fav ? 'rgba(200,150,12,0.18)' : 'var(--bg-secondary)',
+                      border: `1px solid ${fav ? 'rgba(200,150,12,0.45)' : 'var(--border)'}`,
+                      cursor: 'pointer', color: fav ? '#C8960C' : 'var(--text-muted)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      boxShadow: fav ? '0 0 8px rgba(200,150,12,0.3)' : 'none',
                     }}>
-                      <Star size={14} fill={fav ? '#fbbf24' : 'none'} />
+                      <Star size={14} fill={fav ? '#C8960C' : 'none'} />
                     </button>
                     <button onClick={() => speak(item.translatedText, item.toLang)} title="Speak translation" style={{
                       width: 32, height: 32, borderRadius: 8,
-                      background: 'transparent', border: '1px solid var(--border)',
-                      cursor: 'pointer', color: 'var(--text-muted)',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border)',
+                      cursor: 'pointer', color: 'var(--accent-primary)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.2s',
                     }}>
                       <Volume2 size={14} />
                     </button>
                     <button onClick={() => deleteFromHistory(item.id)} title="Delete" style={{
                       width: 32, height: 32, borderRadius: 8,
-                      background: 'transparent', border: '1px solid var(--border)',
-                      cursor: 'pointer', color: 'var(--text-muted)',
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid rgba(192,57,43,0.25)',
+                      cursor: 'pointer', color: '#C0392B',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'all 0.2s',
                     }}>
                       <Trash2 size={14} />
                     </button>

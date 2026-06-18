@@ -80,18 +80,21 @@ export default function Translator() {
 
       <div className="mode-buttons" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {[
-          { id: 'voice-voice', label: 'Voice to Voice' },
-          { id: 'text-text', label: 'Text to Text' },
-          { id: 'voice-text', label: 'Voice to Text' },
-          { id: 'text-voice', label: 'Text to Speak' },
+          { id: 'voice-voice', label: '🎙 Voice → Voice' },
+          { id: 'text-text',   label: '✍ Text → Text'   },
+          { id: 'voice-text',  label: '🎙 Voice → Text'  },
+          { id: 'text-voice',  label: '✍ Text → Speak'  },
         ].map((m) => (
           <button key={m.id} onClick={() => setMode(m.id)} style={{
-            padding: '7px 14px', borderRadius: 20,
-            border: mode === m.id ? '1px solid var(--accent-primary)' : '1px solid var(--border)',
-            background: mode === m.id ? 'rgba(108,99,255,0.15)' : 'var(--bg-card)',
-            color: mode === m.id ? 'var(--accent-secondary)' : 'var(--text-secondary)',
-            cursor: 'pointer', fontSize: 13, fontWeight: mode === m.id ? 600 : 400,
+            padding: '7px 16px', borderRadius: 999,
+            border: mode === m.id ? '2px solid var(--accent-primary)' : '1px solid var(--border)',
+            background: mode === m.id
+              ? 'linear-gradient(135deg,rgba(200,86,10,0.18),rgba(232,135,42,0.12))'
+              : 'var(--bg-card)',
+            color: mode === m.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+            cursor: 'pointer', fontSize: 12, fontWeight: mode === m.id ? 700 : 400,
             transition: 'all 0.2s',
+            boxShadow: mode === m.id ? '0 2px 10px rgba(200,86,10,0.2)' : 'none',
           }}>
             {m.label}
           </button>
@@ -103,13 +106,18 @@ export default function Translator() {
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
           <LanguageSelector value={fromLang} onChange={(v) => { setFromLang(v); if (v === toLang) setToLang(fromLang) }} />
         </div>
-        <button className="swap-btn" onClick={handleSwap} style={{
-          marginTop: 20, width: 40, height: 40, borderRadius: 20,
-          background: 'var(--bg-card)', border: '1px solid var(--border)',
-          color: 'var(--text-secondary)', cursor: 'pointer',
+        <button className="swap-btn" onClick={handleSwap} title="Swap languages" style={{
+          marginTop: 20, width: 42, height: 42, borderRadius: 21,
+          background: 'linear-gradient(135deg,#C8560A,#E8872A)',
+          border: 'none',
+          color: 'white', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, transition: 'all 0.2s',
-        }}>
+          flexShrink: 0, transition: 'all 0.25s cubic-bezier(.34,1.56,.64,1)',
+          boxShadow: '0 3px 12px rgba(200,86,10,0.4)',
+        }}
+          onMouseEnter={e => e.currentTarget.style.transform = 'rotate(180deg) scale(1.1)'}
+          onMouseLeave={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1)'}
+        >
           <ArrowLeftRight size={16} />
         </button>
         <div style={{ flex: 1, minWidth: 180 }}>
@@ -198,21 +206,28 @@ export default function Translator() {
           <div style={{ display: 'flex', gap: 6, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
             <button onClick={handleCopy} disabled={!outputText} style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              padding: '6px 11px', borderRadius: 8,
-              background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-              color: copied ? '#2dd4bf' : 'var(--text-secondary)',
-              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12,
+              padding: '6px 13px', borderRadius: 8,
+              background: copied
+                ? 'linear-gradient(135deg,rgba(45,106,79,0.18),rgba(45,106,79,0.08))'
+                : 'var(--bg-secondary)',
+              border: `1px solid ${copied ? '#2D6A4F' : 'var(--border)'}`,
+              color: copied ? '#2D6A4F' : 'var(--text-secondary)',
+              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: copied ? 600 : 400,
+              transition: 'all 0.2s',
             }}>
               {copied ? <CheckCheck size={13} /> : <Copy size={13} />}
-              {copied ? 'Copied!' : 'Copy'}
+              {copied ? '✓ Copied' : 'Copy'}
             </button>
             <button onClick={() => isSpeaking ? stop() : speak(outputText, toLang)} disabled={!outputText} style={{
               display: 'flex', alignItems: 'center', gap: 5,
-              padding: '6px 11px', borderRadius: 8,
-              background: isSpeaking ? 'rgba(108,99,255,0.2)' : 'var(--bg-secondary)',
-              border: '1px solid ' + (isSpeaking ? 'var(--accent-primary)' : 'var(--border)'),
-              color: isSpeaking ? 'var(--accent-secondary)' : 'var(--text-secondary)',
-              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12,
+              padding: '6px 13px', borderRadius: 8,
+              background: isSpeaking
+                ? 'linear-gradient(135deg,rgba(200,86,10,0.2),rgba(232,135,42,0.1))'
+                : 'var(--bg-secondary)',
+              border: `1px solid ${isSpeaking ? 'var(--accent-primary)' : 'var(--border)'}`,
+              color: isSpeaking ? 'var(--accent-primary)' : 'var(--text-secondary)',
+              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: isSpeaking ? 600 : 400,
+              transition: 'all 0.2s',
             }}>
               {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
               {isSpeaking ? 'Stop' : 'Speak'}
@@ -235,28 +250,97 @@ export default function Translator() {
               Voice on iPhone may be limited. If it fails, please type in the box above.
             </div>
           )}
-          <button
-            onClick={handleMicClick}
-            disabled={!isSupported}
-            className={isListening ? 'pulse-record' : ''}
-            style={{
-              width: 72, height: 72, borderRadius: 36,
-              background: isListening
-                ? 'linear-gradient(135deg, #f87171, #fb923c)'
-                : 'linear-gradient(135deg, #6c63ff, #a78bfa)',
-              border: 'none', cursor: isSupported ? 'pointer' : 'not-allowed',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+          {/* Indian-touch mic button */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+            {/* Rangoli petal ring — 8 petals, visible only when idle */}
+            {!isListening && isSupported && (
+              <svg width="160" height="160" viewBox="0 0 160 160"
+                style={{ position: 'absolute', pointerEvents: 'none', opacity: 0.55 }}
+                aria-hidden="true">
+                {[0,45,90,135,180,225,270,315].map((deg, i) => (
+                  <ellipse key={i}
+                    cx="80" cy="80" rx="9" ry="22"
+                    fill="none"
+                    stroke={i % 2 === 0 ? '#C8560A' : '#C8960C'}
+                    strokeWidth="1.5"
+                    transform={`rotate(${deg} 80 80) translate(0 -38)`}
+                  />
+                ))}
+                <circle cx="80" cy="80" r="42" fill="none" stroke="#E8D5B7" strokeWidth="1" strokeDasharray="4 5"/>
+              </svg>
+            )}
+
+            {/* Listening state: animated concentric ripple rings */}
+            {isListening && (
+              <>
+                {[1,2,3].map(n => (
+                  <span key={n} style={{
+                    position: 'absolute',
+                    width: 72 + n * 28, height: 72 + n * 28,
+                    borderRadius: '50%',
+                    border: `${4 - n}px solid rgba(192,57,43,${0.28 - n * 0.07})`,
+                    animation: `micRipple ${0.9 + n * 0.3}s ease-out infinite`,
+                    animationDelay: `${n * 0.2}s`,
+                    pointerEvents: 'none',
+                  }}/>
+                ))}
+              </>
+            )}
+
+            {/* Main button — lotus-shaped border via clip-path */}
+            <button
+              onClick={handleMicClick}
+              disabled={!isSupported}
+              style={{
+                position: 'relative', zIndex: 1,
+                width: 80, height: 80,
+                borderRadius: '50%',
+                background: isListening
+                  ? 'linear-gradient(135deg, #C0392B, #E8872A)'
+                  : 'linear-gradient(145deg, #C8560A 0%, #E8872A 55%, #C8960C 100%)',
+                border: isListening ? '3px solid rgba(192,57,43,0.4)' : '3px solid rgba(200,150,12,0.5)',
+                cursor: isSupported ? 'pointer' : 'not-allowed',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexDirection: 'column', gap: 2,
+                transition: 'all 0.3s cubic-bezier(.34,1.56,.64,1)',
+                boxShadow: isListening
+                  ? '0 0 0 4px rgba(192,57,43,0.2), 0 8px 32px rgba(192,57,43,0.45)'
+                  : '0 0 0 4px rgba(200,150,12,0.15), 0 8px 28px rgba(200,86,10,0.4)',
+                transform: isListening ? 'scale(1.08)' : 'scale(1)',
+              }}
+            >
+              <Mic size={26} color="white" strokeWidth={2} />
+              {/* Small decorative dot row beneath mic icon */}
+              <div style={{ display: 'flex', gap: 3, marginTop: 1 }}>
+                {[0,1,2].map(i => (
+                  <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.55)' }}/>
+                ))}
+              </div>
+            </button>
+
+            {/* Bottom bindi dot */}
+            <div style={{
+              position: 'absolute', bottom: -14, left: '50%', transform: 'translateX(-50%)',
+              width: 8, height: 8, borderRadius: '50%',
+              background: isListening ? '#C0392B' : '#C8960C',
+              boxShadow: `0 0 8px ${isListening ? 'rgba(192,57,43,0.7)' : 'rgba(200,150,12,0.7)'}`,
               transition: 'all 0.3s',
-              boxShadow: isListening ? '0 0 40px rgba(248,113,113,0.4)' : '0 0 30px rgba(108,99,255,0.3)',
-            }}
-          >
-            <Mic size={28} color="white" />
-          </button>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center' }}>
+            }}/>
+          </div>
+
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center', marginTop: 20, fontFamily: "'Hind', sans-serif" }}>
             {isListening
               ? 'Listening in ' + fromLangData.name + '... tap to stop'
               : 'Tap to speak in ' + fromLangData.name}
           </p>
+
+          <style>{`
+            @keyframes micRipple {
+              0%   { transform: scale(1);    opacity: 1; }
+              100% { transform: scale(1.55); opacity: 0; }
+            }
+          `}</style>
           {isListening && interimText && (
             <div style={{
               padding: '10px 18px', background: 'var(--bg-card)',
