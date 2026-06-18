@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Camera, CameraOff, Scan, RotateCcw, Volume2, Star, StarOff, AlertTriangle, CheckCircle, ChevronDown, Loader, X, Utensils, MapPin, Pill, FileText } from 'lucide-react'
+import { Camera, CameraOff, Scan, RotateCcw, Star, AlertTriangle, CheckCircle, Loader, X, Utensils, MapPin, Pill, FileText } from 'lucide-react'
 import { createWorker } from 'tesseract.js'
 import { translateText } from '../services/translation'
-import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { useAppStore } from '../store/appStore'
 import { LANGUAGES } from '../utils/constants'
 
@@ -50,7 +49,7 @@ export default function LensScanner() {
   const [targetLang, setTargetLang] = useState('en')
   const [results, setResults] = useState([]) // [{original, translated, context, allergens}]
   const [snappedImage, setSnappedImage] = useState(null)
-  const [speakingIdx, setSpeakingIdx] = useState(null)
+
   const [savedIds, setSavedIds] = useState(new Set())
   const [facingMode, setFacingMode] = useState('environment')
 
@@ -59,8 +58,7 @@ export default function LensScanner() {
   const streamRef = useRef(null)
   const workerRef = useRef(null)
 
-  const { speak, stop, isSpeaking } = useSpeechSynthesis()
-  const { addToHistory, favorites, toggleFavorite } = useAppStore()
+  const { addToHistory } = useAppStore()
 
   const targetLangData = ALL_LANGS.find(l => l.code === targetLang) || ALL_LANGS[0]
   const sourceLangData = SOURCE_OPTIONS.find(l => l.code === sourceLang) || SOURCE_OPTIONS[0]
@@ -223,17 +221,6 @@ export default function LensScanner() {
     setOcrProgress(0)
     setSavedIds(new Set())
     startCamera()
-  }
-
-  const handleSpeak = (item, idx) => {
-    if (isSpeaking && speakingIdx === idx) {
-      stop()
-      setSpeakingIdx(null)
-    } else {
-      setSpeakingIdx(idx)
-      speak(item.translated, targetLang)
-      setTimeout(() => setSpeakingIdx(null), item.translated.length * 80)
-    }
   }
 
   const handleSave = (item) => {
@@ -506,7 +493,6 @@ export default function LensScanner() {
             const meta = CONTEXT_META[item.context]
             const ContextIcon = meta.icon
             const isSaved = savedIds.has(item.id)
-            const speaking = isSpeaking && speakingIdx === idx
 
             return (
               <div key={item.id} className="glass" style={{ borderRadius: 16, padding: 18, marginBottom: 14, border: item.allergens.length > 0 ? '1px solid rgba(251,191,36,0.4)' : '1px solid var(--border)' }}>
@@ -548,17 +534,6 @@ export default function LensScanner() {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={() => handleSpeak(item, idx)} style={{
-                    flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    padding: '8px 12px', borderRadius: 10,
-                    background: speaking ? 'rgba(108,99,255,0.2)' : 'var(--bg-secondary)',
-                    border: `1px solid ${speaking ? 'var(--accent-primary)' : 'var(--border)'}`,
-                    color: speaking ? 'var(--accent-secondary)' : 'var(--text-secondary)',
-                    cursor: 'pointer', fontSize: 13,
-                  }}>
-                    <Volume2 size={14} />
-                    {speaking ? 'Stop' : 'Speak'}
-                  </button>
                   <button onClick={() => handleSave(item)} style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '8px 14px', borderRadius: 10,
