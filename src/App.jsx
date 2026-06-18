@@ -12,7 +12,6 @@ const TourismSpots = lazy(() => import('./pages/TourismSpots'))
 const PlacesHub = lazy(() => import('./pages/PlacesHub'))
 const SeasonalGuide = lazy(() => import('./pages/SeasonalGuide'))
 const CulturalGuide = lazy(() => import('./pages/CulturalGuide'))
-const LensScanner = lazy(() => import('./pages/LensScanner'))
 
 export default function App() {
   const { darkMode } = useAppStore()
@@ -41,7 +40,6 @@ export default function App() {
             <Route path="/places/explore" element={<TourismSpots />} />
             <Route path="/places/seasons" element={<SeasonalGuide />} />
             <Route path="/culture" element={<CulturalGuide />} />
-            <Route path="/lens" element={<LensScanner />} />
           </Routes>
         </Suspense>
       </div>
