@@ -219,7 +219,6 @@ export default function Translator() {
               No voice available for {toLangData.name} on this device. Text translation still works.
             </div>
           )}
-          </div>
         </div>
       </div>
 
