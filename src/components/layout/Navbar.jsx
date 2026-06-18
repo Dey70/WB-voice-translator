@@ -19,7 +19,7 @@ export default function Navbar() {
     <>
       {/* Top navbar */}
       <nav style={{
-        background: darkMode ? 'rgba(10, 10, 15, 0.92)' : 'rgba(244, 244, 248, 0.92)',
+        background: darkMode ? 'rgba(28, 15, 5, 0.94)' : 'rgba(253, 246, 233, 0.94)',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border)',
         position: 'sticky', top: 0, zIndex: 50,
@@ -33,14 +33,15 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginRight: 32, flexShrink: 0 }}>
             <div style={{
-              width: 34, height: 34, borderRadius: 9,
-              background: 'linear-gradient(135deg, #6c63ff, #2dd4bf)',
+              width: 36, height: 36, borderRadius: 10,
+              background: 'linear-gradient(135deg, #C8560A, #E8872A)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 16, fontWeight: 700, color: 'white',
-            }}>K</div>
+              fontSize: 18, fontWeight: 700, color: 'white',
+              boxShadow: '0 3px 12px rgba(200,86,10,0.35)',
+            }}>ক</div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>কথাসেতু</div>
-              <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: 1.5 }}>KOTHASETU</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, fontFamily: "'Playfair Display', serif" }}>কথাসেতু</div>
+              <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: 2 }}>KOTHASETU</div>
             </div>
           </Link>
 
@@ -95,7 +96,7 @@ export default function Navbar() {
       <div className="mobile-nav mobile-nav-bar" style={{
         display: 'none',
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: darkMode ? 'rgba(10, 10, 15, 0.97)' : 'rgba(244, 244, 248, 0.97)',
+        background: darkMode ? 'rgba(28, 15, 5, 0.97)' : 'rgba(253, 246, 233, 0.97)',
         backdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border)',
         zIndex: 50,

@@ -1,21 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Hind:wght@300;400;500;600&family=Tiro+Bangla:ital@0;1&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
 
 @import "tailwindcss";
 
+/* ── Light mode (default / warm Indian) ── */
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-secondary: #12121a;
-  --bg-card: #1a1a26;
-  --bg-card-hover: #1f1f2e;
-  --accent-primary: #6c63ff;
-  --accent-secondary: #a78bfa;
-  --accent-teal: #2dd4bf;
-  --accent-coral: #f87171;
-  --text-primary: #f1f0ff;
-  --text-secondary: #a09cb8;
-  --text-muted: #5a5670;
-  --border: #2a2840;
-  --border-light: #3a3758;
+  --bg-primary:    #FDF6E9;
+  --bg-secondary:  #F5EDD8;
+  --bg-card:       #FFFFFF;
+  --bg-card-hover: #FEF9F0;
+  --accent-primary:   #C8560A;
+  --accent-secondary: #E8872A;
+  --accent-teal:   #0D7377;
+  --accent-coral:  #C0392B;
+  --accent-gold:   #C8960C;
+  --text-primary:  #2C1810;
+  --text-secondary:#6B4226;
+  --text-muted:    #9E7B56;
+  --border:        #E8D5B7;
+  --border-light:  #F0E4CC;
+}
+
+/* ── Dark mode (warm night) ── */
+[data-theme="dark"] {
+  --bg-primary:    #1C0F05;
+  --bg-secondary:  #261507;
+  --bg-card:       #301C0A;
+  --bg-card-hover: #3A2210;
+  --accent-primary:   #E8872A;
+  --accent-secondary: #F4A040;
+  --accent-teal:   #2DD4BF;
+  --accent-coral:  #F87171;
+  --accent-gold:   #D4A020;
+  --text-primary:  #FDF0E0;
+  --text-secondary:#C9A882;
+  --text-muted:    #8B6B4A;
+  --border:        #3D2A14;
+  --border-light:  #4E3520;
 }
 
 /* Emergency mode */
@@ -78,42 +98,54 @@
 
 body {
   background-color: var(--bg-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 4 L56 30 L30 56 L4 30 Z' fill='none' stroke='%23C8560A' stroke-width='0.7' opacity='0.09'/%3E%3Ccircle cx='30' cy='30' r='1.8' fill='%23C8560A' opacity='0.08'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
   color: var(--text-primary);
-  font-family: 'Inter', 'Noto Sans Bengali', 'Noto Sans Devanagari', sans-serif;
+  font-family: 'Hind', 'Noto Sans Bengali', 'Noto Sans Devanagari', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+[data-theme="dark"] body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 4 L56 30 L30 56 L4 30 Z' fill='none' stroke='%23E8872A' stroke-width='0.7' opacity='0.05'/%3E%3C/svg%3E");
 }
 
 .route-loader { min-height:50vh; display:grid; place-items:center; color:var(--text-muted); font-size:13px; }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: var(--bg-primary); }
-::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: #E8D5B7; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-secondary); }
 
 /* Glass card */
 .glass {
-  background: rgba(26, 26, 38, 0.7);
+  background: rgba(255, 253, 248, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
+  box-shadow: 0 4px 24px rgba(200, 86, 10, 0.08);
+}
+
+[data-theme="dark"] .glass {
+  background: rgba(48, 28, 10, 0.82);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
 /* Glow effects */
-.glow-purple {
-  box-shadow: 0 0 30px rgba(108, 99, 255, 0.2);
+.glow-saffron {
+  box-shadow: 0 0 30px rgba(200, 86, 10, 0.2);
 }
 
 .glow-teal {
-  box-shadow: 0 0 30px rgba(45, 212, 191, 0.2);
+  box-shadow: 0 0 30px rgba(13, 115, 119, 0.2);
 }
 
 /* Pulse animation for recording */
 @keyframes pulse-ring {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.5); }
-  70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(108, 99, 255, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(108, 99, 255, 0); }
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(200, 86, 10, 0.5); }
+  70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(200, 86, 10, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(200, 86, 10, 0); }
 }
 
 .pulse-record {
@@ -140,10 +172,11 @@ body {
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #6c63ff, #2dd4bf);
+  background: linear-gradient(135deg, #C8560A, #E8872A);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  font-family: 'Playfair Display', serif;
 }
 
 /* Fade in */
@@ -168,44 +201,46 @@ body {
 
 /* Active mic button */
 .mic-active {
-  background: linear-gradient(135deg, #6c63ff, #a78bfa);
-  box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.7);
+  background: linear-gradient(135deg, #C8560A, #E8872A);
+  box-shadow: 0 0 0 0 rgba(200, 86, 10, 0.7);
 }
 
-/* Gradient background orbs */
+/* Warm background orbs */
 .orb {
   position: fixed;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.15;
+  filter: blur(90px);
+  opacity: 0.18;
   pointer-events: none;
   z-index: 0;
 }
 
 .orb-1 {
-  width: 400px;
-  height: 400px;
-  background: #6c63ff;
-  top: -100px;
-  left: -100px;
+  width: 440px;
+  height: 440px;
+  background: #E8872A;
+  top: -120px;
+  left: -120px;
 }
 
 .orb-2 {
-  width: 300px;
-  height: 300px;
-  background: #2dd4bf;
-  bottom: 100px;
-  right: -50px;
+  width: 320px;
+  height: 320px;
+  background: #C0392B;
+  bottom: 80px;
+  right: -60px;
 }
 
 .orb-3 {
-  width: 200px;
-  height: 200px;
-  background: #a78bfa;
+  width: 220px;
+  height: 220px;
+  background: #C8960C;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
+[data-theme="dark"] .orb { opacity: 0.12; }
 
 /* Mobile responsive - override */
 @media (max-width: 768px) {
@@ -251,40 +286,13 @@ body {
   }
 }
 
-/* Light mode */
-[data-theme="light"] {
-  --bg-primary: #f4f4f8;
-  --bg-secondary: #eaeaf0;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f0f0f8;
-  --accent-primary: #6c63ff;
-  --accent-secondary: #5046e4;
-  --accent-teal: #0d9488;
-  --accent-coral: #e53e3e;
-  --text-primary: #1a1a2e;
-  --text-secondary: #4a4a6a;
-  --text-muted: #9090aa;
-  --border: #d8d8e8;
-  --border-light: #c0c0d8;
+/* Dark mode nav overrides */
+[data-theme="dark"] nav {
+  background: rgba(28, 15, 5, 0.94) !important;
 }
 
-[data-theme="light"] .glass {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid var(--border);
-}
-
-[data-theme="light"] .orb-1,
-[data-theme="light"] .orb-2,
-[data-theme="light"] .orb-3 {
-  opacity: 0.07;
-}
-
-[data-theme="light"] nav {
-  background: rgba(244, 244, 248, 0.92) !important;
-}
-
-[data-theme="light"] .mobile-nav-bar {
-  background: rgba(244, 244, 248, 0.97) !important;
+[data-theme="dark"] .mobile-nav-bar {
+  background: rgba(28, 15, 5, 0.97) !important;
 }
 
 /* Tourist phrase bank */

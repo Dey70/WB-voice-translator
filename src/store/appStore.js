@@ -5,7 +5,7 @@ export const useAppStore = create(
   persist(
     (set, get) => ({
       // Theme
-      darkMode: true,
+      darkMode: false,
       toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
 
       // History
