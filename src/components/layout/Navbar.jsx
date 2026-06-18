@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageSquare, Mic, History, Star, Sun, Moon } from 'lucide-react'
+import { MessageSquare, Mic, History, BookOpen, Sun, Moon } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
   { to: '/', icon: Mic, label: 'Translate' },
   { to: '/conversation', icon: MessageSquare, label: 'Chat' },
   { to: '/history', icon: History, label: 'History' },
-  { to: '/favorites', icon: Star, label: 'Saved' },
+  { to: '/phrases', icon: BookOpen, label: 'Phrases' },
 ]
 
 export default function Navbar() {

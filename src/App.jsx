@@ -4,7 +4,7 @@ import Navbar from './components/layout/Navbar'
 import Translator from './pages/Translator'
 import Conversation from './pages/Conversation'
 import History from './pages/History'
-import Favorites from './pages/Favorites'
+import PhraseBank from './pages/PhraseBank'
 import { useAppStore } from './store/appStore'
 
 export default function App() {
@@ -27,7 +27,7 @@ export default function App() {
           <Route path="/" element={<Translator />} />
           <Route path="/conversation" element={<Conversation />} />
           <Route path="/history" element={<History />} />
-          <Route path="/favorites" element={<Favorites />} />
+          <Route path="/phrases" element={<PhraseBank />} />
         </Routes>
       </div>
     </BrowserRouter>
