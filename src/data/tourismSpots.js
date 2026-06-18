@@ -1,10 +1,36 @@
 export const TOURISM_REGIONS = [
+  { id: 'kolkata', name: 'Kolkata' },
   { id: 'darjeeling', name: 'Darjeeling' },
+  { id: 'kalimpong', name: 'Kalimpong' },
+  { id: 'siliguri', name: 'Siliguri' },
+  { id: 'dooars', name: 'Dooars' },
   { id: 'sundarbans', name: 'Sundarbans' },
-  { id: 'sikkim', name: 'Sikkim' },
+  { id: 'digha', name: 'Digha' },
+  { id: 'sikkim', name: 'Gangtok / Sikkim' },
 ]
 
 export const TOURISM_SPOTS = [
+  {
+    id: 'victoria-memorial', region: 'kolkata', name: 'Victoria Memorial', type: 'Museum and monument', detailKey: 'standard-ticket',
+    description: { bn: 'সাদা মার্বেলের ঐতিহাসিক স্মৃতিসৌধ, যেখানে জাদুঘর, উদ্যান এবং ঔপনিবেশিক যুগের সংগ্রহ রয়েছে।', ne: 'सेतो संगमरमरको ऐतिहासिक स्मारक, जहाँ सङ्ग्रहालय, बगैँचा र औपनिवेशिक कालका सामग्री छन्।', hi: 'सफेद संगमरमर का ऐतिहासिक स्मारक, जहाँ संग्रहालय, उद्यान और औपनिवेशिक काल का संग्रह है।' },
+    advisory: 'Museum and garden tickets or opening schedules may differ.',
+  },
+  {
+    id: 'indian-museum', region: 'kolkata', name: 'Indian Museum', type: 'Museum', detailKey: 'standard-ticket',
+    description: { bn: 'ভারতের প্রাচীনতম ও বৃহত্তম জাদুঘরগুলির একটি, যেখানে প্রত্নতত্ত্ব, শিল্প, জীবাশ্ম এবং প্রাকৃতিক ইতিহাসের সংগ্রহ রয়েছে।', ne: 'भारतका पुराना र ठूला सङ्ग्रहालयमध्ये एक, जहाँ पुरातत्त्व, कला, जीवाश्म र प्राकृतिक इतिहासका सामग्री छन्।', hi: 'भारत के सबसे पुराने और बड़े संग्रहालयों में से एक, जहाँ पुरातत्व, कला, जीवाश्म और प्राकृतिक इतिहास का संग्रह है।' },
+    advisory: 'Check the weekly closing day and gallery access before visiting.',
+  },
+  {
+    id: 'howrah-bridge', region: 'kolkata', name: 'Howrah Bridge', type: 'Landmark', detailKey: 'standard-public',
+    description: { bn: 'হুগলি নদীর উপর কলকাতার প্রতীকী ক্যান্টিলিভার সেতু, যা শহর ও হাওড়াকে যুক্ত করেছে।', ne: 'हुगली नदीमाथिको कोलकाताको प्रसिद्ध क्यान्टिलिभर पुल, जसले सहर र हावडालाई जोड्छ।', hi: 'हुगली नदी पर कोलकाता का प्रसिद्ध कैंटिलीवर पुल, जो शहर और हावड़ा को जोड़ता है।' },
+    advisory: 'Use designated pedestrian areas and avoid obstructing traffic.',
+  },
+  {
+    id: 'prinsep-ghat', region: 'kolkata', name: 'Prinsep Ghat', type: 'Riverside landmark', detailKey: 'standard-public',
+    description: { bn: 'হুগলি নদীর ধারে ঔপনিবেশিক স্থাপত্য, নদীর দৃশ্য এবং সন্ধ্যার হাঁটার জন্য জনপ্রিয় স্থান।', ne: 'हुगली नदी किनारको औपनिवेशिक वास्तुकला, नदी दृश्य र साँझको हिँडाइका लागि लोकप्रिय स्थान।', hi: 'हुगली नदी किनारे औपनिवेशिक वास्तुकला, नदी के दृश्य और शाम की सैर के लिए लोकप्रिय स्थान।' },
+    advisory: 'Boat rides are separate private services; agree on the charge first.',
+  },
+
   {
     id: 'tiger-hill', region: 'darjeeling', name: 'Tiger Hill', type: 'Viewpoint',
     description: {
@@ -48,6 +74,51 @@ export const TOURISM_SPOTS = [
     timing: 'Daytime visiting; prayer hours may differ',
     fee: 'No standard entry fee; donations may be accepted',
     advisory: 'Maintain silence and follow worship-area instructions.',
+  },
+  {
+    id: 'deolo-hill', region: 'kalimpong', name: 'Deolo Hill', type: 'Viewpoint', detailKey: 'standard-nature',
+    description: { bn: 'কালিম্পংয়ের উঁচু ভিউপয়েন্ট, যেখান থেকে শহর, উপত্যকা এবং দূরের হিমালয়ের বিস্তৃত দৃশ্য দেখা যায়।', ne: 'कालिम्पोङको अग्लो दृश्यस्थल, जहाँबाट सहर, उपत्यका र टाढाको हिमाल देखिन्छ।', hi: 'कालिम्पोंग का ऊँचा व्यू पॉइंट, जहाँ से शहर, घाटी और दूर हिमालय का विस्तृत दृश्य दिखता है।' },
+    advisory: 'Visibility and outdoor activities depend on weather and wind.',
+  },
+  {
+    id: 'durpin-monastery', region: 'kalimpong', name: 'Zang Dhok Palri Monastery', type: 'Monastery', detailKey: 'standard-religious',
+    description: { bn: 'দুরপিন পাহাড়ের বৌদ্ধ মঠ, যা রঙিন স্থাপত্য, ধর্মীয় গ্রন্থ এবং পাহাড়ি দৃশ্যের জন্য পরিচিত।', ne: 'दुर्पिन डाँडाको बौद्ध गुम्बा, रङ्गीन वास्तुकला, धार्मिक ग्रन्थ र पहाडी दृश्यका लागि परिचित।', hi: 'दुर्पिन पहाड़ी का बौद्ध मठ, जो रंगीन वास्तुकला, धार्मिक ग्रंथों और पहाड़ी दृश्यों के लिए प्रसिद्ध है।' },
+    advisory: 'Respect prayer sessions and photography restrictions.',
+  },
+  {
+    id: 'pine-view-nursery', region: 'kalimpong', name: 'Pine View Nursery', type: 'Cactus nursery', detailKey: 'standard-ticket',
+    description: { bn: 'বিভিন্ন প্রজাতির ক্যাকটাস ও সাকুলেন্টের বড় সংগ্রহসহ কালিম্পংয়ের জনপ্রিয় ব্যক্তিগত নার্সারি।', ne: 'धेरै प्रजातिका क्याक्टस र सकुलेन्टको ठूलो सङ्ग्रह भएको कालिम्पोङको लोकप्रिय निजी नर्सरी।', hi: 'कैक्टस और सक्युलेंट की अनेक प्रजातियों के बड़े संग्रह वाली कालिम्पोंग की लोकप्रिय निजी नर्सरी।' },
+    advisory: 'Private-site hours and ticket rates can change without notice.',
+  },
+  {
+    id: 'bengal-safari', region: 'siliguri', name: 'Bengal Safari', type: 'Wildlife park', detailKey: 'standard-wildlife',
+    description: { bn: 'উত্তরবঙ্গের প্রাণী ও অরণ্য পরিবেশ দেখার জন্য শিলিগুড়ির কাছে সাফারি ও চিড়িয়াখানা অভিজ্ঞতা।', ne: 'उत्तर बङ्गालका जनावर र वन वातावरण हेर्न सिलिगुडी नजिकको सफारी तथा चिडियाखाना अनुभव।', hi: 'उत्तर बंगाल के वन्यजीव और वन परिवेश देखने के लिए सिलीगुड़ी के पास सफारी और चिड़ियाघर अनुभव।' },
+    advisory: 'Safari slots, weekly closures, and animal access can change.',
+  },
+  {
+    id: 'iskcon-siliguri', region: 'siliguri', name: 'ISKCON Siliguri', type: 'Temple', detailKey: 'standard-religious',
+    description: { bn: 'শান্ত মন্দির প্রাঙ্গণ, প্রার্থনা, ধর্মীয় অনুষ্ঠান এবং স্থাপত্যের জন্য পরিচিত জনপ্রিয় স্থান।', ne: 'शान्त मन्दिर परिसर, प्रार्थना, धार्मिक कार्यक्रम र वास्तुकलाका लागि परिचित स्थान।', hi: 'शांत मंदिर परिसर, प्रार्थना, धार्मिक आयोजनों और वास्तुकला के लिए प्रसिद्ध स्थान।' },
+    advisory: 'Temple and meal-service hours may follow a separate daily schedule.',
+  },
+  {
+    id: 'north-bengal-science-centre', region: 'siliguri', name: 'North Bengal Science Centre', type: 'Science museum', detailKey: 'standard-ticket',
+    description: { bn: 'ইন্টারঅ্যাকটিভ বিজ্ঞান প্রদর্শনী, ডিজিটাল প্ল্যানেটারিয়াম এবং শিক্ষামূলক উদ্যানসহ পরিবারবান্ধব কেন্দ্র।', ne: 'अन्तरक्रियात्मक विज्ञान प्रदर्शनी, डिजिटल तारामण्डल र शैक्षिक उद्यान भएको परिवारमैत्री केन्द्र।', hi: 'इंटरैक्टिव विज्ञान प्रदर्शनी, डिजिटल तारामंडल और शैक्षिक उद्यान वाला परिवार-अनुकूल केंद्र।' },
+    advisory: 'Shows may require separate tickets and fixed reporting times.',
+  },
+  {
+    id: 'gorumara', region: 'dooars', name: 'Gorumara National Park', type: 'National park', detailKey: 'standard-wildlife',
+    description: { bn: 'ঘাসভূমি, অরণ্য, ভারতীয় গন্ডার এবং হাতিসহ বন্যপ্রাণীর জন্য পরিচিত ডুয়ার্সের জাতীয় উদ্যান।', ne: 'घाँसे मैदान, वन, भारतीय गैँडा र हात्तीसहित वन्यजन्तुका लागि प्रसिद्ध डुवर्सको राष्ट्रिय निकुञ्ज।', hi: 'घास के मैदान, वन, भारतीय गैंडे और हाथियों सहित वन्यजीवों के लिए प्रसिद्ध डूआर्स का राष्ट्रीय उद्यान।' },
+    advisory: 'Safaris require current bookings and may close seasonally.',
+  },
+  {
+    id: 'jaldapara', region: 'dooars', name: 'Jaldapara National Park', type: 'National park', detailKey: 'standard-wildlife',
+    description: { bn: 'তোর্সা নদীর তৃণভূমি ও অরণ্যে একশৃঙ্গ গন্ডার এবং নানা বন্যপ্রাণীর জন্য বিখ্যাত জাতীয় উদ্যান।', ne: 'तोर्सा नदीको घाँसे मैदान र वनमा एकसिङ्गे गैँडा तथा विविध वन्यजन्तुका लागि प्रसिद्ध राष्ट्रिय निकुञ्ज।', hi: 'तोर्सा नदी के घास के मैदान और वन में एक सींग वाले गैंडे तथा विविध वन्यजीवों के लिए प्रसिद्ध राष्ट्रीय उद्यान।' },
+    advisory: 'Safari permits, zones, and availability must be confirmed in advance.',
+  },
+  {
+    id: 'buxa', region: 'dooars', name: 'Buxa Tiger Reserve', type: 'Tiger reserve', detailKey: 'standard-wildlife',
+    description: { bn: 'অরণ্য, নদী, পাহাড়ি পথ, বক্সা দুর্গ এবং সমৃদ্ধ জীববৈচিত্র্যের জন্য পরিচিত সংরক্ষিত এলাকা।', ne: 'वन, नदी, पहाडी बाटो, बक्सा किल्ला र समृद्ध जैविक विविधताका लागि परिचित संरक्षित क्षेत्र।', hi: 'वन, नदियों, पहाड़ी रास्तों, बक्सा किले और समृद्ध जैव विविधता के लिए प्रसिद्ध संरक्षित क्षेत्र।' },
+    advisory: 'Routes and forest entry can close because of weather or conservation rules.',
   },
 
   {
@@ -93,6 +164,21 @@ export const TOURISM_SPOTS = [
     timing: 'Permit-controlled daytime access only',
     fee: 'Additional route, permit and boat costs may apply',
     advisory: 'Access is restricted and must be confirmed with an authorised operator.',
+  },
+  {
+    id: 'new-digha-beach', region: 'digha', name: 'New Digha Beach', type: 'Beach', detailKey: 'standard-public',
+    description: { bn: 'প্রশস্ত সমুদ্রতট, হাঁটার পথ এবং পরিবারবান্ধব পরিবেশের জন্য জনপ্রিয় দিঘার প্রধান সৈকত।', ne: 'फराकिलो समुद्री किनार, हिँड्ने बाटो र परिवारमैत्री वातावरणका लागि लोकप्रिय दिघाको प्रमुख समुद्रतट।', hi: 'चौड़े समुद्र तट, पैदल मार्ग और परिवार-अनुकूल वातावरण के लिए लोकप्रिय दीघा का प्रमुख बीच।' },
+    advisory: 'Follow lifeguard flags, tide warnings, and local bathing restrictions.',
+  },
+  {
+    id: 'digha-marine-aquarium', region: 'digha', name: 'Marine Aquarium and Regional Centre', type: 'Aquarium', detailKey: 'standard-ticket',
+    description: { bn: 'সামুদ্রিক জীববৈচিত্র্য, মাছ এবং উপকূলীয় পরিবেশ নিয়ে প্রদর্শনীসহ গবেষণা ও দর্শনার্থী কেন্দ্র।', ne: 'समुद्री जैविक विविधता, माछा र तटीय वातावरणका प्रदर्शनी भएको अनुसन्धान तथा आगन्तुक केन्द्र।', hi: 'समुद्री जैव विविधता, मछलियों और तटीय पर्यावरण की प्रदर्शनी वाला अनुसंधान एवं दर्शक केंद्र।' },
+    advisory: 'Check the weekly closing day and visitor-entry schedule.',
+  },
+  {
+    id: 'amarabati-park', region: 'digha', name: 'Amarabati Park', type: 'Recreation park', detailKey: 'standard-ticket',
+    description: { bn: 'হ্রদ, বাগান, নৌবিহার এবং পরিবার নিয়ে সময় কাটানোর জন্য জনপ্রিয় বিনোদন পার্ক।', ne: 'ताल, बगैँचा, डुङ्गा सयर र परिवारसँग समय बिताउन लोकप्रिय मनोरञ्जन पार्क।', hi: 'झील, उद्यान, नौका विहार और परिवार के साथ समय बिताने के लिए लोकप्रिय मनोरंजन पार्क।' },
+    advisory: 'Ride and boating charges may be separate from park entry.',
   },
 
   {
@@ -142,6 +228,26 @@ export const TOURISM_SPOTS = [
 ]
 
 export const TOURISM_DETAIL_TRANSLATIONS = {
+  'standard-public': {
+    timing: { bn: 'সার্বজনীন স্থান; দিনের আলোতে ভ্রমণ করা ভালো', ne: 'सार्वजनिक स्थान; दिनको उज्यालोमा भ्रमण गर्नु राम्रो', hi: 'सार्वजनिक स्थान; दिन के उजाले में जाना बेहतर है' },
+    fee: { bn: 'সাধারণ প্রবেশ মূল্য নেই; আলাদা পরিষেবার চার্জ লাগতে পারে', ne: 'सामान्य प्रवेश शुल्क छैन; छुट्टै सेवाको शुल्क लाग्न सक्छ', hi: 'सामान्य प्रवेश शुल्क नहीं; अलग सेवाओं का शुल्क लग सकता है' },
+  },
+  'standard-ticket': {
+    timing: { bn: 'দিনের বেলা খোলা; সাপ্তাহিক বা সরকারি ছুটি থাকতে পারে', ne: 'दिनको समयमा खुला; साप्ताहिक वा सार्वजनिक बिदा हुन सक्छ', hi: 'दिन में खुला; साप्ताहिक या सार्वजनिक अवकाश हो सकता है' },
+    fee: { bn: 'প্রবেশ টিকিট লাগতে পারে; বর্তমান মূল্য যাচাই করুন', ne: 'प्रवेश टिकट लाग्न सक्छ; हालको दर पुष्टि गर्नुहोस्', hi: 'प्रवेश टिकट लग सकता है; वर्तमान दर की पुष्टि करें' },
+  },
+  'standard-nature': {
+    timing: { bn: 'দিনের আলো ও অনুকূল আবহাওয়ায় ভ্রমণ করুন', ne: 'दिनको उज्यालो र अनुकूल मौसममा भ्रमण गर्नुहोस्', hi: 'दिन के उजाले और अनुकूल मौसम में जाएँ' },
+    fee: { bn: 'প্রবেশ বা স্থানীয় কার্যকলাপের চার্জ লাগতে পারে', ne: 'प्रवेश वा स्थानीय गतिविधि शुल्क लाग्न सक्छ', hi: 'प्रवेश या स्थानीय गतिविधि शुल्क लग सकता है' },
+  },
+  'standard-religious': {
+    timing: { bn: 'দিনের বেলা ভ্রমণ; প্রার্থনার সময় আলাদা হতে পারে', ne: 'दिनको समयमा भ्रमण; प्रार्थनाको समय फरक हुन सक्छ', hi: 'दिन में भ्रमण; प्रार्थना का समय अलग हो सकता है' },
+    fee: { bn: 'সাধারণত নির্দিষ্ট প্রবেশ মূল্য নেই; অনুদান গ্রহণ করা হতে পারে', ne: 'सामान्यतया निश्चित प्रवेश शुल्क छैन; दान स्वीकार हुन सक्छ', hi: 'आमतौर पर निश्चित प्रवेश शुल्क नहीं; दान स्वीकार किया जा सकता है' },
+  },
+  'standard-wildlife': {
+    timing: { bn: 'অনুমতি, ঋতু ও সাফারি স্লট অনুযায়ী দিনের বেলা প্রবেশ', ne: 'अनुमति, मौसम र सफारी स्लटअनुसार दिनको प्रवेश', hi: 'परमिट, मौसम और सफारी स्लॉट के अनुसार दिन में प्रवेश' },
+    fee: { bn: 'প্রবেশ, পারমিট, গাইড ও সাফারির আলাদা চার্জ লাগতে পারে', ne: 'प्रवेश, अनुमति, गाइड र सफारीको छुट्टाछुट्टै शुल्क लाग्न सक्छ', hi: 'प्रवेश, परमिट, गाइड और सफारी के अलग शुल्क लग सकते हैं' },
+  },
   'tiger-hill': {
     timing: { bn: 'সূর্যোদয়ের সময় ভ্রমণ; ঋতু অনুযায়ী প্রবেশের সময় বদলায়', ne: 'सूर्योदयको समयमा भ्रमण; मौसमअनुसार प्रवेश समय बदलिन्छ', hi: 'सूर्योदय के समय भ्रमण; मौसम के अनुसार प्रवेश समय बदलता है' },
     fee: { bn: 'ভিউয়িং এবং গাড়ির চার্জ লাগতে পারে', ne: 'दृश्यस्थल र सवारी शुल्क लाग्न सक्छ', hi: 'व्यूइंग और वाहन शुल्क लग सकता है' },

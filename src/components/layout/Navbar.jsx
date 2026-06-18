@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageSquare, Mic, History, BookOpen, ShieldAlert, Sun, Moon } from 'lucide-react'
+import { MessageSquare, Mic, History, BookOpen, MapPinned, ShieldAlert, Sun, Moon } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
@@ -7,6 +7,7 @@ const navItems = [
   { to: '/conversation', icon: MessageSquare, label: 'Chat' },
   { to: '/history', icon: History, label: 'History' },
   { to: '/phrases', icon: BookOpen, label: 'Phrases' },
+  { to: '/places', icon: MapPinned, label: 'Places' },
 ]
 
 export default function Navbar() {
@@ -104,7 +105,7 @@ export default function Navbar() {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr 1fr', // Fix 2: equal 4-column grid
+          gridTemplateColumns: `repeat(${navItems.length}, 1fr)`,
           width: '100%',
         }}>
           {navItems.map(({ to, icon: Icon, label }) => {

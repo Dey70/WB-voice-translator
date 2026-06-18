@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { ArrowLeftRight, LocateFixed, MapPin, Search, Volume2, VolumeX, WifiOff } from 'lucide-react'
 import LanguageSelector from '../components/translation/LanguageSelector'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
@@ -89,7 +88,6 @@ export default function PhraseBank() {
         <div className="phrase-bank-offline"><WifiOff size={14} /> Works offline</div>
         <h1><span className="gradient-text">Tourist</span> Phrase Bank</h1>
         <p>Tap a phrase to translate it and speak it aloud.</p>
-        <Link className="explore-places-link" to="/places"><MapPin size={15} /> Explore local sightseeing</Link>
       </header>
 
       <section className="location-context glass" aria-label="Location context">

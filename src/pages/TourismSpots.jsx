@@ -48,7 +48,7 @@ export default function TourismSpots() {
       <div className="tourism-count">{spots.length} curated places</div>
       <section className="tourism-grid">
         {spots.map((spot) => {
-          const details = TOURISM_DETAIL_TRANSLATIONS[spot.id]
+          const details = TOURISM_DETAIL_TRANSLATIONS[spot.detailKey || spot.id]
           return (
             <article key={spot.id} className="tourism-card glass">
               <div className="tourism-card-heading">
