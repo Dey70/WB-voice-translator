@@ -215,7 +215,6 @@ export default function Conversation() {
       }}>
         {messages.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'var(--text-muted)', margin: 'auto', padding: 40 }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>💬</div>
             <div style={{ fontSize: 16, marginBottom: 6 }}>Start the conversation</div>
             <div style={{ fontSize: 13 }}>Person A or B taps their mic button below</div>
           </div>

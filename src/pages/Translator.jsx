@@ -80,10 +80,10 @@ export default function Translator() {
 
       <div className="mode-buttons" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {[
-          { id: 'voice-voice', label: '🎙 Voice → Voice' },
-          { id: 'text-text',   label: '✍ Text → Text'   },
-          { id: 'voice-text',  label: '🎙 Voice → Text'  },
-          { id: 'text-voice',  label: '✍ Text → Speak'  },
+          { id: 'voice-voice', label: 'Voice → Voice' },
+          { id: 'text-text',   label: 'Text → Text'   },
+          { id: 'voice-text',  label: 'Voice → Text'  },
+          { id: 'text-voice',  label: 'Text → Speak'  },
         ].map((m) => (
           <button key={m.id} onClick={() => setMode(m.id)} style={{
             padding: '7px 16px', borderRadius: 999,

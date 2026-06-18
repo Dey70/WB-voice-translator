@@ -92,9 +92,6 @@ export default function History() {
 
       {filtered.length === 0 ? (
         <div className="glass" style={{ textAlign: 'center', padding: '56px 32px', borderRadius: 18, color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: 48, marginBottom: 14, filter: 'drop-shadow(0 4px 10px rgba(200,86,10,0.3))' }}>
-            {search ? '🔍' : '📖'}
-          </div>
           <div style={{ fontSize: 16, marginBottom: 6, color: 'var(--text-secondary)', fontFamily: "'Playfair Display',serif" }}>
             {search ? 'No results found' : 'No translations yet'}
           </div>
