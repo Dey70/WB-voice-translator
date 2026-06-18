@@ -6,6 +6,7 @@ import Conversation from './pages/Conversation'
 import History from './pages/History'
 import PhraseBank from './pages/PhraseBank'
 import EmergencyMode from './pages/EmergencyMode'
+import TourismSpots from './pages/TourismSpots'
 import { useAppStore } from './store/appStore'
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/history" element={<History />} />
           <Route path="/phrases" element={<PhraseBank />} />
           <Route path="/emergency" element={<EmergencyMode />} />
+          <Route path="/places" element={<TourismSpots />} />
         </Routes>
       </div>
     </BrowserRouter>

@@ -70,7 +70,9 @@ export default function Navbar() {
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
               {location.pathname === '/emergency'
                 ? 'Emergency'
-                : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
+                : location.pathname === '/places'
+                  ? 'Places'
+                  : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
             </span>
           </div>
 

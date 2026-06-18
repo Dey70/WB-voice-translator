@@ -567,3 +567,47 @@ body {
   .detect-location { padding: 8px; }
   .location-quick-phrases { grid-template-columns: 1fr; }
 }
+
+/* Tourism spots */
+.explore-places-link { display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:8px 12px; border:1px solid var(--accent-primary); border-radius:999px; background:rgba(108,99,255,.1); color:var(--accent-secondary); font-size:12px; font-weight:600; text-decoration:none; }
+.tourism-page { max-width:1100px; margin:0 auto; padding:28px 16px 48px; }
+.tourism-hero { text-align:center; margin-bottom:20px; }
+.tourism-hero>span { display:inline-flex; align-items:center; gap:6px; color:var(--accent-teal); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; }
+.tourism-hero h1 { margin:7px 0 5px; font-size:clamp(27px,5vw,39px); }
+.tourism-hero p { color:var(--text-secondary); font-size:14px; }
+.tourism-unverified { display:flex; align-items:flex-start; gap:9px; margin-bottom:15px; padding:11px 13px; border:1px solid rgba(251,191,36,.25); border-radius:10px; background:rgba(251,191,36,.07); color:var(--text-secondary); font-size:11px; line-height:1.5; }
+.tourism-unverified svg { flex-shrink:0; color:#fbbf24; }
+.tourism-unverified strong { color:#fbbf24; }
+.tourism-controls { display:grid; grid-template-columns:auto 1fr; gap:15px 20px; padding:16px; border-radius:16px; }
+.tourism-regions { display:flex; gap:7px; align-items:center; }
+.tourism-regions button { padding:9px 13px; border:1px solid var(--border); border-radius:999px; background:var(--bg-secondary); color:var(--text-secondary); cursor:pointer; font:inherit; font-size:12px; }
+.tourism-regions button.active { border-color:var(--accent-primary); background:rgba(108,99,255,.14); color:var(--accent-secondary); font-weight:700; }
+.tourism-language { justify-self:end; }
+.tourism-language>span { display:block; margin-bottom:6px; color:var(--text-muted); font-size:10px; text-transform:uppercase; letter-spacing:.7px; }
+.tourism-search { grid-column:1 / -1; display:flex; align-items:center; gap:8px; padding:9px 11px; border:1px solid var(--border); border-radius:10px; background:var(--bg-secondary); color:var(--text-muted); }
+.tourism-search input { width:100%; border:0; outline:0; background:transparent; color:var(--text-primary); font:inherit; font-size:13px; }
+.tourism-count { margin:14px 0 9px; color:var(--text-muted); font-size:11px; }
+.tourism-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.tourism-card { padding:18px; border-radius:15px; }
+.tourism-card-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.tourism-card-heading span { color:var(--accent-teal); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.6px; }
+.tourism-card-heading h2 { margin-top:3px; font-size:19px; }
+.tourism-card-heading svg { color:var(--accent-secondary); }
+.tourism-description { min-height:66px; margin:12px 0 14px; color:var(--text-secondary); font-size:14px; line-height:1.55; }
+.tourism-card dl { display:grid; gap:8px; }
+.tourism-card dl>div { display:grid; grid-template-columns:120px 1fr; gap:10px; padding:9px 10px; border-radius:9px; background:var(--bg-secondary); }
+.tourism-card dt { display:flex; align-items:center; gap:6px; color:var(--text-muted); font-size:10px; font-weight:700; text-transform:uppercase; }
+.tourism-card dd { color:var(--text-primary); font-size:12px; line-height:1.4; }
+.tourism-advisory { display:flex; align-items:flex-start; gap:6px; margin-top:11px; color:var(--text-muted); font-size:10px; line-height:1.45; }
+.tourism-advisory svg { flex-shrink:0; color:#fbbf24; }
+
+@media (max-width:700px) {
+  .tourism-page { padding-top:20px; }
+  .tourism-controls { grid-template-columns:1fr; }
+  .tourism-regions { overflow-x:auto; }
+  .tourism-language { justify-self:stretch; }
+  .tourism-search { grid-column:1; }
+  .tourism-grid { grid-template-columns:1fr; }
+  .tourism-description { min-height:0; }
+  .tourism-card dl>div { grid-template-columns:100px 1fr; }
+}
