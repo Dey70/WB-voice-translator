@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback } from 'react'
 
-// Strict BCP-47 codes required by iOS WebKit
 const LANG_CODES = {
-  bn: 'bn-IN',   // bn-BD crashes on iOS; bn-IN is more universally supported
+  bn: 'bn-IN',
   ne: 'ne-NP',
   hi: 'hi-IN',
 }
@@ -13,9 +12,7 @@ const SILENCE_TIMEOUTS = {
   hi: 2500,
 }
 
-// Detect iOS — iOS requires continuous=false or it crashes instantly
-const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent)
-// Detect Android — Android speech engine produces overlapping duplicate chunks
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
 const isAndroid = () => /Android/.test(navigator.userAgent)
 
 export function useSpeechRecognition() {
@@ -25,44 +22,30 @@ export function useSpeechRecognition() {
   const [error, setError] = useState(null)
   const recognitionRef = useRef(null)
   const accumulatedRef = useRef('')
-  const interimRef = useRef('')       // Bug 6: save interim to ref so onend can use it
+  const interimRef = useRef('')
   const silenceTimerRef = useRef(null)
   const isRunningRef = useRef(false)
-  const androidChunksRef = useRef([]) // Bug 4: track all chunks for subset filtering
+  const androidChunksRef = useRef([])
+  const retryCountRef = useRef(0)
 
-  // Bug 1: Check actual API support, not user-agent
   const isSupported = typeof window !== 'undefined' &&
     ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)
 
-  const startListening = useCallback((langCode) => {
-    if (!isSupported) {
-      setError('Voice not supported in this browser. Please use Chrome on desktop.')
-      return
-    }
-
+  const doStart = useCallback((langCode, onResultCallback) => {
     const ios = isIOS()
     const android = isAndroid()
-
-    accumulatedRef.current = ''
-    interimRef.current = ''
-    androidChunksRef.current = []
-    isRunningRef.current = true
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     const recognition = new SpeechRecognition()
 
-    // Bug 3: iOS needs strict BCP-47 and continuous=false
     recognition.lang = LANG_CODES[langCode] || langCode
-    recognition.continuous = ios ? false : true   // Bug 3: iOS crashes with continuous=true
-    recognition.interimResults = true
-    recognition.maxAlternatives = ios ? 1 : 5     // Bug 3: iOS is strict about alternatives too
+    recognition.continuous = false          // iOS requires false — crashes with true
+    recognition.interimResults = !ios       // iOS WebKit crashes with interimResults=true on some versions
+    recognition.maxAlternatives = ios ? 1 : 5
 
     recognition.onstart = () => {
       setIsListening(true)
       setError(null)
-      setTranscript('')
-      setInterimText('')
-      interimRef.current = ''
     }
 
     recognition.onresult = (event) => {
@@ -90,18 +73,13 @@ export function useSpeechRecognition() {
           const chunk = bestText.trim()
 
           if (android) {
-            // Bug 4: Android sends overlapping progressive chunks like:
-            // "hello" → "hello world" → "hello world how"
-            // We need to detect and skip chunks that are subsets of existing ones
             const isSubset = androidChunksRef.current.some(existing =>
               existing.includes(chunk) || chunk.includes(existing)
             )
             if (!isSubset) {
               androidChunksRef.current.push(chunk)
-              // Bug 4: Force join with space to avoid mashing
               accumulatedRef.current = androidChunksRef.current.join(' ')
             } else {
-              // Replace with the longer version
               androidChunksRef.current = androidChunksRef.current.map(existing =>
                 chunk.includes(existing) ? chunk : existing
               )
@@ -114,47 +92,68 @@ export function useSpeechRecognition() {
           setTranscript(accumulatedRef.current)
           setInterimText('')
           interimRef.current = ''
+          retryCountRef.current = 0 // successful result — reset retry counter
 
-          const timeout = SILENCE_TIMEOUTS[langCode] || 1500
-          silenceTimerRef.current = setTimeout(() => {
-            if (recognitionRef.current && isRunningRef.current) {
-              recognitionRef.current.stop()
-            }
-          }, timeout)
+          if (!ios) {
+            // On desktop: set silence timer to auto-stop
+            const timeout = SILENCE_TIMEOUTS[langCode] || 1500
+            silenceTimerRef.current = setTimeout(() => {
+              if (recognitionRef.current && isRunningRef.current) {
+                recognitionRef.current.stop()
+              }
+            }, timeout)
+          }
 
         } else {
           interim += result[0].transcript
         }
       }
 
-      if (interim) {
-        interimRef.current = interim  // Bug 6: save to ref
+      if (interim && !ios) {
+        interimRef.current = interim
         setInterimText(interim)
       }
     }
 
     recognition.onerror = (event) => {
-      if (event.error === 'aborted') return // manual stop, not an error
+      console.log('[KothaSetu] Speech error:', event.error)
+
+      if (event.error === 'aborted') return // manual stop
+
+      // iOS often fires "not-allowed" or "service-not-allowed" the FIRST time
+      // due to WebKit's permission timing — retry once silently
+      if (ios && retryCountRef.current < 1 &&
+          (event.error === 'not-allowed' || event.error === 'service-not-allowed' || event.error === 'network')) {
+        retryCountRef.current++
+        console.log('[KothaSetu] iOS error, retrying once...')
+        setTimeout(() => {
+          if (isRunningRef.current) {
+            try { doStart(langCode, onResultCallback) } catch(e) {}
+          }
+        }, 500)
+        return
+      }
 
       if (event.error === 'no-speech') {
         setError('No speech detected. Please try again.')
-      } else if (event.error === 'not-allowed') {
-        setError('Microphone blocked. Allow mic access in browser settings.')
+      } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setError('Microphone access denied. Allow mic in your browser settings.')
       } else if (event.error === 'network') {
-        setError('Network error. Check your internet connection.')
+        setError('Network error. Check your connection.')
+      } else if (event.error === 'language-not-supported') {
+        setError('This language is not supported on your device.')
       } else {
         setError('Could not recognize speech. Please try again.')
       }
+
       isRunningRef.current = false
       setIsListening(false)
     }
 
     recognition.onend = () => {
-      isRunningRef.current = false
-      setIsListening(false)
+      console.log('[KothaSetu] onend. accumulated:', accumulatedRef.current, 'interim:', interimRef.current)
 
-      // Bug 6: Race condition fix — if we have interim text but no final,
-      // use the interim as the final result (happens when mic cuts off fast on mobile)
+      // Bug 6: Race condition — if final never fired but we have interim, use it
       if (!accumulatedRef.current && interimRef.current) {
         accumulatedRef.current = interimRef.current
       }
@@ -164,20 +163,77 @@ export function useSpeechRecognition() {
 
       if (accumulatedRef.current) {
         setTranscript(accumulatedRef.current)
+        isRunningRef.current = false
+        setIsListening(false)
+      } else if (ios && isRunningRef.current && retryCountRef.current < 1) {
+        // iOS sometimes fires onend immediately with no result — retry once
+        retryCountRef.current++
+        console.log('[KothaSetu] iOS empty result, retrying once...')
+        setTimeout(() => {
+          if (isRunningRef.current) {
+            try {
+              const r2 = new (window.SpeechRecognition || window.webkitSpeechRecognition)()
+              r2.lang = LANG_CODES[langCode] || langCode
+              r2.continuous = false
+              r2.interimResults = false
+              r2.maxAlternatives = 1
+              r2.onresult = recognition.onresult
+              r2.onerror = recognition.onerror
+              r2.onend = () => {
+                isRunningRef.current = false
+                setIsListening(false)
+                if (accumulatedRef.current) setTranscript(accumulatedRef.current)
+              }
+              recognitionRef.current = r2
+              r2.start()
+            } catch(e) {
+              isRunningRef.current = false
+              setIsListening(false)
+            }
+          }
+        }, 300)
+      } else {
+        isRunningRef.current = false
+        setIsListening(false)
       }
     }
 
     recognitionRef.current = recognition
 
-    try {
-      recognition.start()
-    } catch (e) {
-      console.error('[KothaSetu] Could not start:', e)
-      setError('Could not start mic. Please try again.')
-      setIsListening(false)
-      isRunningRef.current = false
+    // iOS needs a brief delay before start() after any previous session
+    const delay = ios ? 150 : 0
+    setTimeout(() => {
+      try {
+        recognition.start()
+      } catch (e) {
+        console.error('[KothaSetu] start() failed:', e)
+        setError('Could not start mic. Please tap the button again.')
+        setIsListening(false)
+        isRunningRef.current = false
+      }
+    }, delay)
+
+    return recognition
+  }, [])
+
+  const startListening = useCallback((langCode) => {
+    if (!isSupported) {
+      setError('Voice not supported in this browser. Please use Chrome on desktop.')
+      return
     }
-  }, [isSupported])
+
+    accumulatedRef.current = ''
+    interimRef.current = ''
+    androidChunksRef.current = []
+    retryCountRef.current = 0
+    isRunningRef.current = true
+
+    setTranscript('')
+    setInterimText('')
+    setError(null)
+
+    doStart(langCode)
+  }, [isSupported, doStart])
 
   const stopListening = useCallback(() => {
     if (silenceTimerRef.current) {
@@ -197,6 +253,7 @@ export function useSpeechRecognition() {
     accumulatedRef.current = ''
     interimRef.current = ''
     androidChunksRef.current = []
+    retryCountRef.current = 0
   }, [])
 
   return {
