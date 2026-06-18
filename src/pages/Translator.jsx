@@ -18,8 +18,8 @@ export default function Translator() {
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState(null)
 
-  const { transcript, interimText, isListening, startListening, stopListening, resetTranscript, isSupported, error: speechError } = useSpeechRecognition()
-  const { speak, isSpeaking, stop } = useSpeechSynthesis()
+  const { transcript, interimText, isListening, startListening, stopListening, resetTranscript, isSupported, isVoiceReliable, error: speechError } = useSpeechRecognition()
+  const { speak, isSpeaking, stop, noVoiceAvailable } = useSpeechSynthesis()
   const { addToHistory } = useAppStore()
 
   const fromLangData = getLanguage(fromLang)
@@ -214,6 +214,12 @@ export default function Translator() {
             </button>
             {isSpeaking && <Waveform active={true} color={toLangData.color} />}
           </div>
+          {noVoiceAvailable && (
+            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(251,191,36,0.1)', borderRadius: 8, color: '#fbbf24', fontSize: 12 }}>
+              No voice available for {toLangData.name} on this device. Text translation still works.
+            </div>
+          )}
+          </div>
         </div>
       </div>
 
@@ -222,6 +228,11 @@ export default function Translator() {
           {!isSupported && (
             <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center', padding: '12px 16px', background: 'rgba(248,113,113,0.08)', borderRadius: 10, border: '1px solid rgba(248,113,113,0.2)', maxWidth: 340 }}>
               Voice input requires Chrome or Edge browser on desktop.
+            </div>
+          )}
+          {isSupported && !isVoiceReliable && (
+            <div style={{ color: '#fbbf24', fontSize: 12, textAlign: 'center', padding: '8px 14px', background: 'rgba(251,191,36,0.08)', borderRadius: 8, border: '1px solid rgba(251,191,36,0.2)', maxWidth: 340 }}>
+              Voice on iPhone may be limited. If it fails, please type in the box above.
             </div>
           )}
           <button
@@ -239,7 +250,6 @@ export default function Translator() {
               boxShadow: isListening ? '0 0 40px rgba(248,113,113,0.4)' : '0 0 30px rgba(108,99,255,0.3)',
             }}
           >
-            {/* Bug 5: Always show Mic icon — MicOff confused users into thinking mic was off */}
             <Mic size={28} color="white" />
           </button>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center' }}>
@@ -262,3 +272,4 @@ export default function Translator() {
     </div>
   )
 }
+
