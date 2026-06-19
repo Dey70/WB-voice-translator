@@ -90,6 +90,7 @@ export function useSpeechRecognition() {
           }
 
           setTranscript(accumulatedRef.current)
+          onResultCallback?.(accumulatedRef.current)
           setInterimText('')
           interimRef.current = ''
           retryCountRef.current = 0 // successful result — reset retry counter
@@ -156,6 +157,7 @@ export function useSpeechRecognition() {
       // Bug 6: Race condition — if final never fired but we have interim, use it
       if (!accumulatedRef.current && interimRef.current) {
         accumulatedRef.current = interimRef.current
+        onResultCallback?.(accumulatedRef.current)
       }
 
       setInterimText('')
@@ -216,7 +218,7 @@ export function useSpeechRecognition() {
     return recognition
   }, [])
 
-  const startListening = useCallback((langCode) => {
+  const startListening = useCallback((langCode, onResultCallback) => {
     if (!isSupported) {
       setError('Voice not supported in this browser. Please use Chrome on desktop.')
       return
@@ -232,7 +234,7 @@ export function useSpeechRecognition() {
     setInterimText('')
     setError(null)
 
-    doStart(langCode)
+    doStart(langCode, onResultCallback)
   }, [isSupported, doStart])
 
   const stopListening = useCallback(() => {

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mic, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck, History } from 'lucide-react'
+import { Mic, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck, History, Keyboard, Languages, RotateCcw } from 'lucide-react'
 import LanguageSelector from '../components/translation/LanguageSelector'
 import Waveform from '../components/translation/Waveform'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
@@ -15,36 +15,28 @@ export default function Translator() {
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
   const [isTranslating, setIsTranslating] = useState(false)
-  const [mode, setMode] = useState('voice-voice')
+  const [mode, setMode] = useState('text')
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState(null)
 
-  const { transcript, interimText, isListening, startListening, stopListening, resetTranscript, isSupported, isIOS, error: speechError } = useSpeechRecognition()
+  const { interimText, isListening, startListening, stopListening, resetTranscript, isSupported, isIOS, error: speechError } = useSpeechRecognition()
   const { speak, isSpeaking, stop, noVoiceAvailable } = useSpeechSynthesis()
   const { addToHistory } = useAppStore()
 
   const fromLangData = getLanguage(fromLang)
   const toLangData = getLanguage(toLang)
 
-  useEffect(() => { if (transcript) setInputText(transcript) }, [transcript])
-
-  useEffect(() => {
-    if (!inputText.trim()) { setOutputText(''); return }
-    const timer = setTimeout(() => handleTranslate(inputText), 900)
-    return () => clearTimeout(timer)
-  }, [inputText, fromLang, toLang])
-
-  const handleTranslate = async (text) => {
-    if (!text.trim()) return
+  const handleTranslate = async () => {
+    const text = inputText.trim()
+    if (!text) return
     setIsTranslating(true)
     setError(null)
     try {
       const result = await translateText(text, fromLang, toLang)
       setOutputText(result)
       addToHistory({ fromLang, toLang, originalText: text, translatedText: result, fromLangName: fromLangData.name, toLangName: toLangData.name })
-      if (mode === 'voice-voice' || mode === 'text-voice') speak(result, toLang)
-    } catch (err) {
-      setError('Translation failed. Check your internet connection.')
+    } catch {
+      setError('Translation failed. Check your connection and try again.')
     } finally {
       setIsTranslating(false)
     }
@@ -52,19 +44,38 @@ export default function Translator() {
 
   const handleMicClick = () => {
     if (isListening) { stopListening() }
-    else { resetTranscript(); setInputText(''); setOutputText(''); startListening(fromLang) }
+    else {
+      resetTranscript()
+      setInputText('')
+      setOutputText('')
+      setError(null)
+      startListening(fromLang, setInputText)
+    }
   }
 
   const handleSwap = () => {
-    const pf = fromLang, pt = toLang
+    const pf = fromLang, pt = toLang, previousInput = inputText, previousOutput = outputText
     setFromLang(pt); setToLang(pf)
-    setInputText(outputText); setOutputText('')
+    setInputText(previousOutput); setOutputText(previousOutput ? previousInput : '')
+    setError(null)
   }
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(outputText)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(outputText)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      setError('Could not copy the translation. Please select the text manually.')
+    }
+  }
+
+  const clearTranslation = () => {
+    stopListening()
+    resetTranscript()
+    setInputText('')
+    setOutputText('')
+    setError(null)
   }
 
   return (
@@ -84,23 +95,21 @@ export default function Translator() {
 
       <div className="mode-buttons" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
         {[
-          { id: 'voice-voice', label: 'Voice → Voice' },
-          { id: 'text-text',   label: 'Text → Text'   },
-          { id: 'voice-text',  label: 'Voice → Text'  },
-          { id: 'text-voice',  label: 'Text → Speak'  },
-        ].map((m) => (
-          <button key={m.id} onClick={() => setMode(m.id)} style={{
+          { id: 'text', label: 'Type', icon: Keyboard },
+          { id: 'voice', label: 'Speak', icon: Mic },
+        ].map(({ id, label, icon: ModeIcon }) => (
+          <button key={id} aria-pressed={mode === id} onClick={() => { setMode(id); if (isListening) stopListening() }} style={{
             padding: '7px 16px', borderRadius: 999,
-            border: mode === m.id ? '2px solid var(--accent-primary)' : '1px solid var(--border)',
-            background: mode === m.id
+            border: mode === id ? '2px solid var(--accent-primary)' : '1px solid var(--border)',
+            background: mode === id
               ? 'linear-gradient(135deg,rgba(200,86,10,0.18),rgba(232,135,42,0.12))'
               : 'var(--bg-card)',
-            color: mode === m.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            cursor: 'pointer', fontSize: 12, fontWeight: mode === m.id ? 700 : 400,
+            color: mode === id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+            cursor: 'pointer', fontSize: 12, fontWeight: mode === id ? 700 : 400,
             transition: 'all 0.2s',
-            boxShadow: mode === m.id ? '0 2px 10px rgba(200,86,10,0.2)' : 'none',
+            boxShadow: mode === id ? '0 2px 10px rgba(200,86,10,0.2)' : 'none',
           }}>
-            {m.label}
+            <ModeIcon size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />{label}
           </button>
         ))}
       </div>
@@ -108,7 +117,7 @@ export default function Translator() {
       <div className="lang-selector-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
-          <LanguageSelector value={fromLang} onChange={(v) => { setFromLang(v); if (v === toLang) setToLang(fromLang) }} />
+          <LanguageSelector value={fromLang} onChange={(v) => { setFromLang(v); if (v === toLang) setToLang(fromLang); setOutputText(''); setError(null) }} />
         </div>
         <button className="swap-btn" onClick={handleSwap} title="Swap languages" style={{
           marginTop: 20, width: 42, height: 42, borderRadius: 21,
@@ -126,7 +135,7 @@ export default function Translator() {
         </button>
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>To</div>
-          <LanguageSelector value={toLang} onChange={(v) => { setToLang(v); if (v === fromLang) setFromLang(toLang) }} exclude={fromLang} />
+          <LanguageSelector value={toLang} onChange={(v) => { setToLang(v); if (v === fromLang) setFromLang(toLang); setOutputText(''); setError(null) }} exclude={fromLang} />
         </div>
       </div>
 
@@ -148,8 +157,9 @@ export default function Translator() {
           <textarea
             className="translation-copy"
             lang={fromLang}
+            maxLength={500}
             value={isListening && interimText && !inputText ? interimText : inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={(e) => { setInputText(e.target.value); setOutputText(''); setError(null) }}
             placeholder={"Type or speak in " + fromLangData.name + "..."}
             style={{
               width: '100%', minHeight: 'clamp(120px, 20vw, 160px)',
@@ -174,7 +184,7 @@ export default function Translator() {
             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
               {isListening ? 'Listening...' : inputText.length + ' chars'}
             </span>
-            <button onClick={() => { setInputText(''); setOutputText('') }} style={{
+            <button onClick={clearTranslation} disabled={!inputText && !outputText} style={{
               background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12,
             }}>Clear</button>
           </div>
@@ -204,8 +214,9 @@ export default function Translator() {
           </div>
 
           {error && (
-            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 12 }}>
-              {error}
+            <div className="translate-error" role="alert">
+              <span>{error}</span>
+              {error.startsWith('Translation failed') && <button onClick={handleTranslate} disabled={!inputText.trim() || isTranslating}><RotateCcw size={13} /> Retry</button>}
             </div>
           )}
 
@@ -241,10 +252,17 @@ export default function Translator() {
             {isSpeaking && <Waveform active={true} color={toLangData.color} />}
           </div>
 
+          {noVoiceAvailable && <p className="translate-voice-warning">No compatible voice is installed for {toLangData.name}. You can still copy and show the text.</p>}
+
         </div>
       </div>
 
-      {(mode === 'voice-voice' || mode === 'voice-text') && (
+      <button className="translate-primary" onClick={handleTranslate} disabled={!inputText.trim() || isTranslating || Boolean(outputText)}>
+        {isTranslating ? <Loader size={19} className="translate-spinner" /> : outputText ? <CheckCheck size={19} /> : <Languages size={19} />}
+        {isTranslating ? 'Translating...' : outputText ? 'Translation ready' : `Translate to ${toLangData.name}`}
+      </button>
+
+      {mode === 'voice' && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           {!isSupported && (
             <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center', padding: '12px 16px', background: 'rgba(248,113,113,0.08)', borderRadius: 10, border: '1px solid rgba(248,113,113,0.2)', maxWidth: 340 }}>

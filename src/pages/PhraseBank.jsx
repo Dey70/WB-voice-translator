@@ -204,11 +204,11 @@ export default function PhraseBank() {
               </div>
               <div className="phrase-original">
                 <span style={{ color: from.color }}>{from.label}</span>
-                <p>{phrase.translations[fromLang]}</p>
+                <p lang={fromLang}>{phrase.translations[fromLang]}</p>
               </div>
               <div className="phrase-translation">
                 <span style={{ color: to.color }}>{to.label}</span>
-                <p>{phrase.translations[toLang]}</p>
+                <p lang={toLang}>{phrase.translations[toLang]}</p>
               </div>
             </button>
           )

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Mic, Volume2, Trash2 } from 'lucide-react'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
@@ -51,9 +51,6 @@ export default function Conversation() {
 
     const fromLang = speaker === 'A' ? langA : langB
     const toLang = speaker === 'A' ? langB : langA
-    const fromData = getLanguage(fromLang)
-    const toData = getLanguage(toLang)
-
     const msgId = Date.now()
     setMessages((prev) => [...prev, {
       id: msgId, speaker, fromLang, toLang,
@@ -193,14 +190,22 @@ export default function Conversation() {
       <div className="glass" style={{ borderRadius: 16, padding: 20, marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Person A speaks</div>
-          <LanguageSelector value={langA} onChange={setLangA} />
+          <LanguageSelector value={langA} onChange={setLangA} exclude={langB} />
         </div>
         <div style={{ fontSize: 24, color: 'var(--text-muted)' }}>vs</div>
         <div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Person B speaks</div>
-          <LanguageSelector value={langB} onChange={setLangB} />
+          <LanguageSelector value={langB} onChange={setLangB} exclude={langA} />
         </div>
       </div>
+
+      <p className="conversation-instruction" aria-live="polite">
+        {isListening
+          ? `Listening to Person ${activeSpeaker}. Tap again when finished.`
+          : isTranslating
+            ? 'Translating the message...'
+            : 'Choose the speaker, tap their microphone once, and speak naturally.'}
+      </p>
 
       {speechError && (
         <div style={{ marginBottom: 12, padding: '10px 16px', background: 'rgba(248,113,113,0.1)', borderRadius: 10, color: '#f87171', fontSize: 13 }}>

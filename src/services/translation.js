@@ -16,7 +16,7 @@ export async function translateText(text, fromLang, toLang) {
 
   if (!AZURE_KEY) {
     console.error('[KothaSetu] Azure key missing')
-    return 'Error: API Key missing. Check your .env file.'
+    throw new Error('Translation service is not configured.')
   }
 
   const to = AZURE_LANG_MAP[toLang] || toLang
@@ -51,6 +51,6 @@ export async function translateText(text, fromLang, toLang) {
     return result
   } catch (error) {
     console.error('[KothaSetu] Translation error:', error)
-    throw new Error('Translation failed. Please check your connection.')
+    throw new Error('Translation failed. Please check your connection.', { cause: error })
   }
 }
