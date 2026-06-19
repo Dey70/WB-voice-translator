@@ -4,6 +4,7 @@ import LanguageSelector from '../components/translation/LanguageSelector'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getLanguage } from '../utils/constants'
 import { getLocationContextById, getLocationPhrases, getNearestLocationContext, LOCATION_CONTEXTS, PHRASE_CATEGORIES, queryPhrases } from '../data/repositories/phraseRepository'
+import { platformServices } from '../services/platform/platformAdapter'
 
 export default function PhraseBank() {
   const [fromLang, setFromLang] = useState('hi')
@@ -49,26 +50,23 @@ export default function PhraseBank() {
     setCategory(location.categories[0])
   }
 
-  const detectLocation = () => {
-    if (!navigator.geolocation) {
+  const detectLocation = async () => {
+    if (!platformServices.location.isAvailable()) {
       setLocationError('Location is not supported by this browser. Choose a place manually.')
       return
     }
     setLocationStatus('loading')
     setLocationError('')
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
-        const nearest = getNearestLocationContext(coords.latitude, coords.longitude)
-        setLocationStatus('idle')
-        if (nearest) applyLocation(nearest.id)
-        else setLocationError('You are outside the supported region. Choose the nearest travel hub manually.')
-      },
-      () => {
-        setLocationStatus('idle')
-        setLocationError('Location could not be detected. Choose a place manually.')
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
-    )
+    try {
+      const { coords } = await platformServices.location.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 })
+      const nearest = getNearestLocationContext(coords.latitude, coords.longitude)
+      setLocationStatus('idle')
+      if (nearest) applyLocation(nearest.id)
+      else setLocationError('You are outside the supported region. Choose the nearest travel hub manually.')
+    } catch {
+      setLocationStatus('idle')
+      setLocationError('Location could not be detected. Choose a place manually.')
+    }
   }
 
   return (

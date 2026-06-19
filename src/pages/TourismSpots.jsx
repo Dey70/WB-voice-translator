@@ -5,6 +5,7 @@ import { CATEGORY_NAMES, REGION_NAMES, TOURISM_LOCALE } from '../data/tourismLoc
 import PlacesSubnav from '../components/places/PlacesSubnav'
 import { CONTENT_AUDIT_DATE_LABEL } from '../data/contentAudit'
 import { getAvailableTourismCategories, getTourismRegionOptions, queryTourismSpots, TOURISM_REGION_IDS } from '../data/repositories/tourismRepository'
+import { platformServices } from '../services/platform/platformAdapter'
 
 const INFORMATION_LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English' },
@@ -107,9 +108,9 @@ export default function TourismSpots() {
                   <h2>{placeName}</h2>
                   <div className="tourism-locality">{language === 'en' ? (spot.locality || regionName) : regionName} · {accessName}</div>
                 </div>
-                <a className="tourism-map-link" href={spot.mapsUrl} target="_blank" rel="noreferrer" aria-label={`${copy.directions}: ${placeName}`} title={`${copy.directions}: ${placeName}`}>
+                <button className="tourism-map-link" onClick={() => platformServices.links.openMap(spot.mapDestination)} aria-label={`${copy.directions}: ${placeName}`} title={`${copy.directions}: ${placeName}`}>
                   <MapPinned size={18} /><span>{copy.directions}</span><ExternalLink size={12} />
-                </a>
+                </button>
               </div>
               <p className="tourism-description">{spot.description}</p>
               <dl>
@@ -117,7 +118,7 @@ export default function TourismSpots() {
                 <div><dt><IndianRupee size={15} /> {auditCopy.indicative} {copy.entry}</dt><dd>{spot.fee}</dd></div>
               </dl>
               <p className="tourism-advisory"><AlertTriangle size={13} /> {caution}</p>
-              <a className="content-source-link" href={spot.sourceUrl} target="_blank" rel="noreferrer">{auditCopy.verifySource} <ExternalLink size={11}/></a>
+              <button className="content-source-link" onClick={() => platformServices.links.openExternal(spot.sourceUrl)}>{auditCopy.verifySource} <ExternalLink size={11}/></button>
             </article>
           )
         })}

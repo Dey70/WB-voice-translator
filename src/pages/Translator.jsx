@@ -8,6 +8,7 @@ import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { translateText } from '../services/translation'
 import { useAppStore } from '../store/appStore'
 import { getLanguage } from '../utils/constants'
+import { platformServices } from '../services/platform/platformAdapter'
 
 export default function Translator() {
   const [fromLang, setFromLang] = useState('bn')
@@ -62,7 +63,7 @@ export default function Translator() {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(outputText)
+      await platformServices.clipboard.writeText(outputText)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {

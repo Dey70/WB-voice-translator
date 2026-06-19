@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { platformServices } from '../services/platform/platformAdapter'
 
 const LANG_SPEECH_CODES = {
   bn: ['bn-IN', 'bn-BD', 'bn'],
@@ -11,9 +12,10 @@ let voiceCache = []
 let voiceLoadPromise = null
 
 function loadVoices() {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return Promise.resolve([])
+  const engine = platformServices.speechSynthesis.getEngine()
+  if (!engine) return Promise.resolve([])
 
-  const available = window.speechSynthesis.getVoices()
+  const available = engine.getVoices()
   if (available.length) {
     voiceCache = available
     return Promise.resolve(available)
@@ -25,16 +27,16 @@ function loadVoices() {
     const finish = () => {
       if (settled) return
       settled = true
-      window.speechSynthesis.removeEventListener?.('voiceschanged', handleVoicesChanged)
-      voiceCache = window.speechSynthesis.getVoices()
+      engine.removeEventListener?.('voiceschanged', handleVoicesChanged)
+      voiceCache = engine.getVoices()
       resolve(voiceCache)
       voiceLoadPromise = null
     }
     const handleVoicesChanged = () => {
-      if (window.speechSynthesis.getVoices().length) finish()
+      if (engine.getVoices().length) finish()
     }
 
-    window.speechSynthesis.addEventListener?.('voiceschanged', handleVoicesChanged, { once: true })
+    engine.addEventListener?.('voiceschanged', handleVoicesChanged, { once: true })
     setTimeout(finish, 1800)
   })
 
@@ -63,7 +65,7 @@ export function useSpeechSynthesis() {
   const keepAliveRef = useRef(null)
   const mountedRef = useRef(true)
 
-  const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window
+  const isSupported = Boolean(platformServices.speechSynthesis.getEngine() && platformServices.speechSynthesis.createUtterance(''))
 
   const clearTimers = useCallback(() => {
     if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current)
@@ -76,7 +78,7 @@ export function useSpeechSynthesis() {
     requestRef.current += 1
     clearTimers()
     utteranceRef.current = null
-    if (isSupported) window.speechSynthesis.cancel()
+    if (isSupported) platformServices.speechSynthesis.getEngine()?.cancel()
     if (mountedRef.current) {
       setIsSpeaking(false)
       setIsPreparing(false)
@@ -94,7 +96,8 @@ export function useSpeechSynthesis() {
     requestRef.current += 1
     const requestId = requestRef.current
     clearTimers()
-    window.speechSynthesis.cancel()
+    const engine = platformServices.speechSynthesis.getEngine()
+    engine.cancel()
     setIsSpeaking(false)
     setIsPreparing(true)
     setNoVoiceAvailable(false)
@@ -106,7 +109,12 @@ export function useSpeechSynthesis() {
     if (!mountedRef.current || requestRef.current !== requestId) return false
     const { voice, lang } = findVoice(langCode, voices)
 
-    const utterance = new SpeechSynthesisUtterance(content)
+    const utterance = platformServices.speechSynthesis.createUtterance(content)
+    if (!utterance) {
+      setIsPreparing(false)
+      setNoVoiceAvailable(true)
+      return false
+    }
     utteranceRef.current = utterance
     utterance.lang = lang
     utterance.rate = 0.9
@@ -140,21 +148,21 @@ export function useSpeechSynthesis() {
 
     keepAliveRef.current = setInterval(() => {
       if (!isCurrentRequest()) return clearTimers()
-      if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
-        window.speechSynthesis.pause()
-        window.speechSynthesis.resume()
+      if (engine.speaking && !engine.paused) {
+        engine.pause()
+        engine.resume()
       }
     }, 10000)
 
     startTimeoutRef.current = setTimeout(() => {
-      if (!isCurrentRequest() || window.speechSynthesis.speaking) return
+      if (!isCurrentRequest() || engine.speaking) return
       clearTimers()
       setIsPreparing(false)
       setIsSpeaking(false)
       setNoVoiceAvailable(true)
     }, 3500)
 
-    window.speechSynthesis.speak(utterance)
+    engine.speak(utterance)
     return true
   }, [clearTimers, isSupported])
 
@@ -165,9 +173,13 @@ export function useSpeechSynthesis() {
       mountedRef.current = false
       requestRef.current += 1
       clearTimers()
-      window.speechSynthesis?.cancel()
+      platformServices.speechSynthesis.getEngine()?.cancel()
     }
   }, [clearTimers, isSupported])
+
+  useEffect(() => platformServices.lifecycle.subscribe(({ active }) => {
+    if (!active) stop()
+  }), [stop])
 
   return { speak, stop, isSpeaking, isPreparing, noVoiceAvailable, isSupported }
 }

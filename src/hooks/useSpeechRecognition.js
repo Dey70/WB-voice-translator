@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { platformServices } from '../services/platform/platformAdapter'
 
 const LANG_CODES = {
   bn: 'bn-IN',
@@ -7,12 +8,7 @@ const LANG_CODES = {
   en: 'en-IN',
 }
 
-const getIsIOS = () => typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
-
-const getSpeechRecognition = () => {
-  if (typeof window === 'undefined') return null
-  return window.SpeechRecognition || window.webkitSpeechRecognition || null
-}
+const getIsIOS = () => /iPad|iPhone|iPod/.test(platformServices.runtime.getUserAgent())
 
 const getErrorMessage = (error) => {
   if (error === 'no-speech') return 'No speech detected. Move closer to the microphone and try again.'
@@ -40,7 +36,7 @@ export function useSpeechRecognition() {
   const recognitionErrorRef = useRef(false)
   const mountedRef = useRef(true)
 
-  const SpeechRecognition = getSpeechRecognition()
+  const SpeechRecognition = platformServices.speechRecognition.getConstructor()
   const isSupported = Boolean(SpeechRecognition)
   const isIOS = getIsIOS()
 
@@ -197,6 +193,10 @@ export function useSpeechRecognition() {
       disposeRecognition()
     }
   }, [disposeRecognition])
+
+  useEffect(() => platformServices.lifecycle.subscribe(({ active }) => {
+    if (!active) stopListening()
+  }), [stopListening])
 
   return {
     transcript,

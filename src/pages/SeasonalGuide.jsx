@@ -5,6 +5,7 @@ import PlacesSubnav from '../components/places/PlacesSubnav'
 import { REGION_NAMES } from '../data/tourismLocale'
 import { REGION_SEASON_CONFIG, SEASON_CONDITIONS, SEASON_KEYS, SEASON_LOCALE } from '../data/seasonalGuide'
 import { CONTENT_AUDIT_DATE_LABEL, LIVE_CONDITION_SOURCES } from '../data/contentAudit'
+import { platformServices } from '../services/platform/platformAdapter'
 
 const LANGUAGES = ['en','bn','ne','hi']
 const AUDIT_COPY = {
@@ -28,7 +29,7 @@ export default function SeasonalGuide() {
         <div className="season-languages">{LANGUAGES.map(item=><button key={item} className={language===item?'active':''} onClick={()=>setLanguage(item)}>{item.toUpperCase()}</button>)}</div>
         <label><span>{copy.region}</span><select value={region} onChange={event=>setRegion(event.target.value)}>{Object.keys(REGION_SEASON_CONFIG).map(item=><option key={item} value={item}>{REGION_NAMES[item][language]}</option>)}</select></label>
       </section>
-      <div className="season-verify"><AlertTriangle size={16}/><span>{copy.verify} <small>{auditCopy.label}: {CONTENT_AUDIT_DATE_LABEL}. <a href={LIVE_CONDITION_SOURCES.weather} target="_blank" rel="noreferrer">{auditCopy.check}</a></small></span></div>
+      <div className="season-verify"><AlertTriangle size={16}/><span>{copy.verify} <small>{auditCopy.label}: {CONTENT_AUDIT_DATE_LABEL}. <button onClick={() => platformServices.links.openExternal(LIVE_CONDITION_SOURCES.weather)}>{auditCopy.check}</button></small></span></div>
       <section className="season-grid">
         {SEASON_KEYS.map(season=>{const [rating,condition]=config[season];return <article key={season} className={`season-card glass rating-${rating}`}><div className="season-card-top"><div><span>{copy[`${season}Months`]}</span><h2>{copy[season]}</h2></div><strong>{copy[rating]}</strong></div><p>{SEASON_CONDITIONS[condition][language]}</p></article>})}
       </section>

@@ -1,3 +1,5 @@
+import { platformServices } from './platform/platformAdapter'
+
 const TRANSLATION_ENDPOINT = '/api/translate'
 const SUPPORTED_LANGUAGES = new Set(['bn', 'hi', 'ne', 'en'])
 const MAX_TEXT_LENGTH = 500
@@ -6,7 +8,7 @@ export async function translateText(text, fromLang, toLang) {
   const content = text?.trim()
   if (!content) return ''
   if (fromLang === toLang) return content
-  if (typeof navigator !== 'undefined' && !navigator.onLine) throw new Error('Live translation is unavailable offline. Use the Phrasebook or SOS phrases.')
+  if (!platformServices.connectivity.isOnline()) throw new Error('Live translation is unavailable offline. Use the Phrasebook or SOS phrases.')
   if (content.length > MAX_TEXT_LENGTH) throw new Error(`Text must be ${MAX_TEXT_LENGTH} characters or fewer.`)
   if (!SUPPORTED_LANGUAGES.has(fromLang) || !SUPPORTED_LANGUAGES.has(toLang)) throw new Error('Unsupported language selection.')
 

@@ -7,6 +7,7 @@ import { EMERGENCY_RESOURCE_LOCALE } from '../data/emergencyResources'
 import { CONTENT_AUDIT_DATE_LABEL, CONTENT_AUDITS } from '../data/contentAudit'
 import { getPhraseById, matchPhrases } from '../data/repositories/phraseRepository'
 import { getEmergencyContacts, getOfficialSites } from '../data/repositories/emergencyRepository'
+import { platformServices } from '../services/platform/platformAdapter'
 
 const GROUPS = [
   { id: 'urgent', name: 'Urgent help', phraseIds: ['help', 'police', 'ambulance', 'doctor', 'hospital', 'pain', 'lost', 'passport'] },
@@ -46,7 +47,7 @@ export default function EmergencyMode() {
 
   const copyTranslation = async () => {
     if (!selected) return
-    await navigator.clipboard.writeText(selected.translations[toLang])
+    await platformServices.clipboard.writeText(selected.translations[toLang])
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
@@ -59,10 +60,10 @@ export default function EmergencyMode() {
           <h1>Emergency Mode</h1>
           <p>Tap the message you need. The translated phrase will fill the screen and play aloud.</p>
         </div>
-        <a className="emergency-call" href="tel:112" aria-label="Call 112 emergency services in India">
+        <button className="emergency-call" onClick={() => platformServices.links.callPhone('112')} aria-label="Call 112 emergency services in India">
           <Phone size={21} />
           <span><strong>Call 112</strong><small>India emergency services</small></span>
-        </a>
+        </button>
       </header>
 
       <div className="emergency-caution">
@@ -100,8 +101,8 @@ export default function EmergencyMode() {
         <div className="emergency-contact-grid">
           {contacts.map((contact) => (
             <article key={contact.id} className={`emergency-contact level-${contact.level}`}>
-              <div><span className="emergency-level">{resourceCopy[contact.level]}</span><h3>{contact.name[fromLang]}</h3><p>{contact.description[fromLang]}</p>{contact.alternate && <small>{contact.alternate}</small>}<a className="content-source-link" href={contact.sourceUrl} target="_blank" rel="noreferrer">Verify official source <ExternalLink size={11}/></a></div>
-              <a href={`tel:${contact.number}`} aria-label={`${resourceCopy.call} ${contact.number}`}><Phone size={15} /><strong>{contact.number}</strong><span>{resourceCopy.call}</span></a>
+              <div><span className="emergency-level">{resourceCopy[contact.level]}</span><h3>{contact.name[fromLang]}</h3><p>{contact.description[fromLang]}</p>{contact.alternate && <small>{contact.alternate}</small>}<button className="content-source-link" onClick={() => platformServices.links.openExternal(contact.sourceUrl)}>Verify official source <ExternalLink size={11}/></button></div>
+              <button onClick={() => platformServices.links.callPhone(contact.number)} aria-label={`${resourceCopy.call} ${contact.number}`}><Phone size={15} /><strong>{contact.number}</strong><span>{resourceCopy.call}</span></button>
             </article>
           ))}
         </div>
@@ -153,9 +154,9 @@ export default function EmergencyMode() {
         </div>
         <div className="emergency-site-grid">
           {sites.map((site) => (
-            <a key={site.id} href={site.url} target="_blank" rel="noreferrer">
+            <button key={site.id} onClick={() => platformServices.links.openExternal(site.url)}>
               <span><strong>{site.name[fromLang]}</strong><small>{site.description[fromLang]}</small></span><ExternalLink size={15} />
-            </a>
+            </button>
           ))}
         </div>
         <p className="emergency-site-warning"><Globe2 size={13} /> {resourceCopy.siteWarning}</p>

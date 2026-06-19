@@ -1,5 +1,6 @@
 ﻿import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import { platformServices } from '../services/platform/platformAdapter'
 
 export const useAppStore = create(
   persist(
@@ -39,6 +40,7 @@ export const useAppStore = create(
     }),
     {
       name: 'kothasetu-storage',
+      storage: createJSONStorage(() => platformServices.storage),
       partialize: (state) => ({
         history: state.history,
         favorites: state.favorites,

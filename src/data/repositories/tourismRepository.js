@@ -62,7 +62,7 @@ export const getTourismSpotView = (spot, language = 'en') => {
       ? localizedValue(englishDetails?.fee, 'en', DEFAULT_DETAILS.fee)
       : localizedValue(translatedDetails?.fee, language, localizedValue(englishDetails?.fee, 'en', DEFAULT_DETAILS.fee)),
     sourceUrl: TOURISM_OFFICIAL_SOURCES[spot.primaryRegion] || TOURISM_OFFICIAL_SOURCES.default,
-    mapsUrl: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${spot.name}, ${spot.locality || spot.primaryRegion}, India`)}`,
+    mapDestination: `${spot.name}, ${spot.locality || spot.primaryRegion}, India`,
   }
 }
 

@@ -1,18 +1,12 @@
 import { useEffect, useState } from 'react'
 import { WifiOff } from 'lucide-react'
+import { platformServices } from '../../services/platform/platformAdapter'
 
 export default function OfflineNotice() {
-  const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' || navigator.onLine)
+  const [isOnline, setIsOnline] = useState(() => platformServices.connectivity.isOnline())
 
   useEffect(() => {
-    const goOnline = () => setIsOnline(true)
-    const goOffline = () => setIsOnline(false)
-    window.addEventListener('online', goOnline)
-    window.addEventListener('offline', goOffline)
-    return () => {
-      window.removeEventListener('online', goOnline)
-      window.removeEventListener('offline', goOffline)
-    }
+    return platformServices.connectivity.subscribe(setIsOnline)
   }, [])
 
   if (isOnline) return null
