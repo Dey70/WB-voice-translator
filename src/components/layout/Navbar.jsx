@@ -1,15 +1,19 @@
 import { Link, useLocation } from 'react-router-dom'
-import { MessageSquare, Mic, History, BookOpen, HeartHandshake, MapPinned, ShieldAlert, Sun, Moon } from 'lucide-react'
+import { MessageSquare, Mic, BookOpen, MapPinned, ShieldAlert, Sun, Moon } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
-  { to: '/',             icon: Mic,           label: 'Translate' },
-  { to: '/conversation', icon: MessageSquare, label: 'Chat'      },
-  { to: '/history',      icon: History,       label: 'History'   },
-  { to: '/phrases',      icon: BookOpen,      label: 'Phrases'   },
-  { to: '/places',       icon: MapPinned,     label: 'Places'    },
-  { to: '/culture',      icon: HeartHandshake,label: 'Culture'   },
+  { to: '/',             icon: Mic,           label: 'Translate'    },
+  { to: '/conversation', icon: MessageSquare, label: 'Conversation', mobileLabel: 'Chat' },
+  { to: '/places',       icon: MapPinned,     label: 'Explore'      },
+  { to: '/phrases',      icon: BookOpen,      label: 'Phrasebook', mobileLabel: 'Phrases' },
+  { to: '/emergency',    icon: ShieldAlert,   label: 'SOS'          },
 ]
+
+const isNavActive = (pathname, to) => {
+  if (to === '/places') return pathname.startsWith('/places') || pathname === '/culture'
+  return pathname === to
+}
 
 export default function Navbar() {
   const location = useLocation()
@@ -48,7 +52,7 @@ export default function Navbar() {
           {/* Desktop nav links */}
           <div style={{ display: 'flex', gap: 2, flex: 1 }} className="desktop-nav">
             {navItems.map(({ to, icon: Icon, label }) => {
-              const active = to === '/places' ? location.pathname.startsWith('/places') : location.pathname === to
+              const active = isNavActive(location.pathname, to)
               return (
                 <Link key={to} to={to} style={{
                   textDecoration: 'none',
@@ -69,17 +73,13 @@ export default function Navbar() {
           {/* Mobile: centered page title */}
           <div className="mobile-nav" style={{ display: 'none', flex: 1, justifyContent: 'center' }}>
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
-              {location.pathname === '/emergency'
-                ? 'Emergency'
-                : location.pathname.startsWith('/places')
-                  ? 'Places'
+              {location.pathname === '/history'
+                ? 'Translation History'
+                : location.pathname === '/culture' || location.pathname.startsWith('/places')
+                  ? 'Explore'
                   : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
             </span>
           </div>
-
-          <Link className="desktop-sos" to="/emergency" title="Open Emergency Mode">
-            <ShieldAlert size={15} /> SOS
-          </Link>
 
           <button onClick={toggleDarkMode} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} style={{
             background: darkMode ? 'rgba(200,86,10,0.15)' : 'rgba(200,150,12,0.12)',
@@ -111,8 +111,8 @@ export default function Navbar() {
           gridTemplateColumns: `repeat(${navItems.length}, 1fr)`,
           width: '100%',
         }}>
-          {navItems.map(({ to, icon: Icon, label }) => {
-            const active = to === '/places' ? location.pathname.startsWith('/places') : location.pathname === to
+          {navItems.map(({ to, icon: Icon, label, mobileLabel }) => {
+            const active = isNavActive(location.pathname, to)
             return (
               <Link key={to} to={to} style={{
                 textDecoration: 'none',
@@ -133,16 +133,12 @@ export default function Navbar() {
                   fontSize: 10, fontWeight: active ? 600 : 400,
                   textAlign: 'center', whiteSpace: 'nowrap',
                   color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
-                }}>{label}</span>
+                }}>{mobileLabel || label}</span>
               </Link>
             )
           })}
         </div>
       </div>
-
-      <Link className="mobile-sos" to="/emergency" aria-label="Open Emergency Mode">
-        <ShieldAlert size={17} /> SOS
-      </Link>
     </>
   )
 }

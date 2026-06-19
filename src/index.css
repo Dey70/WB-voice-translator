@@ -39,9 +39,6 @@
 }
 
 /* Emergency mode */
-.desktop-sos, .mobile-sos { display:flex; align-items:center; justify-content:center; gap:5px; border:1px solid rgba(248,113,113,.45); background:rgba(248,113,113,.12); color:#f87171; font-size:12px; font-weight:700; text-decoration:none; }
-.desktop-sos { padding:7px 10px; margin-right:8px; border-radius:8px; }
-.mobile-sos { display:none; }
 .emergency-page { max-width:920px; margin:0 auto; padding:28px 16px 48px; }
 .emergency-header { display:flex; align-items:center; justify-content:space-between; gap:22px; padding:22px; border:1px solid rgba(248,113,113,.35); border-radius:18px; background:linear-gradient(135deg,rgba(127,29,29,.22),rgba(248,113,113,.06)); }
 .emergency-title>span { display:flex; align-items:center; gap:7px; color:#f87171; font-size:12px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; }
@@ -97,8 +94,6 @@
 .emergency-site-grid>a:hover { border-color:var(--accent-primary); }.emergency-site-grid strong,.emergency-site-grid small { display:block; }.emergency-site-grid strong { font-size:12px; }.emergency-site-grid small { margin-top:3px; color:var(--text-muted); font-size:9px; line-height:1.4; }.emergency-site-grid svg { flex-shrink:0; color:var(--accent-secondary); }
 
 @media (max-width:768px) {
-  .desktop-sos { display:none; }
-  .mobile-sos { display:flex; position:fixed; right:14px; bottom:calc(78px + env(safe-area-inset-bottom,0px)); z-index:49; padding:9px 12px; border-radius:999px; backdrop-filter:blur(12px); }
 }
 
 @media (max-width:640px) {
@@ -739,11 +734,20 @@ body {
 .places-hub>header>span,.season-hero>span { display:inline-flex; align-items:center; gap:6px; color:var(--accent-teal); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; }
 .places-hub>header h1,.season-hero h1 { margin:7px 0 6px; font-size:clamp(30px,6vw,44px); }
 .places-hub>header p,.season-hero p { max-width:680px; margin:0 auto; color:var(--text-secondary); font-size:14px; line-height:1.55; }
-.places-hub-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+.places-hub-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px; }
 .places-hub-card { display:block; padding:24px; border-radius:18px; color:var(--text-primary); text-decoration:none; transition:transform .2s,border-color .2s; }
 .places-hub-card:hover { transform:translateY(-3px); border-color:var(--accent-primary); }
 .places-hub-icon { width:48px; height:48px; display:grid; place-items:center; border-radius:14px; background:rgba(45,212,191,.12); color:var(--accent-teal); }
 .places-hub-icon.season { background:rgba(108,99,255,.13); color:var(--accent-secondary); }
+.places-hub-icon.culture { background:rgba(232,135,42,.14); color:#d66b16; }
+
+.translator-heading { position:relative; text-align:center; margin-bottom:28px; }
+.translator-history-link { position:absolute; top:50%; right:0; transform:translateY(-50%); display:inline-flex; align-items:center; gap:7px; padding:8px 12px; border:1px solid var(--border); border-radius:9px; background:var(--bg-card); color:var(--text-secondary); font-size:12px; font-weight:600; text-decoration:none; transition:color .2s,border-color .2s,background .2s; }
+.translator-history-link:hover { color:var(--accent-primary); border-color:var(--accent-primary); background:rgba(200,86,10,.08); }
+
+@media (max-width:700px) {
+  .translator-history-link { position:static; transform:none; margin-top:12px; }
+}
 .places-hub-card h2 { margin:18px 0 8px; font-size:22px; }
 .places-hub-card p { min-height:70px; color:var(--text-secondary); font-size:13px; line-height:1.6; }
 .places-hub-card>strong { display:flex; align-items:center; gap:6px; margin-top:16px; color:var(--accent-secondary); font-size:12px; }

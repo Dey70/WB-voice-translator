@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Mic, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Mic, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck, History } from 'lucide-react'
 import LanguageSelector from '../components/translation/LanguageSelector'
 import Waveform from '../components/translation/Waveform'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
@@ -69,13 +70,16 @@ export default function Translator() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
 
-      <div style={{ textAlign: 'center', marginBottom: 28 }}>
+      <div className="translator-heading">
         <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 700, marginBottom: 6 }}>
           <span className="gradient-text">Voice & Text</span> Translator
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(13px, 2vw, 16px)' }}>
           Speak or type in Bengali, Nepali, or Hindi
         </p>
+        <Link to="/history" className="translator-history-link">
+          <History size={16} /> Translation history
+        </Link>
       </div>
 
       <div className="mode-buttons" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
