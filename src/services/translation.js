@@ -1,56 +1,32 @@
-const AZURE_KEY = import.meta.env.VITE_AZURE_TRANSLATOR_KEY
-const AZURE_REGION = import.meta.env.VITE_AZURE_TRANSLATOR_REGION
-const AZURE_ENDPOINT = 'https://api.cognitive.microsofttranslator.com/translate?api-version=3.0'
-
-// Map our lang codes to Azure codes
-const AZURE_LANG_MAP = {
-  bn: 'bn',
-  hi: 'hi',
-  ne: 'ne',
-  en: 'en',
-}
+const TRANSLATION_ENDPOINT = '/api/translate'
+const SUPPORTED_LANGUAGES = new Set(['bn', 'hi', 'ne', 'en'])
+const MAX_TEXT_LENGTH = 500
 
 export async function translateText(text, fromLang, toLang) {
-  if (!text || !text.trim()) return ''
-  if (fromLang === toLang) return text
+  const content = text?.trim()
+  if (!content) return ''
+  if (fromLang === toLang) return content
+  if (content.length > MAX_TEXT_LENGTH) throw new Error(`Text must be ${MAX_TEXT_LENGTH} characters or fewer.`)
+  if (!SUPPORTED_LANGUAGES.has(fromLang) || !SUPPORTED_LANGUAGES.has(toLang)) throw new Error('Unsupported language selection.')
 
-  if (!AZURE_KEY) {
-    console.error('[KothaSetu] Azure key missing')
-    throw new Error('Translation service is not configured.')
-  }
-
-  const to = AZURE_LANG_MAP[toLang] || toLang
-
-  const url = AZURE_ENDPOINT +
-    (fromLang && fromLang !== 'auto' ? '&from=' + (AZURE_LANG_MAP[fromLang] || fromLang) : '') +
-    '&to=' + to +
-    '&textType=plain'
-
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 12_000)
   try {
-    const response = await fetch(url, {
+    const response = await fetch(TRANSLATION_ENDPOINT, {
       method: 'POST',
-      headers: {
-        'Ocp-Apim-Subscription-Key': AZURE_KEY,
-        'Ocp-Apim-Subscription-Region': AZURE_REGION,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify([{ text: text.trim() }]),
+      signal: controller.signal,
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: content, fromLang, toLang }),
     })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('[KothaSetu] Azure API error:', response.status, errorData)
-      throw new Error('HTTP ' + response.status)
-    }
-
-    const data = await response.json()
-    const result = data[0]?.translations?.[0]?.text
-
-    if (!result) throw new Error('Empty response from Azure')
-
-    return result
+    const data = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(data.error || 'Translation failed. Please try again.')
+    if (typeof data.translation !== 'string' || !data.translation.trim()) throw new Error('Translation returned an invalid response.')
+    return data.translation
   } catch (error) {
-    console.error('[KothaSetu] Translation error:', error)
-    throw new Error('Translation failed. Please check your connection.', { cause: error })
+    if (error.name === 'AbortError') throw new Error('Translation timed out. Please try again.', { cause: error })
+    throw new Error(error.message || 'Translation failed. Please check your connection.', { cause: error })
+  } finally {
+    clearTimeout(timeout)
   }
 }

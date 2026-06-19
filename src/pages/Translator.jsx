@@ -35,8 +35,8 @@ export default function Translator() {
       const result = await translateText(text, fromLang, toLang)
       setOutputText(result)
       addToHistory({ fromLang, toLang, originalText: text, translatedText: result, fromLangName: fromLangData.name, toLangName: toLangData.name })
-    } catch {
-      setError('Translation failed. Check your connection and try again.')
+    } catch (translationError) {
+      setError(translationError.message || 'Translation failed. Check your connection and try again.')
     } finally {
       setIsTranslating(false)
     }

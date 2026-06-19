@@ -68,11 +68,10 @@ Bengali to Nepali, Bengali to Hindi, Nepali to Hindi, and all reverse pairs.
 | State | Zustand (with localStorage persistence) |
 | Speech Recognition | Web Speech API (built into Chrome) |
 | Speech Synthesis | Web Speech Synthesis API (built into Chrome) |
-| Translation | MyMemory API (free, no API key needed) |
+| Translation | Azure AI Translator through a server-side API route |
 | Deployment | Vercel |
 
-**No backend. No database. No API keys required.**
-Everything runs in the browser — completely free to use and deploy.
+Azure credentials stay on the server and are never bundled into browser JavaScript. Translation requests pass through a validated, rate-limited `/api/translate` route.
 
 ---
 
@@ -91,6 +90,10 @@ cd WB-voice-translator
 
 # Install dependencies
 npm install
+
+# Create local server credentials
+Copy-Item .env.example .env
+# Fill in AZURE_TRANSLATOR_KEY and AZURE_TRANSLATOR_REGION
 
 # Start the development server
 npm run dev
@@ -112,9 +115,10 @@ This project is configured for one-click deployment on Vercel.
 
 1. Fork this repository
 2. Go to vercel.com and import the repo
-3. Click Deploy — no environment variables needed
+3. Add `AZURE_TRANSLATOR_KEY` and `AZURE_TRANSLATOR_REGION` in the Vercel project environment settings
+4. Deploy
 
-A vercel.json is included for proper SPA routing.
+A `vercel.json` is included for SPA routing and baseline security headers. Never use a `VITE_` prefix for the Azure key because Vite exposes such values to the browser bundle.
 
 ---
 
