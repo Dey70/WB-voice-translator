@@ -3,7 +3,7 @@ import { MessageSquare, Mic, BookOpen, MapPinned, ShieldAlert, Sun, Moon } from 
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
-  { to: '/',             icon: Mic,           label: 'Translate'    },
+  { to: '/translate',    icon: Mic,           label: 'Translate'    },
   { to: '/conversation', icon: MessageSquare, label: 'Conversation', mobileLabel: 'Chat' },
   { to: '/places',       icon: MapPinned,     label: 'Explore'      },
   { to: '/phrases',      icon: BookOpen,      label: 'Phrasebook', mobileLabel: 'Phrases' },

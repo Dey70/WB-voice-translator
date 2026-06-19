@@ -4,6 +4,7 @@ import Navbar from './components/layout/Navbar'
 import { useAppStore } from './store/appStore'
 
 const Translator    = lazy(() => import('./pages/Translator'))
+const Home          = lazy(() => import('./pages/Home'))
 const Conversation  = lazy(() => import('./pages/Conversation'))
 const History       = lazy(() => import('./pages/History'))
 const PhraseBank    = lazy(() => import('./pages/PhraseBank'))
@@ -135,7 +136,8 @@ export default function App() {
         <Navbar />
         <Suspense fallback={<div className="route-loader">Loading...</div>}>
           <Routes>
-            <Route path="/"              element={<Translator />} />
+            <Route path="/"              element={<Home />} />
+            <Route path="/translate"     element={<Translator />} />
             <Route path="/conversation"  element={<Conversation />} />
             <Route path="/history"       element={<History />} />
             <Route path="/phrases"       element={<PhraseBank />} />
