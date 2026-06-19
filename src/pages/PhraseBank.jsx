@@ -15,7 +15,7 @@ export default function PhraseBank() {
   const [locationId, setLocationId] = useState('')
   const [locationStatus, setLocationStatus] = useState('idle')
   const [locationError, setLocationError] = useState('')
-  const { speak, stop, isSpeaking } = useSpeechSynthesis()
+  const { speak, stop, isSpeaking, isPreparing, noVoiceAvailable } = useSpeechSynthesis()
 
   const from = getLanguage(fromLang)
   const to = getLanguage(toLang)
@@ -41,7 +41,7 @@ export default function PhraseBank() {
   }
 
   const playPhrase = (phrase) => {
-    if (isSpeaking && activePhrase === phrase.id) {
+    if ((isSpeaking || isPreparing) && activePhrase === phrase.id) {
       stop()
       setActivePhrase(null)
       return
@@ -89,6 +89,8 @@ export default function PhraseBank() {
         <h1><span className="gradient-text">Tourist</span> Phrase Bank</h1>
         <p>Tap a phrase to translate it and speak it aloud.</p>
       </header>
+
+      {noVoiceAvailable && <p className="speech-unavailable" role="alert">Voice playback is unavailable for {to.name} on this device. You can still read and show the phrase.</p>}
 
       <section className="location-context glass" aria-label="Location context">
         <div className="location-context-heading">
@@ -189,7 +191,7 @@ export default function PhraseBank() {
 
       <section className="phrase-grid" aria-live="polite">
         {phrases.map((phrase) => {
-          const playing = isSpeaking && activePhrase === phrase.id
+          const playing = (isSpeaking || isPreparing) && activePhrase === phrase.id
           return (
             <button
               key={phrase.id}

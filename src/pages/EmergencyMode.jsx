@@ -24,7 +24,7 @@ export default function EmergencyMode() {
   const [selectedId, setSelectedId] = useState('help')
   const [copied, setCopied] = useState(false)
   const [resourceScope, setResourceScope] = useState('india')
-  const { speak, stop, isSpeaking } = useSpeechSynthesis()
+  const { speak, stop, isSpeaking, isPreparing, noVoiceAvailable } = useSpeechSynthesis()
 
   const from = getLanguage(fromLang)
   const to = getLanguage(toLang)
@@ -37,8 +37,7 @@ export default function EmergencyMode() {
 
   const playPhrase = (phrase) => {
     setSelectedId(phrase.id)
-    stop()
-    setTimeout(() => speak(phrase.translations[toLang], toLang), 100)
+    speak(phrase.translations[toLang], toLang)
   }
 
   const swapLanguages = () => {
@@ -118,11 +117,12 @@ export default function EmergencyMode() {
           </div>
           <p className="emergency-target">{selected.translations[toLang]}</p>
           <div className="emergency-actions">
-            <button className="emergency-speak" onClick={() => isSpeaking ? stop() : speak(selected.translations[toLang], toLang)}>
-              {isSpeaking ? <VolumeX size={20} /> : <Volume2 size={20} />}{isSpeaking ? 'Stop speaking' : 'Speak loudly'}
+            <button className="emergency-speak" onClick={() => (isSpeaking || isPreparing) ? stop() : speak(selected.translations[toLang], toLang)}>
+              {isSpeaking || isPreparing ? <VolumeX size={20} /> : <Volume2 size={20} />}{isPreparing ? 'Preparing voice...' : isSpeaking ? 'Stop speaking' : 'Speak loudly'}
             </button>
             <button onClick={copyTranslation}><Copy size={17} /> {copied ? 'Copied' : 'Copy'}</button>
           </div>
+          {noVoiceAvailable && <p className="speech-unavailable" role="alert">Voice playback is unavailable for {to.name} on this device. Show or copy the translated text instead.</p>}
         </section>
       )}
 

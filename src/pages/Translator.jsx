@@ -20,7 +20,7 @@ export default function Translator() {
   const [error, setError] = useState(null)
 
   const { interimText, isListening, startListening, stopListening, resetTranscript, isSupported, isIOS, error: speechError } = useSpeechRecognition()
-  const { speak, isSpeaking, stop, noVoiceAvailable } = useSpeechSynthesis()
+  const { speak, isSpeaking, isPreparing, stop, noVoiceAvailable } = useSpeechSynthesis()
   const { addToHistory } = useAppStore()
 
   const fromLangData = getLanguage(fromLang)
@@ -235,7 +235,7 @@ export default function Translator() {
               {copied ? <CheckCheck size={13} /> : <Copy size={13} />}
               {copied ? '✓ Copied' : 'Copy'}
             </button>
-            <button onClick={() => isSpeaking ? stop() : speak(outputText, toLang)} disabled={!outputText} style={{
+            <button onClick={() => (isSpeaking || isPreparing) ? stop() : speak(outputText, toLang)} disabled={!outputText} style={{
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '6px 13px', borderRadius: 8,
               background: isSpeaking
@@ -246,8 +246,8 @@ export default function Translator() {
               cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: isSpeaking ? 600 : 400,
               transition: 'all 0.2s',
             }}>
-              {isSpeaking ? <VolumeX size={13} /> : <Volume2 size={13} />}
-              {isSpeaking ? 'Stop' : 'Speak'}
+              {isSpeaking || isPreparing ? <VolumeX size={13} /> : <Volume2 size={13} />}
+              {isPreparing ? 'Preparing...' : isSpeaking ? 'Stop' : 'Speak'}
             </button>
             {isSpeaking && <Waveform active={true} color={toLangData.color} />}
           </div>

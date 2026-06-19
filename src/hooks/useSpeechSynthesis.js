@@ -1,159 +1,173 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 
-// Language codes in priority order for speech synthesis
 const LANG_SPEECH_CODES = {
-  bn: ['bn-BD', 'bn-IN', 'bn'],
-  ne: ['ne-NP', 'ne', 'hi-IN', 'hi'],
+  bn: ['bn-IN', 'bn-BD', 'bn'],
+  ne: ['ne-NP', 'ne', 'hi-IN'],
   hi: ['hi-IN', 'hi'],
+  en: ['en-IN', 'en-GB', 'en-US', 'en'],
 }
 
 let voiceCache = []
-let voicesLoaded = false
+let voiceLoadPromise = null
 
 function loadVoices() {
-  return new Promise((resolve) => {
-    if (voicesLoaded && voiceCache.length > 0) {
-      resolve(voiceCache)
-      return
-    }
-    const tryLoad = () => {
-      const v = window.speechSynthesis.getVoices()
-      if (v.length > 0) {
-        voiceCache = v
-        voicesLoaded = true
-        console.log('[KothaSetu] Voices loaded:', v.length)
-        v.forEach(voice => {
-          if (['bn', 'hi', 'ne', 'en'].some(l => voice.lang.startsWith(l))) {
-            console.log('[KothaSetu] Voice:', voice.lang, '-', voice.name, voice.localService ? '(local)' : '(remote)')
-          }
-        })
-        resolve(v)
-      }
-    }
-    tryLoad()
-    window.speechSynthesis.onvoiceschanged = () => { tryLoad(); resolve(voiceCache) }
-    setTimeout(() => resolve(voiceCache), 3000)
-  })
-}
+  if (typeof window === 'undefined' || !window.speechSynthesis) return Promise.resolve([])
 
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  loadVoices()
+  const available = window.speechSynthesis.getVoices()
+  if (available.length) {
+    voiceCache = available
+    return Promise.resolve(available)
+  }
+  if (voiceLoadPromise) return voiceLoadPromise
+
+  voiceLoadPromise = new Promise((resolve) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      window.speechSynthesis.removeEventListener?.('voiceschanged', handleVoicesChanged)
+      voiceCache = window.speechSynthesis.getVoices()
+      resolve(voiceCache)
+      voiceLoadPromise = null
+    }
+    const handleVoicesChanged = () => {
+      if (window.speechSynthesis.getVoices().length) finish()
+    }
+
+    window.speechSynthesis.addEventListener?.('voiceschanged', handleVoicesChanged, { once: true })
+    setTimeout(finish, 1800)
+  })
+
+  return voiceLoadPromise
 }
 
 function findVoice(langCode, voices) {
   const codes = LANG_SPEECH_CODES[langCode] || [langCode]
-
   for (const code of codes) {
-    const base = code.split('-')[0]
-
-    // Exact match
-    const exact = voices.find(v => v.lang.toLowerCase() === code.toLowerCase())
-    if (exact) {
-      console.log('[KothaSetu] Exact voice:', exact.name, exact.lang)
-      return { voice: exact, lang: code, hasVoice: true }
-    }
-
-    // Starts-with match (e.g. bn-BD matches bn)
-    const partial = voices.find(v => v.lang.toLowerCase().startsWith(base))
-    if (partial) {
-      console.log('[KothaSetu] Partial voice:', partial.name, partial.lang)
-      return { voice: partial, lang: partial.lang, hasVoice: true }
-    }
+    const exact = voices.find((voice) => voice.lang.toLowerCase() === code.toLowerCase())
+    if (exact) return { voice: exact, lang: exact.lang }
   }
 
-  // No local voice found — return null voice but with correct lang code
-  // Chrome will attempt to use a remote/cloud voice if available
-  // This is the key fix for Bengali: DON'T assign voice=null explicitly,
-  // just set the lang and let the browser try its cloud voice
-  console.log('[KothaSetu] No local voice for', langCode, '— trying cloud fallback with lang:', codes[0])
-  return { voice: null, lang: codes[0], hasVoice: false }
+  const baseLanguage = codes[0].split('-')[0].toLowerCase()
+  const partial = voices.find((voice) => voice.lang.toLowerCase().split('-')[0] === baseLanguage)
+  return { voice: partial || null, lang: partial?.lang || codes[0] }
 }
 
 export function useSpeechSynthesis() {
   const [isSpeaking, setIsSpeaking] = useState(false)
+  const [isPreparing, setIsPreparing] = useState(false)
   const [noVoiceAvailable, setNoVoiceAvailable] = useState(false)
+  const requestRef = useRef(0)
+  const utteranceRef = useRef(null)
+  const startTimeoutRef = useRef(null)
+  const keepAliveRef = useRef(null)
+  const mountedRef = useRef(true)
 
-  const speak = useCallback(async (text, langCode) => {
-    if (!text || !text.trim()) return
-    if (!window.speechSynthesis) return
+  const isSupported = typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window
 
-    setNoVoiceAvailable(false)
-    window.speechSynthesis.cancel()
-    await new Promise(r => setTimeout(r, 150))
-
-    const voices = await loadVoices()
-    const { voice, lang, hasVoice } = findVoice(langCode, voices)
-
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = lang
-    utterance.rate = 0.88
-    utterance.pitch = 1.0
-    utterance.volume = 1.0
-
-    // Only assign voice if we found a real match
-    // For Bengali: do NOT assign voice — let browser use cloud TTS
-    if (voice) utterance.voice = voice
-
-    utterance.onstart = () => {
-      console.log('[KothaSetu] Speaking:', langCode, lang, hasVoice ? 'local' : 'cloud')
-      setIsSpeaking(true)
-      setNoVoiceAvailable(false)
-    }
-
-    utterance.onend = () => {
-      setIsSpeaking(false)
-    }
-
-    utterance.onerror = (e) => {
-      console.error('[KothaSetu] Speech error:', e.error, 'lang:', lang)
-      setIsSpeaking(false)
-
-      if (e.error === 'interrupted') return
-
-      // If synthesis-failed, the browser has no voice at all for this language
-      if (e.error === 'synthesis-failed' || e.error === 'language-unavailable') {
-        setNoVoiceAvailable(true)
-        return
-      }
-
-      // Retry once without specific voice (cloud fallback)
-      setTimeout(() => {
-        const u2 = new SpeechSynthesisUtterance(text)
-        u2.lang = lang
-        u2.rate = 0.88
-        u2.onerror = () => setNoVoiceAvailable(true)
-        window.speechSynthesis.speak(u2)
-      }, 500)
-    }
-
-    // Chrome keep-alive for long text
-    const keepAlive = setInterval(() => {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.pause()
-        window.speechSynthesis.resume()
-      } else {
-        clearInterval(keepAlive)
-      }
-    }, 10000)
-
-    window.speechSynthesis.speak(utterance)
-
-    // If nothing starts within 3 seconds, browser has no voice
-    setTimeout(() => {
-      if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
-        console.log('[KothaSetu] No speech started — voice unavailable for', langCode)
-        setIsSpeaking(false)
-        setNoVoiceAvailable(true)
-      }
-    }, 3000)
-
+  const clearTimers = useCallback(() => {
+    if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current)
+    if (keepAliveRef.current) clearInterval(keepAliveRef.current)
+    startTimeoutRef.current = null
+    keepAliveRef.current = null
   }, [])
 
   const stop = useCallback(() => {
+    requestRef.current += 1
+    clearTimers()
+    utteranceRef.current = null
+    if (isSupported) window.speechSynthesis.cancel()
+    if (mountedRef.current) {
+      setIsSpeaking(false)
+      setIsPreparing(false)
+      setNoVoiceAvailable(false)
+    }
+  }, [clearTimers, isSupported])
+
+  const speak = useCallback(async (text, langCode) => {
+    const content = text?.trim()
+    if (!content || !isSupported) {
+      if (!isSupported && mountedRef.current) setNoVoiceAvailable(true)
+      return false
+    }
+
+    requestRef.current += 1
+    const requestId = requestRef.current
+    clearTimers()
     window.speechSynthesis.cancel()
     setIsSpeaking(false)
+    setIsPreparing(true)
     setNoVoiceAvailable(false)
-  }, [])
 
-  return { speak, stop, isSpeaking, noVoiceAvailable }
+    await new Promise((resolve) => setTimeout(resolve, 120))
+    if (!mountedRef.current || requestRef.current !== requestId) return false
+
+    const voices = voiceCache.length ? voiceCache : await loadVoices()
+    if (!mountedRef.current || requestRef.current !== requestId) return false
+    const { voice, lang } = findVoice(langCode, voices)
+
+    const utterance = new SpeechSynthesisUtterance(content)
+    utteranceRef.current = utterance
+    utterance.lang = lang
+    utterance.rate = 0.9
+    utterance.pitch = 1
+    utterance.volume = 1
+    if (voice) utterance.voice = voice
+
+    const isCurrentRequest = () => mountedRef.current && requestRef.current === requestId
+    utterance.onstart = () => {
+      if (!isCurrentRequest()) return
+      clearTimeout(startTimeoutRef.current)
+      startTimeoutRef.current = null
+      setIsPreparing(false)
+      setIsSpeaking(true)
+    }
+    utterance.onend = () => {
+      if (!isCurrentRequest()) return
+      clearTimers()
+      utteranceRef.current = null
+      setIsSpeaking(false)
+      setIsPreparing(false)
+    }
+    utterance.onerror = (event) => {
+      if (!isCurrentRequest() || event.error === 'interrupted' || event.error === 'canceled') return
+      clearTimers()
+      utteranceRef.current = null
+      setIsSpeaking(false)
+      setIsPreparing(false)
+      setNoVoiceAvailable(true)
+    }
+
+    keepAliveRef.current = setInterval(() => {
+      if (!isCurrentRequest()) return clearTimers()
+      if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+        window.speechSynthesis.pause()
+        window.speechSynthesis.resume()
+      }
+    }, 10000)
+
+    startTimeoutRef.current = setTimeout(() => {
+      if (!isCurrentRequest() || window.speechSynthesis.speaking) return
+      clearTimers()
+      setIsPreparing(false)
+      setIsSpeaking(false)
+      setNoVoiceAvailable(true)
+    }, 3500)
+
+    window.speechSynthesis.speak(utterance)
+    return true
+  }, [clearTimers, isSupported])
+
+  useEffect(() => {
+    mountedRef.current = true
+    if (isSupported) loadVoices()
+    return () => {
+      mountedRef.current = false
+      requestRef.current += 1
+      clearTimers()
+      window.speechSynthesis?.cancel()
+    }
+  }, [clearTimers, isSupported])
+
+  return { speak, stop, isSpeaking, isPreparing, noVoiceAvailable, isSupported }
 }
