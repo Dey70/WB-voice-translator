@@ -22,7 +22,7 @@ export default function Navbar() {
   return (
     <>
       {/* Top navbar */}
-      <nav style={{
+      <nav className="app-navbar" style={{
         background: darkMode ? 'rgba(28, 15, 5, 0.94)' : 'rgba(253, 246, 233, 0.94)',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border)',
@@ -36,7 +36,7 @@ export default function Navbar() {
         }}>
           {/* Logo */}
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginRight: 32, flexShrink: 0 }}>
-            <div style={{
+            <div className="brand-mark" style={{
               width: 36, height: 36, borderRadius: 10,
               background: 'linear-gradient(135deg, #C8560A, #E8872A)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -44,7 +44,7 @@ export default function Navbar() {
               boxShadow: '0 3px 12px rgba(200,86,10,0.35)',
             }}>ক</div>
             <div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, fontFamily: "'Playfair Display', serif" }}>কথাসেতু</div>
+              <div className="brand-wordmark" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>কথাসেতু</div>
               <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: 2 }}>KOTHASETU</div>
             </div>
           </Link>
@@ -54,7 +54,7 @@ export default function Navbar() {
             {navItems.map(({ to, icon: Icon, label }) => {
               const active = isNavActive(location.pathname, to)
               return (
-                <Link key={to} to={to} style={{
+                <Link key={to} to={to} aria-current={active ? 'page' : undefined} style={{
                   textDecoration: 'none',
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '7px 14px', borderRadius: 8,
@@ -114,14 +114,14 @@ export default function Navbar() {
           {navItems.map(({ to, icon: Icon, label, mobileLabel }) => {
             const active = isNavActive(location.pathname, to)
             return (
-              <Link key={to} to={to} style={{
+              <Link key={to} to={to} className="mobile-tab-link" aria-current={active ? 'page' : undefined} style={{
                 textDecoration: 'none',
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
                 gap: 3, padding: '10px 0 8px',
                 color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
               }}>
-                <div style={{
+                <div className="mobile-tab-icon" style={{
                   width: 36, height: 28, borderRadius: 10,
                   background: active ? 'rgba(200,86,10,0.12)' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',

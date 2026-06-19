@@ -236,7 +236,7 @@ export default function Conversation() {
                 borderRadius: isA ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
                 padding: '14px 18px',
               }}>
-                <div style={{ fontSize: 16, color: 'var(--text-primary)', marginBottom: 10, lineHeight: 1.5 }}>
+                <div className="translation-copy" lang={msg.fromLang} style={{ fontSize: 16, color: 'var(--text-primary)', marginBottom: 10, lineHeight: 1.5 }}>
                   {msg.originalText}
                 </div>
                 <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
@@ -248,7 +248,7 @@ export default function Conversation() {
                         Translating to {toData.name}...
                       </div>
                     ) : (
-                      <div style={{ fontSize: 15, color: accentColor, lineHeight: 1.5 }}>
+                      <div className="translation-copy" lang={msg.toLang} style={{ fontSize: 15, color: accentColor, lineHeight: 1.5 }}>
                         {msg.translatedText}
                       </div>
                     )}

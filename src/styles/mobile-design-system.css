@@ -1,0 +1,47 @@
+/* KothaSetu mobile design system: terracotta, alpana geometry, and kantha linework. */
+::selection { background:rgba(200,86,10,.22); color:var(--text-primary); }
+html { -webkit-tap-highlight-color:transparent; text-rendering:optimizeLegibility; }
+body,button,input,textarea,select { font-family:var(--font-interface); }
+:lang(bn) { font-family:var(--font-bengali); }
+:lang(hi),:lang(ne) { font-family:var(--font-devanagari); }
+:lang(en) { font-family:var(--font-interface); }
+button,a,input,textarea,select { touch-action:manipulation; }
+button,select { min-height:var(--touch-target); }
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible { outline:3px solid rgba(200,86,10,.25); outline-offset:3px; }
+input,textarea,select { caret-color:var(--accent-primary); accent-color:var(--accent-primary); }
+textarea::placeholder,input::placeholder { color:var(--text-muted); opacity:.78; }
+h1,h2,h3 { text-wrap:balance; }
+
+.glass { border-radius:var(--radius-card); background-color:var(--bg-card); background-image:linear-gradient(135deg,rgba(200,86,10,.025),transparent 44%),radial-gradient(circle at 10px 10px,rgba(200,86,10,.055) 1px,transparent 1.3px); background-size:auto,20px 20px; box-shadow:var(--shadow-card); }
+.glass:hover { box-shadow:var(--shadow-card-raised); }
+
+.translation-surface { position:relative; overflow:hidden; border-radius:var(--radius-card) !important; border-top:3px solid rgba(200,86,10,.5); }
+.translation-surface::after { content:''; position:absolute; right:12px; bottom:8px; width:24px; height:24px; border:1px solid rgba(200,86,10,.13); border-radius:50% 50% 4px 50%; transform:rotate(45deg); pointer-events:none; }
+.translation-copy { font-family:var(--font-multiscript); font-size:clamp(17px,4.5vw,20px) !important; line-height:1.75 !important; letter-spacing:.005em; }
+.translation-copy:lang(bn) { font-family:var(--font-bengali); }
+.translation-copy:lang(hi),.translation-copy:lang(ne) { font-family:var(--font-devanagari); }
+
+.app-navbar { border-bottom:1px solid var(--border-strong) !important; }
+.app-navbar::after { content:''; position:absolute; left:0; right:0; bottom:-4px; height:4px; background:linear-gradient(135deg,var(--accent-primary) 25%,transparent 25%) 0 0/8px 8px,linear-gradient(225deg,var(--accent-gold) 25%,transparent 25%) 0 0/8px 8px; opacity:.32; }
+.brand-mark { border:1px solid rgba(255,255,255,.3); border-radius:50% 50% 12px 12px !important; font-family:var(--font-bengali); }
+.brand-wordmark { font-family:var(--font-bengali) !important; }
+.mobile-tab-link { min-height:64px; }
+.mobile-tab-icon { border-radius:50% 50% 9px 9px !important; }
+.mobile-tab-link[aria-current='page'] .mobile-tab-icon { box-shadow:inset 0 -2px 0 rgba(200,86,10,.35); }
+
+.mode-buttons button,.places-hub-languages button,.season-languages button,.culture-languages button,.tourism-language-options button { border-radius:50% 50% 10px 10px !important; }
+.phrase-card,.tourism-card,.culture-card,.season-card,.places-hub-card { border-radius:var(--radius-card) !important; box-shadow:var(--shadow-card); }
+
+@media (max-width:768px) {
+  body { font-size:16px; }
+  .app-navbar>div { height:58px !important; }
+  .mobile-nav-bar { border-top:1px solid var(--border-strong) !important; box-shadow:0 -8px 28px rgba(91,45,12,.12); }
+  .mobile-nav-bar::before { content:''; position:absolute; left:0; right:0; top:-5px; height:5px; background:linear-gradient(45deg,transparent 40%,var(--accent-primary) 42% 58%,transparent 60%) 0 0/10px 10px; opacity:.28; }
+  .glass { backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+  input,textarea,select { font-size:16px !important; }
+  .translation-surface { padding:18px !important; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+}

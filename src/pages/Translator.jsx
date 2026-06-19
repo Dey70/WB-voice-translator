@@ -131,7 +131,7 @@ export default function Translator() {
       </div>
 
       <div className="translation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
-        <div className="glass" style={{ borderRadius: 14, padding: 18 }}>
+        <div className="glass translation-surface" style={{ borderRadius: 14, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
@@ -146,6 +146,8 @@ export default function Translator() {
           </div>
 
           <textarea
+            className="translation-copy"
+            lang={fromLang}
             value={isListening && interimText && !inputText ? interimText : inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder={"Type or speak in " + fromLangData.name + "..."}
@@ -178,7 +180,7 @@ export default function Translator() {
           </div>
         </div>
 
-        <div className="glass" style={{ borderRadius: 14, padding: 18 }}>
+        <div className="glass translation-surface" style={{ borderRadius: 14, padding: 18 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
@@ -192,7 +194,7 @@ export default function Translator() {
             {isTranslating && <Loader size={14} style={{ color: 'var(--accent-primary)' }} />}
           </div>
 
-          <div style={{
+          <div className="translation-copy" lang={toLang} style={{
             minHeight: 'clamp(120px, 20vw, 160px)',
             fontSize: 'clamp(15px, 2vw, 18px)', lineHeight: 1.6,
             color: outputText ? 'var(--text-primary)' : 'var(--text-muted)',

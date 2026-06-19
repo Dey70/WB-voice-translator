@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Hind:wght@300;400;500;600&family=Tiro+Bangla:ital@0;1&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+@import "./styles/mobile-design-system.css";
 
 @import "tailwindcss";
 
@@ -18,6 +19,16 @@
   --text-muted:    #9E7B56;
   --border:        #E8D5B7;
   --border-light:  #F0E4CC;
+  --border-strong: #D8B98B;
+  --font-interface: 'Hind', 'Noto Sans Bengali', 'Noto Sans Devanagari', sans-serif;
+  --font-multiscript: 'Noto Sans Bengali', 'Noto Sans Devanagari', 'Hind', sans-serif;
+  --font-bengali: 'Tiro Bangla', 'Noto Sans Bengali', sans-serif;
+  --font-devanagari: 'Noto Sans Devanagari', 'Hind', sans-serif;
+  --touch-target: 44px;
+  --radius-control: 12px;
+  --radius-card: 18px;
+  --shadow-card: 0 5px 22px rgba(91,45,12,.09);
+  --shadow-card-raised: 0 10px 30px rgba(91,45,12,.14);
 }
 
 /* ── Dark mode (warm night) ── */
@@ -36,6 +47,9 @@
   --text-muted:    #8B6B4A;
   --border:        #3D2A14;
   --border-light:  #4E3520;
+  --border-strong: #68431F;
+  --shadow-card: 0 6px 24px rgba(0,0,0,.32);
+  --shadow-card-raised: 0 12px 34px rgba(0,0,0,.4);
 }
 
 /* Emergency mode */
