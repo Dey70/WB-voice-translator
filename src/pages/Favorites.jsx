@@ -1,4 +1,4 @@
-import { Star, Volume2, ArrowRight } from 'lucide-react'
+import { Star, Volume2, ArrowRight, Heart } from 'lucide-react'
 import { useAppStore } from '../store/appStore'
 import { getLanguage } from '../utils/constants'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
@@ -10,8 +10,8 @@ export default function Favorites() {
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, fontFamily: "'Playfair Display',serif" }}>
-          🪔 <span className="gradient-text">Favorites</span>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 28, fontWeight: 700, fontFamily: "'Playfair Display',serif" }}>
+          <Heart size={25} color="var(--accent-gold)" /> <span className="gradient-text">Favorites</span>
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginTop: 4 }}>
           {favorites.length} saved translation{favorites.length !== 1 ? 's' : ''}
@@ -20,8 +20,7 @@ export default function Favorites() {
 
       {favorites.length === 0 ? (
         <div className="glass" style={{ textAlign: 'center', padding: '56px 32px', borderRadius: 18 }}>
-          {/* Diya lamp illustration */}
-          <div style={{ fontSize: 52, marginBottom: 14, filter: 'drop-shadow(0 4px 12px rgba(200,150,12,0.4))' }}>🪔</div>
+          <div style={{ width: 62, height: 62, display: 'grid', placeItems: 'center', margin: '0 auto 14px', borderRadius: 20, background: 'rgba(200,150,12,.12)', color: 'var(--accent-gold)' }}><Heart size={30} /></div>
           <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6, fontFamily: "'Playfair Display',serif" }}>
             No favorites yet
           </div>

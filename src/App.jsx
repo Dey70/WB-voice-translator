@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Navbar from './components/layout/Navbar'
 import OfflineNotice from './components/layout/OfflineNotice'
+import Onboarding from './components/layout/Onboarding'
 import { useAppStore } from './store/appStore'
 
 const Translator    = lazy(() => import('./pages/Translator'))
@@ -14,6 +15,8 @@ const TourismSpots  = lazy(() => import('./pages/TourismSpots'))
 const PlacesHub     = lazy(() => import('./pages/PlacesHub'))
 const SeasonalGuide = lazy(() => import('./pages/SeasonalGuide'))
 const CulturalGuide = lazy(() => import('./pages/CulturalGuide'))
+const Discover      = lazy(() => import('./pages/Discover'))
+const Collections   = lazy(() => import('./pages/Collections'))
 
 // Howrah Bridge silhouette — iconic cantilever bridge of Kolkata
 function HowrahBridge({ color }) {
@@ -112,7 +115,7 @@ function SundarbansTree({ color }) {
 }
 
 export default function App() {
-  const { darkMode } = useAppStore()
+  const { darkMode, onboardingComplete } = useAppStore()
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
@@ -123,6 +126,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      {!onboardingComplete && <Onboarding />}
       {/* Warm gradient orbs */}
       <div className="orb orb-1" />
       <div className="orb orb-2" />
@@ -151,6 +155,8 @@ export default function App() {
             <Route path="/places/explore"element={<TourismSpots />} />
             <Route path="/places/seasons"element={<SeasonalGuide />} />
             <Route path="/culture"       element={<CulturalGuide />} />
+            <Route path="/discover"      element={<Discover />} />
+            <Route path="/collections"   element={<Collections />} />
           </Routes>
         </Suspense>
         </div>

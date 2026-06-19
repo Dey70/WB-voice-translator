@@ -10,8 +10,20 @@ const LANGUAGES = [
   { code: 'en', name: 'English',  nativeName: 'English',   label: 'EN',  color: '#C8960C' },
 ]
 
-export default function LanguageSelector({ value, onChange, exclude }) {
+export default function LanguageSelector({ value, onChange, exclude, variant = 'buttons' }) {
   const options = exclude ? LANGUAGES.filter((l) => l.code !== exclude) : LANGUAGES
+
+  if (variant === 'select') {
+    const selected = LANGUAGES.find((language) => language.code === value)
+    return (
+      <label className="language-select-compact">
+        <span style={{ color: selected?.color }}>{selected?.label}</span>
+        <select value={value} onChange={(event) => onChange(event.target.value)} aria-label="Choose language">
+          {options.map((language) => <option key={language.code} value={language.code}>{language.nativeName} - {language.name}</option>)}
+        </select>
+      </label>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>

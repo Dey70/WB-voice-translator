@@ -32,7 +32,7 @@ export default function History() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px' }}>
+    <main className="history-page immersive-page" style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 700 }}>Translation <span className="gradient-text">History</span></h1>
@@ -209,6 +209,6 @@ export default function History() {
           })}
         </div>
       )}
-    </div>
+    </main>
   )
 }

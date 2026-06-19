@@ -16,7 +16,7 @@ export default function Translator() {
   const [inputText, setInputText] = useState('')
   const [outputText, setOutputText] = useState('')
   const [isTranslating, setIsTranslating] = useState(false)
-  const [mode, setMode] = useState('text')
+  const [mode, setMode] = useState('voice')
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState(null)
 
@@ -80,7 +80,7 @@ export default function Translator() {
   }
 
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
+    <main className="translator-page immersive-page" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
 
       <div className="translator-heading">
         <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 700, marginBottom: 6 }}>
@@ -118,7 +118,7 @@ export default function Translator() {
       <div className="lang-selector-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
-          <LanguageSelector value={fromLang} onChange={(v) => { setFromLang(v); if (v === toLang) setToLang(fromLang); setOutputText(''); setError(null) }} />
+          <LanguageSelector variant="select" value={fromLang} onChange={(v) => { setFromLang(v); if (v === toLang) setToLang(fromLang); setOutputText(''); setError(null) }} />
         </div>
         <button className="swap-btn" onClick={handleSwap} title="Swap languages" style={{
           marginTop: 20, width: 42, height: 42, borderRadius: 21,
@@ -136,7 +136,7 @@ export default function Translator() {
         </button>
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>To</div>
-          <LanguageSelector value={toLang} onChange={(v) => { setToLang(v); if (v === fromLang) setFromLang(toLang); setOutputText(''); setError(null) }} exclude={fromLang} />
+          <LanguageSelector variant="select" value={toLang} onChange={(v) => { setToLang(v); if (v === fromLang) setFromLang(toLang); setOutputText(''); setError(null) }} exclude={fromLang} />
         </div>
       </div>
 
@@ -264,7 +264,7 @@ export default function Translator() {
       </button>
 
       {mode === 'voice' && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <section className="translator-voice-panel">
           {!isSupported && (
             <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center', padding: '12px 16px', background: 'rgba(248,113,113,0.08)', borderRadius: 10, border: '1px solid rgba(248,113,113,0.2)', maxWidth: 340 }}>
               Voice input requires Chrome or Edge browser on desktop.
@@ -376,9 +376,9 @@ export default function Translator() {
               {interimText}
             </div>
           )}
-        </div>
+        </section>
       )}
-    </div>
+    </main>
   )
 }
 

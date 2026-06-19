@@ -8,6 +8,16 @@ export const useAppStore = create(
       // Theme
       darkMode: false,
       toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
+      onboardingComplete: false,
+      completeOnboarding: () => set({ onboardingComplete: true }),
+
+      // Travel discovery
+      savedDiscoveries: [],
+      toggleDiscovery: (id) => set((state) => ({
+        savedDiscoveries: state.savedDiscoveries.includes(id)
+          ? state.savedDiscoveries.filter((item) => item !== id)
+          : [...state.savedDiscoveries, id],
+      })),
 
       // History
       history: [],
@@ -45,6 +55,8 @@ export const useAppStore = create(
         history: state.history,
         favorites: state.favorites,
         darkMode: state.darkMode,
+        onboardingComplete: state.onboardingComplete,
+        savedDiscoveries: state.savedDiscoveries,
       }),
     }
   )

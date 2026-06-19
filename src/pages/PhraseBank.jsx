@@ -1,10 +1,22 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeftRight, LocateFixed, MapPin, Search, Volume2, VolumeX, WifiOff } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { ArrowLeftRight, ArrowRight, BedDouble, CircleHelp, Landmark, Languages, LocateFixed, MapPin, MessageCircle, Search, ShieldAlert, ShoppingBag, TrainFront, UtensilsCrossed, Volume2, VolumeX, WifiOff } from 'lucide-react'
 import LanguageSelector from '../components/translation/LanguageSelector'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getLanguage } from '../utils/constants'
 import { getLocationContextById, getLocationPhrases, getNearestLocationContext, LOCATION_CONTEXTS, PHRASE_CATEGORIES, queryPhrases } from '../data/repositories/phraseRepository'
 import { platformServices } from '../services/platform/platformAdapter'
+
+const CATEGORY_ICONS = {
+  greetings: MessageCircle,
+  food: UtensilsCrossed,
+  transport: TrainFront,
+  stays: BedDouble,
+  sightseeing: Landmark,
+  shopping: ShoppingBag,
+  essentials: CircleHelp,
+  emergency: ShieldAlert,
+}
 
 export default function PhraseBank() {
   const [fromLang, setFromLang] = useState('hi')
@@ -76,6 +88,28 @@ export default function PhraseBank() {
         <h1><span className="gradient-text">Tourist</span> Phrase Bank</h1>
         <p>Tap a phrase to translate it and speak it aloud.</p>
       </header>
+
+      <section className="phrase-category-dashboard" aria-label="Phrase categories">
+        {PHRASE_CATEGORIES.map((item) => {
+          const Icon = CATEGORY_ICONS[item.id] || Languages
+          const count = queryPhrases({ category: item.id, query: '' }).length
+          return (
+            <button key={item.id} className={category === item.id ? 'active' : ''} onClick={() => setCategory(item.id)}>
+              <span><Icon size={20} /></span><strong>{item.name}</strong><small>{count} phrases</small>
+            </button>
+          )
+        })}
+      </section>
+
+      <Link to="/emergency" className="phrase-sos-band">
+        <span><ShieldAlert size={21} /></span><div><strong>Emergency phrases and helplines</strong><small>Police, medical help and tourist support</small></div><ArrowRight size={17} />
+      </Link>
+
+      <section className="phrase-trust-row" aria-label="Phrasebook facts">
+        <div><strong>400</strong><span>Curated phrases</span></div>
+        <div><strong>4</strong><span>Languages</span></div>
+        <div><strong><WifiOff size={15} /> Ready</strong><span>Works offline</span></div>
+      </section>
 
       {noVoiceAvailable && <p className="speech-unavailable" role="alert">Voice playback is unavailable for {to.name} on this device. You can still read and show the phrase.</p>}
 

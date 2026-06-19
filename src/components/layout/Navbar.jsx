@@ -1,23 +1,40 @@
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { MessageSquare, Mic, BookOpen, MapPinned, ShieldAlert, Sun, Moon } from 'lucide-react'
+import { Mic, Compass, Bookmark, Home, Sun, Moon, Menu, X, MessageSquare, BookOpen, MapPinned, ShieldAlert, History, HeartHandshake } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
+  { to: '/',             icon: Home,          label: 'Home'         },
   { to: '/translate',    icon: Mic,           label: 'Translate'    },
-  { to: '/conversation', icon: MessageSquare, label: 'Conversation', mobileLabel: 'Chat' },
-  { to: '/places',       icon: MapPinned,     label: 'Explore'      },
-  { to: '/phrases',      icon: BookOpen,      label: 'Phrasebook', mobileLabel: 'Phrases' },
-  { to: '/emergency',    icon: ShieldAlert,   label: 'SOS'          },
+  { to: '/discover',     icon: Compass,       label: 'Discover'     },
+  { to: '/collections',  icon: Bookmark,      label: 'Collections', mobileLabel: 'Saved' },
+]
+
+const mobileNavItems = [
+  { to: '/discover', icon: Compass, label: 'Explore' },
+  { to: '/phrases', icon: BookOpen, label: 'Phrases' },
+  { to: '/translate', icon: Mic, label: 'Translate', primary: true },
+  { to: '/conversation', icon: MessageSquare, label: 'Convo' },
+]
+
+const moreItems = [
+  { to: '/conversation', icon: MessageSquare, label: 'Conversation', detail: 'Two-person voice translation' },
+  { to: '/phrases', icon: BookOpen, label: 'Phrasebook', detail: 'Useful phrases available offline' },
+  { to: '/places', icon: MapPinned, label: 'Places & seasons', detail: 'Sightseeing and trip planning' },
+  { to: '/culture', icon: HeartHandshake, label: 'Cultural guide', detail: 'Customs, etiquette and festivals' },
+  { to: '/history', icon: History, label: 'Translation history', detail: 'Saved activity on this device' },
+  { to: '/emergency', icon: ShieldAlert, label: 'Emergency', detail: 'SOS phrases and verified numbers', urgent: true },
 ]
 
 const isNavActive = (pathname, to) => {
-  if (to === '/places') return pathname.startsWith('/places') || pathname === '/culture'
+  if (to === '/') return pathname === '/'
   return pathname === to
 }
 
 export default function Navbar() {
   const location = useLocation()
   const { darkMode, toggleDarkMode } = useAppStore()
+  const [moreOpen, setMoreOpen] = useState(false)
 
   return (
     <>
@@ -34,19 +51,9 @@ export default function Navbar() {
           padding: '0 16px',
           display: 'flex', alignItems: 'center', height: 60,
         }}>
-          {/* Logo */}
-          <Link to="/" aria-label="KothaSetu — go to home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginRight: 32, flexShrink: 0 }}>
-            <div className="brand-mark" style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: 'linear-gradient(135deg, #C8560A, #E8872A)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18, fontWeight: 700, color: 'white',
-              boxShadow: '0 3px 12px rgba(200,86,10,0.35)',
-            }}>ক</div>
-            <div>
-              <div className="brand-wordmark" style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>কথাসেতু</div>
-              <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: 2 }}>KOTHASETU</div>
-            </div>
+          {/* Bengali wordmark from the mobile design system */}
+          <Link to="/" className="brand-logo-link" aria-label="KothaSetu - go to home">
+            <div className="brand-logo"><span>কথা</span><b>সেতু</b></div>
           </Link>
 
           {/* Desktop nav links */}
@@ -77,11 +84,16 @@ export default function Navbar() {
                 ? 'Translation History'
                 : location.pathname === '/culture' || location.pathname.startsWith('/places')
                   ? 'Explore'
+                  : location.pathname === '/phrases'
+                    ? 'Phrasebook'
+                    : location.pathname === '/emergency'
+                      ? 'Emergency'
                   : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
             </span>
           </div>
 
           <button
+            className="theme-toggle"
             onClick={toggleDarkMode}
             aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             aria-pressed={darkMode}
@@ -96,8 +108,24 @@ export default function Navbar() {
           }}>
             {darkMode ? <><Sun size={14} /> <span>Day</span></> : <><Moon size={14} /> <span>Night</span></>}
           </button>
+          <button className="more-trigger" onClick={() => setMoreOpen((open) => !open)} aria-expanded={moreOpen} aria-controls="more-menu">
+            {moreOpen ? <X size={17} /> : <Menu size={17} />}
+            <span>More</span>
+          </button>
         </div>
       </nav>
+
+      {moreOpen && <button className="more-backdrop" aria-label="Close menu" onClick={() => setMoreOpen(false)} />}
+      <aside id="more-menu" className={`more-menu ${moreOpen ? 'open' : ''}`} aria-hidden={!moreOpen}>
+        <header><div><span>Explore KothaSetu</span><strong>More tools</strong></div><button onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={19} /></button></header>
+        <div className="more-menu-grid">
+          {moreItems.map(({ to, icon: Icon, label, detail, urgent }) => (
+            <Link key={to} to={to} onClick={() => setMoreOpen(false)} className={urgent ? 'urgent' : ''} tabIndex={moreOpen ? 0 : -1}>
+              <span><Icon size={19} /></span><div><strong>{label}</strong><small>{detail}</small></div>
+            </Link>
+          ))}
+        </div>
+      </aside>
 
       {/* Mobile bottom tab bar */}
       <nav className="mobile-nav mobile-nav-bar" aria-label="Main navigation" style={{
@@ -112,13 +140,13 @@ export default function Navbar() {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: `repeat(${navItems.length}, 1fr)`,
+          gridTemplateColumns: 'repeat(5, 1fr)',
           width: '100%',
         }}>
-          {navItems.map(({ to, icon: Icon, label, mobileLabel }) => {
+          {mobileNavItems.map(({ to, icon: Icon, label, primary }) => {
             const active = isNavActive(location.pathname, to)
             return (
-              <Link key={to} to={to} className="mobile-tab-link" aria-current={active ? 'page' : undefined} style={{
+              <Link key={to} to={to} className={`mobile-tab-link${primary ? ' primary' : ''}`} aria-current={active ? 'page' : undefined} style={{
                 textDecoration: 'none',
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
@@ -137,10 +165,13 @@ export default function Navbar() {
                   fontSize: 10, fontWeight: active ? 600 : 400,
                   textAlign: 'center', whiteSpace: 'nowrap',
                   color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
-                }}>{mobileLabel || label}</span>
+                }}>{label}</span>
               </Link>
             )
           })}
+          <button className="mobile-tab-link mobile-more" onClick={() => setMoreOpen(true)} aria-expanded={moreOpen}>
+            <div className="mobile-tab-icon"><Menu size={20} /></div><span>More</span>
+          </button>
         </div>
       </nav>
     </>

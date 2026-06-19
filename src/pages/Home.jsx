@@ -1,94 +1,81 @@
-import { Link } from 'react-router-dom'
-import {
-  ArrowRight,
-  BookOpen,
-  Clock3,
-  MapPinned,
-  MessageSquare,
-  Mic,
-  ShieldAlert,
-  Sparkles,
-} from 'lucide-react'
-import { useAppStore } from '../store/appStore'
+import { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { ArrowRight, BookOpen, Compass, Landmark, MapPin, MessageSquare, Mic, Mountain, Search, ShieldAlert, Star, Trees, UtensilsCrossed } from 'lucide-react'
 
 const quickActions = [
-  {
-    to: '/conversation',
-    icon: MessageSquare,
-    title: 'Have a conversation',
-    description: 'Use a simple two-person translation view.',
-    tone: 'teal',
-  },
-  {
-    to: '/phrases',
-    icon: BookOpen,
-    title: 'Find a useful phrase',
-    description: 'Browse practical phrases for common situations.',
-    tone: 'gold',
-  },
-  {
-    to: '/places',
-    icon: MapPinned,
-    title: 'Explore the region',
-    description: 'Discover places, seasons, and local culture.',
-    tone: 'violet',
-  },
+  { to: '/translate', icon: Mic, label: 'Translate', detail: 'Speak or type' },
+  { to: '/phrases', icon: BookOpen, label: 'Phrasebook', detail: 'Works offline' },
+  { to: '/discover', icon: Compass, label: 'Explore', detail: 'Local ideas' },
+  { to: '/emergency', icon: ShieldAlert, label: 'SOS', detail: 'Urgent help', urgent: true },
+]
+
+const interests = [
+  { icon: Landmark, label: 'Heritage', tone: 'terracotta' },
+  { icon: Trees, label: 'Wildlife', tone: 'teal' },
+  { icon: UtensilsCrossed, label: 'Food', tone: 'gold' },
+  { icon: Mountain, label: 'Hills', tone: 'indigo' },
+]
+
+const trending = [
+  { title: 'Bishnupur', subtitle: 'Terracotta temples', region: 'Bankura', tone: 'terracotta' },
+  { title: 'Darjeeling', subtitle: 'Tea trails and hill walks', region: 'Darjeeling', tone: 'tea' },
+  { title: 'Sundarbans', subtitle: 'Guided mangrove journeys', region: 'South Bengal', tone: 'teal' },
 ]
 
 export default function Home() {
-  const history = useAppStore((state) => state.history)
-  const latestTranslation = history[0]
+  const [query, setQuery] = useState('')
+  const navigate = useNavigate()
+
+  const search = (event) => {
+    event.preventDefault()
+    navigate(query.trim() ? `/places/explore?q=${encodeURIComponent(query.trim())}` : '/discover')
+  }
 
   return (
-    <main className="home-page">
-      <section className="home-hero glass">
-        <div className="home-hero-copy">
-          <span className="home-eyebrow"><Sparkles size={14} /> Your local travel companion</span>
-          <h1>Travel with fewer language barriers.</h1>
-          <p>Translate, communicate, and explore West Bengal and its surrounding regions with more confidence.</p>
-          <Link to="/translate" className="home-primary-action">
-            <span><Mic size={22} /></span>
-            <div><strong>Start translating</strong><small>Speak or type a message</small></div>
-            <ArrowRight size={20} />
-          </Link>
-        </div>
-        <div className="home-language-mark" aria-hidden="true">
-          <strong>ক</strong><span>अ</span><small>A</small>
+    <main className="home-page mockup-home">
+      <section className="mockup-home-hero">
+        <div className="mockup-home-pattern" aria-hidden="true" />
+        <div className="mockup-greeting">
+          <span>Namaskar, traveller</span>
+          <h1>West Bengal,<br />without the <em>language</em> wall.</h1>
+          <p>Useful words, local context and calmer journeys, all in one place.</p>
         </div>
       </section>
 
-      <section className="home-section">
-        <div className="home-section-heading">
-          <div><span>Quick actions</span><h2>What do you need right now?</h2></div>
+      <form className="mockup-search" onSubmit={search}>
+        <Search size={18} />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search places, food or phrases" aria-label="Search KothaSetu" />
+        <button type="button" onClick={() => navigate('/translate')} aria-label="Open voice translator"><Mic size={17} /></button>
+      </form>
+
+      <section className="mockup-quick-grid" aria-label="Quick actions">
+        {quickActions.map(({ to, icon: Icon, label, detail, urgent }) => (
+          <Link key={to} to={to} className={urgent ? 'urgent' : ''}><span><Icon size={20} /></span><strong>{label}</strong><small>{detail}</small></Link>
+        ))}
+      </section>
+
+      <section className="mockup-section">
+        <header><div><span>Pick a mood</span><h2>Explore by interest</h2></div><Link to="/discover">See all <ArrowRight size={14} /></Link></header>
+        <div className="mockup-interests">
+          {interests.map(({ icon: Icon, label, tone }) => (
+            <Link key={label} to="/discover"><span className={`interest-ring ${tone}`}><Icon size={22} /></span><strong>{label}</strong></Link>
+          ))}
         </div>
-        <div className="home-action-grid">
-          {quickActions.map(({ to, icon: Icon, title, description, tone }) => (
-            <Link to={to} className="home-action-card glass" key={to}>
-              <span className={`home-action-icon ${tone}`}><Icon size={21} /></span>
-              <div><strong>{title}</strong><p>{description}</p></div>
-              <ArrowRight size={17} />
+      </section>
+
+      <section className="mockup-section">
+        <header><div><span>Worth a detour</span><h2>Ideas for your trip</h2></div></header>
+        <div className="mockup-trending-rail">
+          {trending.map((item) => (
+            <Link key={item.title} to="/places/explore" className={`mockup-trend-card ${item.tone}`}>
+              <span className="mockup-rating"><Star size={11} fill="currentColor" /> Curated</span>
+              <div><small><MapPin size={11} /> {item.region}</small><h3>{item.title}</h3><p>{item.subtitle}</p></div>
             </Link>
           ))}
         </div>
       </section>
 
-      {latestTranslation && (
-        <section className="home-recent glass">
-          <span className="home-action-icon recent"><Clock3 size={19} /></span>
-          <div>
-            <small>Continue where you left off</small>
-            <strong>{latestTranslation.originalText}</strong>
-            <p>{latestTranslation.translatedText}</p>
-          </div>
-          <Link to="/history">View history <ArrowRight size={15} /></Link>
-        </section>
-      )}
-
-      <Link to="/emergency" className="home-emergency">
-        <span><ShieldAlert size={22} /></span>
-        <div><strong>Need urgent help?</strong><small>Open emergency phrases and verified contact numbers</small></div>
-        <ArrowRight size={18} />
-      </Link>
+      <Link to="/conversation" className="mockup-conversation-cta"><span><MessageSquare size={21} /></span><div><strong>Talking with someone?</strong><small>Open two-person Conversation mode</small></div><ArrowRight size={17} /></Link>
     </main>
   )
 }

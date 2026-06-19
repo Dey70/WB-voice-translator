@@ -176,7 +176,7 @@ export default function Conversation() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px', display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)' }}>
+    <main className="conversation-page immersive-page" style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px', display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)' }}>
 
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
@@ -317,6 +317,6 @@ export default function Conversation() {
           </button>
         </div>
       )}
-    </div>
+    </main>
   )
 }
