@@ -3,9 +3,10 @@ import { AlertCircle, ArrowLeftRight, Copy, ExternalLink, Globe2, Phone, PhoneCa
 import LanguageSelector from '../components/translation/LanguageSelector'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getLanguage } from '../utils/constants'
-import { TOURIST_PHRASES } from '../data/touristPhrases'
-import { EMERGENCY_CONTACTS, EMERGENCY_RESOURCE_LOCALE, OFFICIAL_SITES } from '../data/emergencyResources'
-import { CONTENT_AUDIT_DATE_LABEL, CONTENT_AUDITS, EMERGENCY_CONTACT_SOURCES } from '../data/contentAudit'
+import { EMERGENCY_RESOURCE_LOCALE } from '../data/emergencyResources'
+import { CONTENT_AUDIT_DATE_LABEL, CONTENT_AUDITS } from '../data/contentAudit'
+import { getPhraseById, matchPhrases } from '../data/repositories/phraseRepository'
+import { getEmergencyContacts, getOfficialSites } from '../data/repositories/emergencyRepository'
 
 const GROUPS = [
   { id: 'urgent', name: 'Urgent help', phraseIds: ['help', 'police', 'ambulance', 'doctor', 'hospital', 'pain', 'lost', 'passport'] },
@@ -13,10 +14,6 @@ const GROUPS = [
   { id: 'lost', name: 'Lost items', match: (id) => id.startsWith('emergency-lost-') || id.startsWith('emergency-find-') || id === 'passport' },
   { id: 'safety', name: 'Safety', phraseIds: ['help', 'police', 'ambulance', 'hospital', 'safe-today', 'road-open', 'mobile-signal', 'do-not-understand', 'speak-slowly'] },
 ]
-
-const phrasesForGroup = (group) => group.phraseIds
-  ? group.phraseIds.map((id) => TOURIST_PHRASES.find((phrase) => phrase.id === id)).filter(Boolean)
-  : TOURIST_PHRASES.filter((phrase) => group.match?.(phrase.id))
 
 export default function EmergencyMode() {
   const [fromLang, setFromLang] = useState('hi')
@@ -30,11 +27,11 @@ export default function EmergencyMode() {
   const from = getLanguage(fromLang)
   const to = getLanguage(toLang)
   const group = GROUPS.find((item) => item.id === groupId) || GROUPS[0]
-  const phrases = useMemo(() => phrasesForGroup(group), [group])
-  const selected = TOURIST_PHRASES.find((phrase) => phrase.id === selectedId) || phrases[0]
+  const phrases = useMemo(() => matchPhrases(group), [group])
+  const selected = getPhraseById(selectedId) || phrases[0]
   const resourceCopy = EMERGENCY_RESOURCE_LOCALE[fromLang]
-  const contacts = EMERGENCY_CONTACTS.filter((item) => item.scope === resourceScope)
-  const sites = OFFICIAL_SITES.filter((item) => item.scope === resourceScope)
+  const contacts = getEmergencyContacts(resourceScope)
+  const sites = getOfficialSites(resourceScope)
 
   const playPhrase = (phrase) => {
     setSelectedId(phrase.id)
@@ -103,7 +100,7 @@ export default function EmergencyMode() {
         <div className="emergency-contact-grid">
           {contacts.map((contact) => (
             <article key={contact.id} className={`emergency-contact level-${contact.level}`}>
-              <div><span className="emergency-level">{resourceCopy[contact.level]}</span><h3>{contact.name[fromLang]}</h3><p>{contact.description[fromLang]}</p>{contact.alternate && <small>{contact.alternate}</small>}<a className="content-source-link" href={EMERGENCY_CONTACT_SOURCES[contact.id]} target="_blank" rel="noreferrer">Verify official source <ExternalLink size={11}/></a></div>
+              <div><span className="emergency-level">{resourceCopy[contact.level]}</span><h3>{contact.name[fromLang]}</h3><p>{contact.description[fromLang]}</p>{contact.alternate && <small>{contact.alternate}</small>}<a className="content-source-link" href={contact.sourceUrl} target="_blank" rel="noreferrer">Verify official source <ExternalLink size={11}/></a></div>
               <a href={`tel:${contact.number}`} aria-label={`${resourceCopy.call} ${contact.number}`}><Phone size={15} /><strong>{contact.number}</strong><span>{resourceCopy.call}</span></a>
             </article>
           ))}
@@ -136,7 +133,7 @@ export default function EmergencyMode() {
         {GROUPS.map((item) => (
           <button key={item.id} role="tab" aria-selected={groupId === item.id} className={groupId === item.id ? 'active' : ''} onClick={() => {
             setGroupId(item.id)
-            const next = phrasesForGroup(item)[0]
+            const next = matchPhrases(item)[0]
             if (next) setSelectedId(next.id)
           }}>{item.name}</button>
         ))}

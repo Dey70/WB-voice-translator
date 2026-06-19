@@ -3,8 +3,7 @@ import { ArrowLeftRight, LocateFixed, MapPin, Search, Volume2, VolumeX, WifiOff 
 import LanguageSelector from '../components/translation/LanguageSelector'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getLanguage } from '../utils/constants'
-import { PHRASE_CATEGORIES, TOURIST_PHRASES } from '../data/touristPhrases'
-import { getNearestLocationContext, LOCATION_CONTEXTS } from '../data/locationContexts'
+import { getLocationContextById, getLocationPhrases, getNearestLocationContext, LOCATION_CONTEXTS, PHRASE_CATEGORIES, queryPhrases } from '../data/repositories/phraseRepository'
 
 export default function PhraseBank() {
   const [fromLang, setFromLang] = useState('hi')
@@ -19,19 +18,9 @@ export default function PhraseBank() {
 
   const from = getLanguage(fromLang)
   const to = getLanguage(toLang)
-  const locationContext = LOCATION_CONTEXTS.find((location) => location.id === locationId)
-  const recommendedPhrases = locationContext
-    ? locationContext.phraseIds.map((id) => TOURIST_PHRASES.find((phrase) => phrase.id === id)).filter(Boolean)
-    : []
-  const phrases = useMemo(() => {
-    const search = query.trim().toLocaleLowerCase()
-    return TOURIST_PHRASES.filter((phrase) => {
-      const inCategory = phrase.category === category
-      const matchesSearch = !search || [phrase.title, ...Object.values(phrase.translations)]
-        .some((text) => text.toLocaleLowerCase().includes(search))
-      return inCategory && matchesSearch
-    })
-  }, [category, query])
+  const locationContext = getLocationContextById(locationId)
+  const recommendedPhrases = getLocationPhrases(locationContext)
+  const phrases = useMemo(() => queryPhrases({ category, query }), [category, query])
 
   const swapLanguages = () => {
     setFromLang(toLang)
@@ -51,7 +40,7 @@ export default function PhraseBank() {
   }
 
   const applyLocation = (id) => {
-    const location = LOCATION_CONTEXTS.find((item) => item.id === id)
+    const location = getLocationContextById(id)
     setLocationId(id)
     setLocationError('')
     if (!location) return

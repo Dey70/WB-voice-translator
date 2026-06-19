@@ -1,16 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { AlertTriangle, Clock3, ExternalLink, IndianRupee, MapPinned, Navigation, Search } from 'lucide-react'
-import { TOURISM_DETAIL_TRANSLATIONS, TOURISM_REGIONS, TOURISM_SPOTS } from '../data/tourismSpots'
-import { TOURISM_ENGLISH_DESCRIPTIONS, TOURISM_ENGLISH_DETAILS } from '../data/tourismEnglish'
-import { HIDDEN_TOURISM_SPOTS } from '../data/hiddenTourismSpots'
-import { REGIONAL_EXPANSION_SPOTS } from '../data/regionalExpansionSpots'
-import { CATEGORY_NAMES, getPlaceCategory, REGION_NAMES, TOURISM_LOCALE } from '../data/tourismLocale'
-import { getTourismPlaceName } from '../data/tourismPlaceNames'
+import { CATEGORY_NAMES, REGION_NAMES, TOURISM_LOCALE } from '../data/tourismLocale'
 import PlacesSubnav from '../components/places/PlacesSubnav'
-import { CONTENT_AUDIT_DATE_LABEL, TOURISM_OFFICIAL_SOURCES } from '../data/contentAudit'
+import { CONTENT_AUDIT_DATE_LABEL } from '../data/contentAudit'
+import { getAvailableTourismCategories, getTourismRegionOptions, queryTourismSpots, TOURISM_REGION_IDS } from '../data/repositories/tourismRepository'
 
-const ALL_TOURISM_SPOTS = [...TOURISM_SPOTS, ...HIDDEN_TOURISM_SPOTS, ...REGIONAL_EXPANSION_SPOTS]
 const INFORMATION_LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English' },
   { code: 'bn', label: 'BN', name: 'বাংলা' },
@@ -25,20 +20,11 @@ const AUDIT_COPY = {
   hi: { auditLabel:'आंतरिक सूची', sourceCheck:'यात्रा से पहले आधिकारिक स्रोत पर वर्तमान जानकारी जाँचें।', indicative:'संकेतात्मक', verifySource:'आधिकारिक पर्यटन स्रोत जाँचें' },
 }
 
-const getDescription = (spot, language) => language === 'en'
-  ? (spot.description.en || TOURISM_ENGLISH_DESCRIPTIONS[spot.id])
-  : spot.description[language]
-
-const googleMapsDirectionsUrl = (spot) => {
-  const region = TOURISM_REGIONS.find((item) => item.id === spot.region)?.name || spot.region
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${spot.name}, ${spot.locality || region}, India`)}`
-}
-
 export default function TourismSpots() {
   const [searchParams] = useSearchParams()
   const [region, setRegion] = useState(() => {
     const requested = searchParams.get('region')
-    return TOURISM_REGIONS.some((item) => item.id === requested) ? requested : 'darjeeling'
+    return TOURISM_REGION_IDS.includes(requested) ? requested : 'darjeeling'
   })
   const [language, setLanguage] = useState('en')
   const [query, setQuery] = useState('')
@@ -49,23 +35,11 @@ export default function TourismSpots() {
   const auditCopy = AUDIT_COPY[language]
   const regionName = REGION_NAMES[region][language]
 
-  const availableCategories = useMemo(() => [...new Set(
-    ALL_TOURISM_SPOTS
-      .filter((spot) => (spot.regions || [spot.region]).includes(region))
-      .map((spot) => getPlaceCategory(spot.type)),
-  )], [region])
+  const regionOptions = useMemo(() => getTourismRegionOptions(language), [language])
+  const availableCategories = useMemo(() => getAvailableTourismCategories(region), [region])
 
   const spots = useMemo(() => {
-    const search = query.trim().toLocaleLowerCase()
-    return ALL_TOURISM_SPOTS.filter((spot) => (spot.regions || [spot.region]).includes(region)
-      && (discovery === 'all' || (discovery === 'hidden' ? spot.isHidden : !spot.isHidden))
-      && (access === 'all' || (access === 'local' ? !spot.access || spot.access === 'local' : spot.access === access))
-      && (category === 'all' || getPlaceCategory(spot.type) === category)
-      && (!search
-        || spot.name.toLocaleLowerCase().includes(search)
-        || getTourismPlaceName(spot, language).toLocaleLowerCase().includes(search)
-        || spot.type.toLocaleLowerCase().includes(search)
-        || getDescription(spot, language).toLocaleLowerCase().includes(search)))
+    return queryTourismSpots({ region, language, query, discovery, access, category })
   }, [region, language, query, discovery, access, category])
 
   return (
@@ -96,7 +70,7 @@ export default function TourismSpots() {
 
         <div className="tourism-select-grid">
           <label><span>{copy.destination}</span><select value={region} onChange={(event) => { setRegion(event.target.value); setCategory('all') }}>
-            {TOURISM_REGIONS.map((item) => <option key={item.id} value={item.id}>{REGION_NAMES[item.id][language]}</option>)}
+            {regionOptions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select></label>
           <label><span>{copy.distance}</span><select value={access} onChange={(event) => setAccess(event.target.value)}>
             <option value="all">{copy.anyDistance}</option><option value="local">{copy.inTown}</option><option value="drive">{copy.nearbyDrive}</option><option value="restricted">{copy.planAhead}</option>
@@ -120,12 +94,8 @@ export default function TourismSpots() {
 
       <section className="tourism-grid">
         {spots.map((spot) => {
-          const detailKey = spot.detailKey || spot.id
-          const details = language === 'en'
-            ? (TOURISM_ENGLISH_DETAILS[detailKey] || { timing: spot.timing, fee: spot.fee })
-            : TOURISM_DETAIL_TRANSLATIONS[detailKey]
-          const categoryName = CATEGORY_NAMES[getPlaceCategory(spot.type)][language]
-          const placeName = getTourismPlaceName(spot, language)
+          const categoryName = CATEGORY_NAMES[spot.category][language]
+          const placeName = spot.name
           const accessName = spot.access === 'drive' ? copy.nearbyDrive : spot.access === 'restricted' ? copy.planAhead : copy.inTown
           const caution = spot.access === 'drive' ? copy.cautionDrive : spot.access === 'restricted' ? copy.cautionRestricted : copy.cautionLocal
           return (
@@ -137,17 +107,17 @@ export default function TourismSpots() {
                   <h2>{placeName}</h2>
                   <div className="tourism-locality">{language === 'en' ? (spot.locality || regionName) : regionName} · {accessName}</div>
                 </div>
-                <a className="tourism-map-link" href={googleMapsDirectionsUrl(spot)} target="_blank" rel="noreferrer" aria-label={`${copy.directions}: ${placeName}`} title={`${copy.directions}: ${placeName}`}>
+                <a className="tourism-map-link" href={spot.mapsUrl} target="_blank" rel="noreferrer" aria-label={`${copy.directions}: ${placeName}`} title={`${copy.directions}: ${placeName}`}>
                   <MapPinned size={18} /><span>{copy.directions}</span><ExternalLink size={12} />
                 </a>
               </div>
-              <p className="tourism-description">{getDescription(spot, language)}</p>
+              <p className="tourism-description">{spot.description}</p>
               <dl>
-                <div><dt><Clock3 size={15} /> {auditCopy.indicative} {copy.timing}</dt><dd>{language === 'en' ? details.timing : details.timing[language]}</dd></div>
-                <div><dt><IndianRupee size={15} /> {auditCopy.indicative} {copy.entry}</dt><dd>{language === 'en' ? details.fee : details.fee[language]}</dd></div>
+                <div><dt><Clock3 size={15} /> {auditCopy.indicative} {copy.timing}</dt><dd>{spot.timing}</dd></div>
+                <div><dt><IndianRupee size={15} /> {auditCopy.indicative} {copy.entry}</dt><dd>{spot.fee}</dd></div>
               </dl>
               <p className="tourism-advisory"><AlertTriangle size={13} /> {caution}</p>
-              <a className="content-source-link" href={TOURISM_OFFICIAL_SOURCES[spot.region] || TOURISM_OFFICIAL_SOURCES.default} target="_blank" rel="noreferrer">{auditCopy.verifySource} <ExternalLink size={11}/></a>
+              <a className="content-source-link" href={spot.sourceUrl} target="_blank" rel="noreferrer">{auditCopy.verifySource} <ExternalLink size={11}/></a>
             </article>
           )
         })}

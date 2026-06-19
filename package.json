@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "npm run validate:data",
     "build": "vite build",
+    "validate:data": "node scripts/validate-data.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

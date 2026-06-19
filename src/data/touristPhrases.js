@@ -312,4 +312,7 @@ const BASE_TOURIST_PHRASES = [
 export const TOURIST_PHRASES = PHRASE_CATEGORIES.flatMap((category) => [
   ...BASE_TOURIST_PHRASES.filter((phrase) => phrase.category === category.id),
   ...PHRASE_EXPANSIONS.filter((phrase) => phrase.category === category.id),
-].slice(0, 50))
+].slice(0, 50)).map((phrase) => ({
+  ...phrase,
+  translations: { en: phrase.translations.en || phrase.title, ...phrase.translations },
+}))
