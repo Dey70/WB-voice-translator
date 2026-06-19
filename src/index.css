@@ -73,6 +73,28 @@
 .emergency-phrase-grid span { color:var(--text-muted); font-size:10px; }
 .emergency-phrase-grid strong { color:var(--text-primary); font-family:inherit; font-size:16px; line-height:1.4; }
 .emergency-phrase-grid svg { grid-column:2; grid-row:1 / span 2; align-self:center; }
+.emergency-directory,.emergency-sites { margin-top:18px; padding:17px; border:1px solid var(--border); border-radius:16px; background:var(--bg-card); }
+.emergency-section-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:13px; }
+.emergency-section-heading>div:first-child { display:flex; align-items:flex-start; gap:8px; }
+.emergency-section-heading>div:first-child>svg { flex-shrink:0; color:var(--accent-secondary); }
+.emergency-section-heading strong,.emergency-section-heading small { display:block; }
+.emergency-section-heading strong { font-size:15px; }.emergency-section-heading small { max-width:520px; margin-top:3px; color:var(--text-muted); font-size:10px; line-height:1.45; }
+.emergency-scope-switch { display:flex; gap:5px; flex-shrink:0; }
+.emergency-scope-switch button { padding:7px 9px; border:1px solid var(--border); border-radius:8px; background:var(--bg-secondary); color:var(--text-secondary); cursor:pointer; font:inherit; font-size:10px; }
+.emergency-scope-switch button.active { border-color:var(--accent-primary); background:rgba(108,99,255,.13); color:var(--accent-secondary); font-weight:700; }
+.emergency-contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.emergency-contact { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border:1px solid var(--border); border-radius:11px; background:var(--bg-secondary); }
+.emergency-contact.level-primary { border-color:rgba(248,113,113,.45); background:rgba(248,113,113,.08); }.emergency-contact.level-specialist { border-color:rgba(45,212,191,.25); }
+.emergency-level { display:inline-block; margin-bottom:5px; color:var(--text-muted); font-size:8px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; }
+.level-primary .emergency-level { color:#f87171; }.level-specialist .emergency-level { color:var(--accent-teal); }
+.emergency-contact h3 { font-size:13px; }.emergency-contact p { margin-top:4px; color:var(--text-muted); font-size:10px; line-height:1.4; }.emergency-contact small { display:block; margin-top:5px; color:var(--text-secondary); font-size:9px; }
+.emergency-contact>a { min-width:74px; display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px; border-radius:9px; background:var(--bg-card); color:var(--accent-secondary); text-decoration:none; }
+.emergency-contact>a strong { font-size:16px; }.emergency-contact>a span { font-size:8px; font-weight:700; text-transform:uppercase; }
+.level-primary>a { background:#dc2626; color:white; }
+.emergency-availability,.emergency-site-warning { display:flex; align-items:flex-start; gap:6px; margin-top:10px; color:var(--text-muted); font-size:9px; line-height:1.45; }.emergency-availability svg,.emergency-site-warning svg { flex-shrink:0; color:#fbbf24; }
+.emergency-site-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.emergency-site-grid>a { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px; border:1px solid var(--border); border-radius:10px; background:var(--bg-secondary); color:var(--text-primary); text-decoration:none; }
+.emergency-site-grid>a:hover { border-color:var(--accent-primary); }.emergency-site-grid strong,.emergency-site-grid small { display:block; }.emergency-site-grid strong { font-size:12px; }.emergency-site-grid small { margin-top:3px; color:var(--text-muted); font-size:9px; line-height:1.4; }.emergency-site-grid svg { flex-shrink:0; color:var(--accent-secondary); }
 
 @media (max-width:768px) {
   .desktop-sos { display:none; }
@@ -88,6 +110,10 @@
   .emergency-display-label { align-items:flex-start; flex-direction:column; gap:3px; }
   .emergency-actions { flex-direction:column; }
   .emergency-phrase-grid { grid-template-columns:1fr; }
+  .emergency-section-heading { flex-direction:column; }
+  .emergency-scope-switch { width:100%; }
+  .emergency-scope-switch button { flex:1; }
+  .emergency-contact-grid,.emergency-site-grid { grid-template-columns:1fr; }
 }
 
 * {

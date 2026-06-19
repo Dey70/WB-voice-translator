@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeftRight, Copy, Phone, ShieldAlert, Volume2, VolumeX } from 'lucide-react'
+import { AlertCircle, ArrowLeftRight, Copy, ExternalLink, Globe2, Phone, PhoneCall, ShieldAlert, Volume2, VolumeX } from 'lucide-react'
 import LanguageSelector from '../components/translation/LanguageSelector'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getLanguage } from '../utils/constants'
 import { TOURIST_PHRASES } from '../data/touristPhrases'
+import { EMERGENCY_CONTACTS, EMERGENCY_RESOURCE_LOCALE, OFFICIAL_SITES } from '../data/emergencyResources'
 
 const GROUPS = [
   { id: 'urgent', name: 'Urgent help', phraseIds: ['help', 'police', 'ambulance', 'doctor', 'hospital', 'pain', 'lost', 'passport'] },
@@ -22,6 +23,7 @@ export default function EmergencyMode() {
   const [groupId, setGroupId] = useState('urgent')
   const [selectedId, setSelectedId] = useState('help')
   const [copied, setCopied] = useState(false)
+  const [resourceScope, setResourceScope] = useState('india')
   const { speak, stop, isSpeaking } = useSpeechSynthesis()
 
   const from = getLanguage(fromLang)
@@ -29,6 +31,9 @@ export default function EmergencyMode() {
   const group = GROUPS.find((item) => item.id === groupId) || GROUPS[0]
   const phrases = useMemo(() => phrasesForGroup(group), [group])
   const selected = TOURIST_PHRASES.find((phrase) => phrase.id === selectedId) || phrases[0]
+  const resourceCopy = EMERGENCY_RESOURCE_LOCALE[fromLang]
+  const contacts = EMERGENCY_CONTACTS.filter((item) => item.scope === resourceScope)
+  const sites = OFFICIAL_SITES.filter((item) => item.scope === resourceScope)
 
   const playPhrase = (phrase) => {
     setSelectedId(phrase.id)
@@ -82,6 +87,25 @@ export default function EmergencyMode() {
         </div>
       </section>
 
+      <section className="emergency-directory" aria-label={resourceCopy.directory}>
+        <div className="emergency-section-heading">
+          <div><PhoneCall size={18} /><span><strong>{resourceCopy.directory}</strong><small>{resourceCopy.directoryText}</small></span></div>
+          <div className="emergency-scope-switch">
+            <button className={resourceScope === 'india' ? 'active' : ''} onClick={() => setResourceScope('india')}>{resourceCopy.india}</button>
+            <button className={resourceScope === 'wb' ? 'active' : ''} onClick={() => setResourceScope('wb')}>{resourceCopy.westBengal}</button>
+          </div>
+        </div>
+        <div className="emergency-contact-grid">
+          {contacts.map((contact) => (
+            <article key={contact.id} className={`emergency-contact level-${contact.level}`}>
+              <div><span className="emergency-level">{resourceCopy[contact.level]}</span><h3>{contact.name[fromLang]}</h3><p>{contact.description[fromLang]}</p>{contact.alternate && <small>{contact.alternate}</small>}</div>
+              <a href={`tel:${contact.number}`} aria-label={`${resourceCopy.call} ${contact.number}`}><Phone size={15} /><strong>{contact.number}</strong><span>{resourceCopy.call}</span></a>
+            </article>
+          ))}
+        </div>
+        <p className="emergency-availability"><AlertCircle size={13} /> {resourceCopy.availability}</p>
+      </section>
+
       {selected && (
         <section className="emergency-display" aria-live="assertive">
           <div className="emergency-display-label">
@@ -118,6 +142,20 @@ export default function EmergencyMode() {
             <span>{phrase.title}</span><strong>{phrase.translations[toLang]}</strong><Volume2 size={17} />
           </button>
         ))}
+      </section>
+
+      <section className="emergency-sites">
+        <div className="emergency-section-heading">
+          <div><Globe2 size={18} /><span><strong>{resourceCopy.sites}</strong><small>{resourceCopy.sitesText}</small></span></div>
+        </div>
+        <div className="emergency-site-grid">
+          {sites.map((site) => (
+            <a key={site.id} href={site.url} target="_blank" rel="noreferrer">
+              <span><strong>{site.name[fromLang]}</strong><small>{site.description[fromLang]}</small></span><ExternalLink size={15} />
+            </a>
+          ))}
+        </div>
+        <p className="emergency-site-warning"><Globe2 size={13} /> {resourceCopy.siteWarning}</p>
       </section>
     </main>
   )
