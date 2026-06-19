@@ -8,7 +8,19 @@ import translateHandler from './api/translate.js'
 const secureTranslationDevPlugin = () => ({
   name: 'secure-translation-dev-api',
   configureServer(server) {
-    server.middlewares.use('/api/translate', translateHandler)
+    server.middlewares.use('/api/translate', (req, res, next) => {
+      // Allow Capacitor WebView origins (capacitor://localhost, http://localhost)
+      // during local development so the Android APK can reach this dev server.
+      const origin = req.headers.origin || ''
+      const isCapacitorOrigin = /^(capacitor:\/\/localhost|http:\/\/localhost(:\d+)?|null)$/.test(origin)
+      if (isCapacitorOrigin || !origin) {
+        res.setHeader('Access-Control-Allow-Origin', origin || '*')
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+      }
+      if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end() }
+      translateHandler(req, res, next)
+    })
   },
 })
 

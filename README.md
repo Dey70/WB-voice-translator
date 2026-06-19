@@ -66,8 +66,8 @@ Bengali to Nepali, Bengali to Hindi, Nepali to Hindi, and all reverse pairs.
 | Frontend | React + Vite |
 | Styling | Tailwind CSS |
 | State | Zustand (with localStorage persistence) |
-| Speech Recognition | Web Speech API (built into Chrome) |
-| Speech Synthesis | Web Speech Synthesis API (built into Chrome) |
+| Speech Recognition | Web Speech API on web; Capacitor speech plugin on Android |
+| Speech Synthesis | Web Speech Synthesis on web; Capacitor TTS plugin on Android |
 | Translation | Azure AI Translator through a server-side API route |
 | Deployment | Vercel |
 
@@ -106,6 +106,18 @@ Open http://localhost:5173 in Chrome.
 ```bash
 npm run build
 ```
+
+### Android
+
+The Android project uses Capacitor. Set `VITE_API_BASE_URL` to the HTTPS origin
+that hosts `/api/translate`, then sync the web bundle and open Android Studio:
+
+```bash
+npm run android:sync
+npm run android:open
+```
+
+Azure credentials remain server-side. Do not place them in a `VITE_` variable.
 
 ---
 
@@ -162,7 +174,7 @@ src/
 │   ├── History.jsx         # Translation history
 │   └── Favorites.jsx       # Saved translations
 ├── services/
-│   └── translation.js      # MyMemory API integration
+│   └── translation.js      # Secure translation API client
 ├── store/
 │   └── appStore.js         # Zustand global state
 └── utils/

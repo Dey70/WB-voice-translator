@@ -1,22 +1,17 @@
 # Android Service Adapter Contract
 
-UI components must use `platformServices` rather than browser globals. The current Web adapter is the default. A future Capacitor or native Android shell can expose `window.KothaSetuNative` with any subset of the interfaces below; missing services fall back to the Web implementation.
+UI components use `platformServices` rather than browser globals. The adapter selects Capacitor plugins in the packaged Android app and browser APIs on the web.
 
 ```js
-window.KothaSetuNative = {
-  platform: 'android',
-  clipboard: { writeText(text) },
-  location: { getCurrentPosition(options) },
-  connectivity: { isOnline(), subscribe(callback) },
-  links: { callPhone(number), openMap(destination), openExternal(url) },
-  lifecycle: { subscribe(({ active }) => {}) },
-  storage: { getItem(key), setItem(key, value), removeItem(key) },
-  speechRecognition: { Recognition },
-  speechSynthesis: { engine, createUtterance(text) },
+platformServices = {
+  runtime, clipboard, location, connectivity, links,
+  lifecycle, storage, speechRecognition, speechSynthesis,
 }
 ```
 
-Subscriptions return an unsubscribe function. Storage methods may return values or promises; Zustand persistence supports asynchronous native storage. Speech objects intentionally follow the browser speech interfaces so the reliability hooks remain platform-neutral.
+Subscriptions return a synchronous unsubscribe function even though Capacitor listener registration is asynchronous. Speech hooks use the community Capacitor plugins on Android and browser speech APIs on the web.
+
+Packaged Android builds must set `VITE_API_BASE_URL` to the HTTPS origin that hosts `/api/translate`. Translation credentials remain only on that server.
 
 ## Migrated Capabilities
 

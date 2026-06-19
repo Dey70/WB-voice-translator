@@ -43,8 +43,6 @@ const safeHttpsUrl = (url) => {
 }
 
 // ── Network listener cache ───────────────────────────────────────────────────
-let _networkListenerHandle = null
-
 export const platformServices = {
 
   // ── Runtime ───────────────────────────────────────────────────────────────
@@ -114,11 +112,18 @@ export const platformServices = {
     },
     subscribe(callback) {
       if (isNative()) {
-        // Remove any previous listener before adding a new one
-        _networkListenerHandle?.remove()
-        const handle = Network.addListener('networkStatusChange', ({ connected }) => callback(connected))
-        _networkListenerHandle = handle
-        return () => handle.remove()
+        let disposed = false
+        let handle = null
+        Network.addListener('networkStatusChange', ({ connected }) => callback(connected))
+          .then((listener) => {
+            if (disposed) listener.remove()
+            else handle = listener
+          })
+          .catch(() => {})
+        return () => {
+          disposed = true
+          handle?.remove()
+        }
       }
       const win = getWindow()
       if (!win) return () => {}
@@ -153,8 +158,18 @@ export const platformServices = {
   lifecycle: {
     subscribe(callback) {
       if (isNative()) {
-        const handle = App.addListener('appStateChange', ({ isActive }) => callback({ active: isActive }))
-        return () => handle.remove()
+        let disposed = false
+        let handle = null
+        App.addListener('appStateChange', ({ isActive }) => callback({ active: isActive }))
+          .then((listener) => {
+            if (disposed) listener.remove()
+            else handle = listener
+          })
+          .catch(() => {})
+        return () => {
+          disposed = true
+          handle?.remove()
+        }
       }
       const win = getWindow()
       if (!win?.document) return () => {}

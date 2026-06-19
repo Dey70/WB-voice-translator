@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Mic, Volume2, Trash2 } from 'lucide-react'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
@@ -38,15 +38,7 @@ export default function Conversation() {
     startListening(fromLang)
   }
 
-  useEffect(() => {
-    if (!isListening && transcript && activeSpeakerRef.current) {
-      const speaker = activeSpeakerRef.current
-      activeSpeakerRef.current = null
-      processMessage(transcript, speaker)
-    }
-  }, [isListening])
-
-  const processMessage = async (text, speaker) => {
+  const processMessage = useCallback(async (text, speaker) => {
     if (!text.trim()) { setActiveSpeaker(null); return }
 
     const fromLang = speaker === 'A' ? langA : langB
@@ -75,7 +67,15 @@ export default function Conversation() {
       setIsTranslating(false)
       setActiveSpeaker(null)
     }
-  }
+  }, [langA, langB, speak])
+
+  useEffect(() => {
+    if (!isListening && transcript && activeSpeakerRef.current) {
+      const speaker = activeSpeakerRef.current
+      activeSpeakerRef.current = null
+      processMessage(transcript, speaker)
+    }
+  }, [isListening, processMessage, transcript])
 
   const replayMessage = (msg) => {
     if (msg.translatedText) { stop(); setTimeout(() => speak(msg.translatedText, msg.toLang), 100) }
@@ -86,7 +86,7 @@ export default function Conversation() {
   const isButtonDisabled = (speaker) =>
     isTranslating || (isListening && activeSpeaker !== speaker)
 
-  const MicButton = ({ speaker, langData }) => {
+  const renderMicButton = (speaker, langData) => {
     const active = isListening && activeSpeaker === speaker
     const disabled = isButtonDisabled(speaker)
     // Person A = saffron/marigold side, Person B = teal/pine side
@@ -295,7 +295,7 @@ export default function Conversation() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center' }}>
-          <MicButton speaker="A" langData={langAData} />
+          {renderMicButton('A', langAData)}
           <button onClick={clearConversation} title="Clear conversation" style={{
             width: 44, height: 44, borderRadius: 22,
             background: 'var(--bg-card)', border: '1px solid var(--border)',
@@ -304,7 +304,7 @@ export default function Conversation() {
           }}>
             <Trash2 size={16} />
           </button>
-          <MicButton speaker="B" langData={langBData} />
+          {renderMicButton('B', langBData)}
         </div>
       )}
 

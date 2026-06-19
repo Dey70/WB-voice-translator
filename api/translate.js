@@ -66,11 +66,28 @@ const validateRequest = ({ text, fromLang, toLang } = {}) => {
 }
 
 export default async function handler(request, response) {
+  const origin = request.headers.origin || ''
+  const isCapacitorOrigin = /^capacitor:\/\/localhost$/.test(origin) || /^https?:\/\/localhost(?::\d+)?$/.test(origin)
+  if (isCapacitorOrigin) {
+    response.setHeader('Access-Control-Allow-Origin', origin)
+    response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    response.setHeader('Vary', 'Origin')
+  }
+  if (request.method === 'OPTIONS') {
+    return isCapacitorOrigin
+      ? sendJson(response, 204, {})
+      : sendJson(response, 403, { error: 'Cross-site requests are not allowed.' })
+  }
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST')
     return sendJson(response, 405, { error: 'Method not allowed.' })
   }
-  if (request.headers['sec-fetch-site'] === 'cross-site') {
+  // Block hostile cross-site browser requests. Capacitor WebViews use the
+  // capacitor://localhost origin, which browsers classify as cross-site —
+  // so we allow it explicitly alongside same-origin/same-site/none.
+  const fetchSite = request.headers['sec-fetch-site']
+  if (fetchSite === 'cross-site' && !isCapacitorOrigin) {
     return sendJson(response, 403, { error: 'Cross-site requests are not allowed.' })
   }
   if (!request.headers['content-type']?.toLowerCase().startsWith('application/json')) {

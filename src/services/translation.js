@@ -1,6 +1,10 @@
 import { platformServices } from './platform/platformAdapter'
 
-const TRANSLATION_ENDPOINT = '/api/translate'
+// In web PWA: relative URL works (same-origin Vite/Vercel handler).
+// In Android APK: VITE_API_BASE_URL must be set to the deployed API origin
+// e.g. https://kothasetu.vercel.app  or  http://192.168.x.x:5173 for local dev.
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '')
+const TRANSLATION_ENDPOINT = `${API_BASE}/api/translate`
 const SUPPORTED_LANGUAGES = new Set(['bn', 'hi', 'ne', 'en'])
 const MAX_TEXT_LENGTH = 500
 
@@ -8,7 +12,7 @@ export async function translateText(text, fromLang, toLang) {
   const content = text?.trim()
   if (!content) return ''
   if (fromLang === toLang) return content
-  if (!platformServices.connectivity.isOnline()) throw new Error('Live translation is unavailable offline. Use the Phrasebook or SOS phrases.')
+  if (!await platformServices.connectivity.isOnline()) throw new Error('Live translation is unavailable offline. Use the Phrasebook or SOS phrases.')
   if (content.length > MAX_TEXT_LENGTH) throw new Error(`Text must be ${MAX_TEXT_LENGTH} characters or fewer.`)
   if (!SUPPORTED_LANGUAGES.has(fromLang) || !SUPPORTED_LANGUAGES.has(toLang)) throw new Error('Unsupported language selection.')
 
@@ -18,7 +22,7 @@ export async function translateText(text, fromLang, toLang) {
     const response = await fetch(TRANSLATION_ENDPOINT, {
       method: 'POST',
       signal: controller.signal,
-      credentials: 'same-origin',
+      credentials: API_BASE ? 'omit' : 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: content, fromLang, toLang }),
     })

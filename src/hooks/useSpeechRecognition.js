@@ -11,119 +11,144 @@ const LANG_CODES = {
 }
 
 const isNative = () => Capacitor.isNativePlatform()
+const MICROPHONE_PERMISSION_ERROR = 'Microphone access is blocked. Go to Settings > Apps > KothaSetu > Permissions > Microphone.'
 
 const getErrorMessage = (error) => {
-  if (error === 'no-speech')                        return 'No speech detected. Move closer to the microphone and try again.'
-  if (error === 'audio-capture')                    return 'No microphone was found. Check your device microphone.'
+  if (error === 'no-speech')                      return 'No speech detected. Move closer to the microphone and try again.'
+  if (error === 'audio-capture')                  return 'No microphone was found. Check your device microphone.'
   if (error === 'not-allowed' ||
       error === 'service-not-allowed' ||
-      error === 'denied')                           return 'Microphone access is blocked. Go to Settings → App Permissions → KothaSetu → Microphone and allow access.'
-  if (error === 'network')                          return 'Speech recognition needs a stable connection on this device.'
-  if (error === 'language-not-supported')           return 'This spoken language is not supported on your device.'
+      error === 'denied' ||
+      error === 'missing permission' ||
+      error === 'insufficient permissions')       return MICROPHONE_PERMISSION_ERROR
+  if (error === 'network')                        return 'Speech recognition needs a stable connection on this device.'
+  if (error === 'language-not-supported')         return 'This spoken language is not supported on your device.'
   return 'Speech could not be recognized. Please try again or type the message.'
 }
 
-// ─── Native (Capacitor) implementation ────────────────────────────────────────
+// ─── Native (Capacitor) implementation ───────────────────────────────────────
 
 function useNativeSpeechRecognition() {
   const [interimText,  setInterimText]  = useState('')
   const [isListening,  setIsListening]  = useState(false)
   const [error,        setError]        = useState(null)
 
-  const listenerRef   = useRef(null)
-  const mountedRef    = useRef(true)
-  const sessionRef    = useRef(0)
-  const callbackRef   = useRef(null)
+  const mountedRef         = useRef(true)
+  const sessionRef         = useRef(0)
+  const callbackRef        = useRef(null)
+  // Ref so the listeningState closure always reads the LATEST text — never stale
+  const latestTextRef      = useRef('')
+  const stateListenerRef   = useRef(null)
 
-  const removeListener = useCallback(() => {
-    listenerRef.current?.remove()
-    listenerRef.current = null
+  const removeListeners = useCallback(() => {
+    stateListenerRef.current?.remove()
+    stateListenerRef.current   = null
   }, [])
 
-  const resetTranscript = useCallback(() => setInterimText(''), [])
+  const resetTranscript = useCallback(() => {
+    latestTextRef.current = ''
+    setInterimText('')
+  }, [])
 
   const stopListening = useCallback(async () => {
+    // Increment session so the listeningState handler knows it's a manual stop
     sessionRef.current += 1
-    removeListener()
-    await SpeechRecognition.stop().catch(() => {})
+    removeListeners()
+    // The Android community plugin does not resolve stop(); do not await it.
+    SpeechRecognition.stop().catch(() => {})
     if (mountedRef.current) {
       setIsListening(false)
       setInterimText('')
     }
-  }, [removeListener])
+  }, [removeListeners])
 
   const startListening = useCallback(async (langCode, onResultCallback) => {
     if (!mountedRef.current) return false
 
-    // Ensure we have permission
-    const { speechRecognition: perm } = await SpeechRecognition.requestPermissions().catch(() => ({ speechRecognition: 'denied' }))
-    if (perm !== 'granted') {
-      setError('Microphone access is blocked. Go to Settings → App Permissions → KothaSetu → Microphone and allow access.')
+    // 1. Reuse an existing grant before opening a permission request.
+    try {
+      let permission = await SpeechRecognition.checkPermissions()
+      if (permission.speechRecognition !== 'granted') {
+        permission = await SpeechRecognition.requestPermissions()
+      }
+      if (permission.speechRecognition !== 'granted') {
+        setError(MICROPHONE_PERMISSION_ERROR)
+        return false
+      }
+    } catch (permissionError) {
+      setError(getErrorMessage(permissionError?.message?.toLowerCase() || 'denied'))
       return false
     }
 
-    sessionRef.current += 1
-    const sessionId = sessionRef.current
-    callbackRef.current = onResultCallback || null
-    const isCurrentSession = () => mountedRef.current && sessionRef.current === sessionId
+    const availability = await SpeechRecognition.available().catch(() => ({ available: false }))
+    if (!availability.available) {
+      setError('Speech recognition is unavailable on this device. Install or enable the Google speech service, then try again.')
+      return false
+    }
 
-    removeListener()
+    // 2. Start new session
+    sessionRef.current += 1
+    const sessionId       = sessionRef.current
+    callbackRef.current   = onResultCallback || null
+    latestTextRef.current = ''
+    const isCurrent       = () => mountedRef.current && sessionRef.current === sessionId
+
+    // 3. Clean up any previous session
+    removeListeners()
+    SpeechRecognition.stop().catch(() => {})
+
     setError(null)
     setInterimText('')
 
-    // Subscribe to partial results before starting
-    listenerRef.current = await SpeechRecognition.addListener('partialResults', ({ matches }) => {
-      if (!isCurrentSession()) return
-      const text = matches?.[0] ?? ''
-      setInterimText(text)
-    })
+    // 4. Track listening state. Final text comes from start() so Android's
+    // onEndOfSpeech event cannot truncate a later final recognition result.
+    stateListenerRef.current = await SpeechRecognition.addListener(
+      'listeningState',
+      ({ status }) => {
+        if (!isCurrent()) return
+        setIsListening(status === 'started')
+      }
+    )
 
+    // 5. Wait for Android's final recognition result instead of treating a
+    // partial result as final when onEndOfSpeech fires.
+    setIsListening(true)
     try {
-      await SpeechRecognition.start({
+      const { matches = [] } = await SpeechRecognition.start({
         language:       LANG_CODES[langCode] ?? langCode,
         maxResults:     3,
-        partialResults: true,
+        partialResults: false,
         popup:          false,
       })
+      if (!isCurrent()) return false
+      const final = matches[0]?.trim() ?? ''
+      latestTextRef.current = final
+      setInterimText(final)
+      setIsListening(false)
+      removeListeners()
+      if (final) callbackRef.current?.(final)
+      else setError('No speech was captured. Tap the microphone and try again.')
     } catch (err) {
-      if (isCurrentSession()) {
-        setError(getErrorMessage(err?.message ?? ''))
+      if (isCurrent()) {
+        removeListeners()
+        setError(getErrorMessage(err?.message?.toLowerCase() ?? ''))
         setIsListening(false)
       }
       return false
     }
 
-    if (!isCurrentSession()) return false
-    setIsListening(true)
-
-    // Poll listening state — the plugin fires a 'listeningState' event but we
-    // also need to catch the case where Android stops recognition silently.
-    const stateHandle = await SpeechRecognition.addListener('listeningState', ({ status, matches }) => {
-      if (!isCurrentSession()) return
-      if (status === 'stopped') {
-        stateHandle.remove()
-        removeListener()
-        const final = matches?.[0] ?? interimText
-        if (final && callbackRef.current) callbackRef.current(final)
-        if (mountedRef.current) {
-          setInterimText('')
-          setIsListening(false)
-        }
-      }
-    })
-
     return true
-  }, [interimText, removeListener])
+  }, [removeListeners])
 
   useEffect(() => {
     mountedRef.current = true
     return () => {
       mountedRef.current = false
       sessionRef.current += 1
-      removeListener()
+      removeListeners()
       SpeechRecognition.stop().catch(() => {})
     }
-  }, [removeListener])
+  }, [removeListeners])
 
   useEffect(() => platformServices.lifecycle.subscribe(({ active }) => {
     if (!active) stopListening()
@@ -142,7 +167,7 @@ function useNativeSpeechRecognition() {
   }
 }
 
-// ─── Web (browser) implementation ─────────────────────────────────────────────
+// ─── Web (browser) implementation — unchanged ─────────────────────────────────
 
 const getIsIOS = () => /iPad|iPhone|iPod/.test(platformServices.runtime.getUserAgent())
 
@@ -198,7 +223,6 @@ function useWebSpeechRecognition() {
       setError('Voice input is unavailable here. Use Chrome on Android or type the message.')
       return false
     }
-
     sessionRef.current += 1
     const sessionId = sessionRef.current
     manualStopRef.current = false
@@ -216,10 +240,10 @@ function useWebSpeechRecognition() {
     r.interimResults  = !isIOS
     r.maxAlternatives = isIOS ? 1 : 3
 
-    const isCurrent      = () => mountedRef.current && sessionRef.current === sessionId
-    const compileFinal   = () =>
+    const isCurrent    = () => mountedRef.current && sessionRef.current === sessionId
+    const compileFinal = () =>
       [...finalResultsRef.current.entries()].sort(([a], [b]) => a - b).map(([, v]) => v).join(' ').trim()
-    const deliverText    = (text) => {
+    const deliverText  = (text) => {
       if (!text || text === lastDeliveredRef.current) return
       lastDeliveredRef.current = text
       setTranscript(text)
@@ -289,7 +313,6 @@ function useWebSpeechRecognition() {
 }
 
 // ─── Public hook — picks implementation at runtime ────────────────────────────
-
 export function useSpeechRecognition() {
   const native = useNativeSpeechRecognition()
   const web    = useWebSpeechRecognition()

@@ -106,7 +106,7 @@ export default function History() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {filtered.map((item, index) => {
+          {filtered.map((item) => {
             const from = getLanguage(item.fromLang)
             const to = getLanguage(item.toLang)
             const fav = isFavorite(item.id)

@@ -3,10 +3,18 @@ import { WifiOff } from 'lucide-react'
 import { platformServices } from '../../services/platform/platformAdapter'
 
 export default function OfflineNotice() {
-  const [isOnline, setIsOnline] = useState(() => platformServices.connectivity.isOnline())
+  const [isOnline, setIsOnline] = useState(true)
 
   useEffect(() => {
-    return platformServices.connectivity.subscribe(setIsOnline)
+    let active = true
+    platformServices.connectivity.isOnline().then((online) => {
+      if (active) setIsOnline(online)
+    })
+    const unsubscribe = platformServices.connectivity.subscribe(setIsOnline)
+    return () => {
+      active = false
+      unsubscribe()
+    }
   }, [])
 
   if (isOnline) return null

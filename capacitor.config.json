@@ -7,6 +7,9 @@
     "adjustModeDecor": false
   },
   "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    },
     "SplashScreen": {
       "launchShowDuration": 1200,
       "backgroundColor": "#C8560A",
