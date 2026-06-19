@@ -8,6 +8,7 @@ import { REGIONAL_EXPANSION_SPOTS } from '../data/regionalExpansionSpots'
 import { CATEGORY_NAMES, getPlaceCategory, REGION_NAMES, TOURISM_LOCALE } from '../data/tourismLocale'
 import { getTourismPlaceName } from '../data/tourismPlaceNames'
 import PlacesSubnav from '../components/places/PlacesSubnav'
+import { CONTENT_AUDIT_DATE_LABEL, TOURISM_OFFICIAL_SOURCES } from '../data/contentAudit'
 
 const ALL_TOURISM_SPOTS = [...TOURISM_SPOTS, ...HIDDEN_TOURISM_SPOTS, ...REGIONAL_EXPANSION_SPOTS]
 const INFORMATION_LANGUAGES = [
@@ -16,6 +17,13 @@ const INFORMATION_LANGUAGES = [
   { code: 'ne', label: 'NE', name: 'नेपाली' },
   { code: 'hi', label: 'HI', name: 'हिन्दी' },
 ]
+
+const AUDIT_COPY = {
+  en: { auditLabel:'Internal inventory', sourceCheck:'Live source check required before travel.', indicative:'Indicative', verifySource:'Check official tourism source' },
+  bn: { auditLabel:'অভ্যন্তরীণ তালিকা', sourceCheck:'ভ্রমণের আগে সরকারি উৎসে বর্তমান তথ্য যাচাই করুন।', indicative:'আনুমানিক', verifySource:'সরকারি পর্যটন উৎস যাচাই করুন' },
+  ne: { auditLabel:'आन्तरिक सूची', sourceCheck:'यात्राअघि आधिकारिक स्रोतमा हालको जानकारी जाँच्नुहोस्।', indicative:'अनुमानित', verifySource:'आधिकारिक पर्यटन स्रोत जाँच्नुहोस्' },
+  hi: { auditLabel:'आंतरिक सूची', sourceCheck:'यात्रा से पहले आधिकारिक स्रोत पर वर्तमान जानकारी जाँचें।', indicative:'संकेतात्मक', verifySource:'आधिकारिक पर्यटन स्रोत जाँचें' },
+}
 
 const getDescription = (spot, language) => language === 'en'
   ? (spot.description.en || TOURISM_ENGLISH_DESCRIPTIONS[spot.id])
@@ -38,6 +46,7 @@ export default function TourismSpots() {
   const [access, setAccess] = useState('all')
   const [category, setCategory] = useState('all')
   const copy = TOURISM_LOCALE[language]
+  const auditCopy = AUDIT_COPY[language]
   const regionName = REGION_NAMES[region][language]
 
   const availableCategories = useMemo(() => [...new Set(
@@ -70,7 +79,7 @@ export default function TourismSpots() {
 
       <div className="tourism-unverified">
         <AlertTriangle size={17} />
-        <span><strong>{copy.warningTitle}</strong> {copy.warning}</span>
+        <span><strong>{copy.warningTitle}</strong> {copy.warning} <small>{auditCopy.auditLabel}: {CONTENT_AUDIT_DATE_LABEL}. {auditCopy.sourceCheck}</small></span>
       </div>
 
       <section className="tourism-controls glass">
@@ -134,10 +143,11 @@ export default function TourismSpots() {
               </div>
               <p className="tourism-description">{getDescription(spot, language)}</p>
               <dl>
-                <div><dt><Clock3 size={15} /> {copy.timing}</dt><dd>{language === 'en' ? details.timing : details.timing[language]}</dd></div>
-                <div><dt><IndianRupee size={15} /> {copy.entry}</dt><dd>{language === 'en' ? details.fee : details.fee[language]}</dd></div>
+                <div><dt><Clock3 size={15} /> {auditCopy.indicative} {copy.timing}</dt><dd>{language === 'en' ? details.timing : details.timing[language]}</dd></div>
+                <div><dt><IndianRupee size={15} /> {auditCopy.indicative} {copy.entry}</dt><dd>{language === 'en' ? details.fee : details.fee[language]}</dd></div>
               </dl>
               <p className="tourism-advisory"><AlertTriangle size={13} /> {caution}</p>
+              <a className="content-source-link" href={TOURISM_OFFICIAL_SOURCES[spot.region] || TOURISM_OFFICIAL_SOURCES.default} target="_blank" rel="noreferrer">{auditCopy.verifySource} <ExternalLink size={11}/></a>
             </article>
           )
         })}

@@ -5,6 +5,7 @@ import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getLanguage } from '../utils/constants'
 import { TOURIST_PHRASES } from '../data/touristPhrases'
 import { EMERGENCY_CONTACTS, EMERGENCY_RESOURCE_LOCALE, OFFICIAL_SITES } from '../data/emergencyResources'
+import { CONTENT_AUDIT_DATE_LABEL, CONTENT_AUDITS, EMERGENCY_CONTACT_SOURCES } from '../data/contentAudit'
 
 const GROUPS = [
   { id: 'urgent', name: 'Urgent help', phraseIds: ['help', 'police', 'ambulance', 'doctor', 'hospital', 'pain', 'lost', 'passport'] },
@@ -71,6 +72,11 @@ export default function EmergencyMode() {
         If someone is in immediate danger, contact emergency services first. Translation can help communication but does not replace professional medical or safety advice.
       </div>
 
+      <section className="content-audit-banner critical" aria-label="Emergency information review status">
+        <AlertCircle size={18} />
+        <div><strong>Source check required</strong><p>{CONTENT_AUDITS.emergency.summary} Internal inventory: {CONTENT_AUDIT_DATE_LABEL}. Call 112 first for immediate danger.</p></div>
+      </section>
+
       <section className="emergency-languages" aria-label="Emergency phrase languages">
         <div>
           <span>You speak</span>
@@ -97,7 +103,7 @@ export default function EmergencyMode() {
         <div className="emergency-contact-grid">
           {contacts.map((contact) => (
             <article key={contact.id} className={`emergency-contact level-${contact.level}`}>
-              <div><span className="emergency-level">{resourceCopy[contact.level]}</span><h3>{contact.name[fromLang]}</h3><p>{contact.description[fromLang]}</p>{contact.alternate && <small>{contact.alternate}</small>}</div>
+              <div><span className="emergency-level">{resourceCopy[contact.level]}</span><h3>{contact.name[fromLang]}</h3><p>{contact.description[fromLang]}</p>{contact.alternate && <small>{contact.alternate}</small>}<a className="content-source-link" href={EMERGENCY_CONTACT_SOURCES[contact.id]} target="_blank" rel="noreferrer">Verify official source <ExternalLink size={11}/></a></div>
               <a href={`tel:${contact.number}`} aria-label={`${resourceCopy.call} ${contact.number}`}><Phone size={15} /><strong>{contact.number}</strong><span>{resourceCopy.call}</span></a>
             </article>
           ))}
