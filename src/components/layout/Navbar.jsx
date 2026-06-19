@@ -22,7 +22,7 @@ export default function Navbar() {
   return (
     <>
       {/* Top navbar */}
-      <nav className="app-navbar" style={{
+      <nav className="app-navbar" aria-label="Site navigation" style={{
         background: darkMode ? 'rgba(28, 15, 5, 0.94)' : 'rgba(253, 246, 233, 0.94)',
         backdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border)',
@@ -35,7 +35,7 @@ export default function Navbar() {
           display: 'flex', alignItems: 'center', height: 60,
         }}>
           {/* Logo */}
-          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginRight: 32, flexShrink: 0 }}>
+          <Link to="/" aria-label="KothaSetu — go to home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, marginRight: 32, flexShrink: 0 }}>
             <div className="brand-mark" style={{
               width: 36, height: 36, borderRadius: 10,
               background: 'linear-gradient(135deg, #C8560A, #E8872A)',
@@ -81,7 +81,11 @@ export default function Navbar() {
             </span>
           </div>
 
-          <button onClick={toggleDarkMode} title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'} style={{
+          <button
+            onClick={toggleDarkMode}
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-pressed={darkMode}
+            style={{
             background: darkMode ? 'rgba(200,86,10,0.15)' : 'rgba(200,150,12,0.12)',
             border: darkMode ? '1px solid rgba(200,86,10,0.35)' : '1px solid rgba(200,150,12,0.35)',
             borderRadius: 8, padding: '7px 9px', cursor: 'pointer',
@@ -96,7 +100,7 @@ export default function Navbar() {
       </nav>
 
       {/* Mobile bottom tab bar */}
-      <div className="mobile-nav mobile-nav-bar" style={{
+      <nav className="mobile-nav mobile-nav-bar" aria-label="Main navigation" style={{
         display: 'none',
         position: 'fixed', bottom: 0, left: 0, right: 0,
         background: darkMode ? 'rgba(28, 15, 5, 0.97)' : 'rgba(253, 246, 233, 0.97)',
@@ -138,7 +142,7 @@ export default function Navbar() {
             )
           })}
         </div>
-      </div>
+      </nav>
     </>
   )
 }

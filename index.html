@@ -9,8 +9,13 @@
     <meta name="description" content="A multilingual travel companion for West Bengal and nearby regions." />
     <meta name="mobile-web-app-capable" content="yes" />
     <title>KothaSetu - Bengal Travel Companion</title>
+    <!-- Preconnect to Google Fonts so the @import in CSS doesn't block first paint -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   </head>
   <body>
+    <!-- Skip-to-content for keyboard and screen-reader users -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

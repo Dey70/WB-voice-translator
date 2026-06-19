@@ -16,7 +16,7 @@
   --accent-gold:   #C8960C;
   --text-primary:  #2C1810;
   --text-secondary:#6B4226;
-  --text-muted:    #9E7B56;
+  --text-muted:    #7A5535; /* darkened from #9E7B56 — now ~4.6:1 on --bg-primary */
   --border:        #E8D5B7;
   --border-light:  #F0E4CC;
   --border-strong: #D8B98B;
@@ -44,7 +44,7 @@
   --accent-gold:   #D4A020;
   --text-primary:  #FDF0E0;
   --text-secondary:#C9A882;
-  --text-muted:    #8B6B4A;
+  --text-muted:    #B08B62; /* lightened from #8B6B4A — now ~4.5:1 on --bg-primary dark */
   --border:        #3D2A14;
   --border-light:  #4E3520;
   --border-strong: #68431F;
@@ -297,6 +297,9 @@ body {
   opacity: 0.18;
   pointer-events: none;
   z-index: 0;
+  /* Isolate each orb's blur repaint — prevents layout thrash on scroll */
+  contain: strict;
+  will-change: opacity;
 }
 
 .orb-1 {

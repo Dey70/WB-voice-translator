@@ -128,15 +128,18 @@ export default function App() {
       <div className="orb orb-2" />
       <div className="orb orb-3" />
 
-      {/* Bengal landmark silhouettes */}
-      <VictoriaMemorial color={landmarkColor} />
-      <HowrahBridge color={landmarkColor} />
-      <SundarbansTree color={landmarkColor} />
+      {/* Bengal landmark silhouettes — decorative, isolated from layout */}
+      <div aria-hidden="true" style={{ contain: 'strict', position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none' }}>
+        <VictoriaMemorial color={landmarkColor} />
+        <HowrahBridge color={landmarkColor} />
+        <SundarbansTree color={landmarkColor} />
+      </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <Navbar />
         <OfflineNotice />
-        <Suspense fallback={<div className="route-loader">Loading...</div>}>
+        <div id="main-content">
+        <Suspense fallback={<div className="route-loader" role="status" aria-live="polite" aria-label="Loading page">Loading…</div>}>
           <Routes>
             <Route path="/"              element={<Home />} />
             <Route path="/translate"     element={<Translator />} />
@@ -150,6 +153,7 @@ export default function App() {
             <Route path="/culture"       element={<CulturalGuide />} />
           </Routes>
         </Suspense>
+        </div>
       </div>
     </BrowserRouter>
   )
