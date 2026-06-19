@@ -1,0 +1,32 @@
+{
+  "name": "KothaSetu - Bengal Travel Companion",
+  "short_name": "KothaSetu",
+  "description": "Translation, emergency phrases, local places, and cultural guidance for West Bengal and nearby regions.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FDF6E9",
+  "theme_color": "#C8560A",
+  "lang": "en-IN",
+  "categories": ["travel", "utilities", "education"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Phrasebook", "short_name": "Phrases", "url": "/phrases" },
+    { "name": "Emergency Mode", "short_name": "SOS", "url": "/emergency" },
+    { "name": "Explore Places", "short_name": "Explore", "url": "/places" }
+  ]
+}

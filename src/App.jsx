@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Navbar from './components/layout/Navbar'
+import OfflineNotice from './components/layout/OfflineNotice'
 import { useAppStore } from './store/appStore'
 
 const Translator    = lazy(() => import('./pages/Translator'))
@@ -134,6 +135,7 @@ export default function App() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <Navbar />
+        <OfflineNotice />
         <Suspense fallback={<div className="route-loader">Loading...</div>}>
           <Routes>
             <Route path="/"              element={<Home />} />

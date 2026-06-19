@@ -135,6 +135,14 @@ Recommended: Google Chrome
 
 ---
 
+## Offline Support
+
+After one complete online load, the service worker stores the app shell and essential travel content on the device. The Phrasebook, SOS phrases and saved numbers, History, Places, Seasonal Guide, and Cultural Guide can then open without a connection.
+
+Live translation, Google Maps, current conditions, external links, and device speech services that depend on a network remain online-only. The app displays an offline notice instead of presenting cached information as live data.
+
+---
+
 ## Project Structure
 
 ```
