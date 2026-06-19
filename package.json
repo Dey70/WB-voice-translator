@@ -12,6 +12,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
+    "@capacitor-community/text-to-speech": "^8.0.2",
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/clipboard": "^8.0.1",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/geolocation": "^8.2.0",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@tailwindcss/vite": "^4.3.1",
     "lucide-react": "^1.18.0",
     "react": "^19.2.6",
@@ -22,6 +32,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.0",
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

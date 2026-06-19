@@ -1,127 +1,161 @@
-const memoryStorage = new Map()
+/**
+ * Platform adapter — single import surface for all device APIs.
+ *
+ * Resolution order for every capability:
+ *   1. Capacitor native plugin  (Android / iOS app)
+ *   2. Browser Web API          (Chrome on Android, desktop)
+ *   3. Memory / no-op fallback  (SSR, restricted environments)
+ *
+ * Nothing outside this file should import from @capacitor/* directly.
+ */
 
-const getWindow = () => typeof window === 'undefined' ? null : window
-const getNavigator = () => typeof navigator === 'undefined' ? null : navigator
-const getNativeBridge = () => getWindow()?.KothaSetuNative || null
+import { Capacitor } from '@capacitor/core'
+import { App }          from '@capacitor/app'
+import { Clipboard }    from '@capacitor/clipboard'
+import { Geolocation }  from '@capacitor/geolocation'
+import { Network }      from '@capacitor/network'
 
+const isNative = () => Capacitor.isNativePlatform()
+
+const getWindow    = () => (typeof window    === 'undefined' ? null : window)
+const getNavigator = () => (typeof navigator === 'undefined' ? null : navigator)
+
+// ── Clipboard fallback for ancient browsers ──────────────────────────────────
+const writeClipboardFallback = (text) => {
+  const win = getWindow()
+  if (!win?.document?.body) throw new Error('Clipboard is unavailable on this device.')
+  const ta = win.document.createElement('textarea')
+  ta.value = text
+  ta.setAttribute('readonly', '')
+  ta.style.cssText = 'position:fixed;opacity:0'
+  win.document.body.appendChild(ta)
+  ta.select()
+  const ok = win.document.execCommand('copy')
+  ta.remove()
+  if (!ok) throw new Error('Clipboard permission was denied.')
+}
+
+// ── External URL guard ───────────────────────────────────────────────────────
 const safeHttpsUrl = (url) => {
   const parsed = new URL(url)
   if (parsed.protocol !== 'https:') throw new Error('Only secure external links are allowed.')
   return parsed.toString()
 }
 
-const writeClipboardFallback = (text) => {
-  const win = getWindow()
-  if (!win?.document?.body) throw new Error('Clipboard is unavailable on this device.')
-  const textarea = win.document.createElement('textarea')
-  textarea.value = text
-  textarea.setAttribute('readonly', '')
-  textarea.style.position = 'fixed'
-  textarea.style.opacity = '0'
-  win.document.body.appendChild(textarea)
-  textarea.select()
-  const copied = win.document.execCommand('copy')
-  textarea.remove()
-  if (!copied) throw new Error('Clipboard permission was denied.')
-}
+// ── Network listener cache ───────────────────────────────────────────────────
+let _networkListenerHandle = null
 
 export const platformServices = {
+
+  // ── Runtime ───────────────────────────────────────────────────────────────
   runtime: {
     getPlatform() {
-      const bridge = getNativeBridge()
-      if (bridge?.platform) return bridge.platform
+      if (isNative()) return Capacitor.getPlatform()   // 'android' | 'ios'
       return /Android/i.test(getNavigator()?.userAgent || '') ? 'android-web' : 'web'
     },
     getUserAgent() {
       return getNavigator()?.userAgent || ''
     },
-    isNative() {
-      return Boolean(getNativeBridge())
-    },
+    isNative,
     getCapabilities() {
       const nav = getNavigator()
       return {
-        native: Boolean(getNativeBridge()),
-        clipboard: Boolean(getNativeBridge()?.clipboard || nav?.clipboard || getWindow()?.document?.execCommand),
-        geolocation: Boolean(getNativeBridge()?.location || nav?.geolocation),
-        connectivity: Boolean(getNativeBridge()?.connectivity || nav),
-        speechRecognition: Boolean(getNativeBridge()?.speechRecognition || getWindow()?.SpeechRecognition || getWindow()?.webkitSpeechRecognition),
-        speechSynthesis: Boolean(getNativeBridge()?.speechSynthesis || getWindow()?.speechSynthesis),
+        native:            isNative(),
+        clipboard:         isNative() || Boolean(nav?.clipboard || getWindow()?.document?.execCommand),
+        geolocation:       isNative() || Boolean(nav?.geolocation),
+        connectivity:      true,
+        speechRecognition: isNative() || Boolean(getWindow()?.SpeechRecognition || getWindow()?.webkitSpeechRecognition),
+        speechSynthesis:   isNative() || Boolean(getWindow()?.speechSynthesis),
       }
     },
   },
 
+  // ── Clipboard ─────────────────────────────────────────────────────────────
   clipboard: {
     async writeText(text) {
-      const bridge = getNativeBridge()
-      if (bridge?.clipboard?.writeText) return bridge.clipboard.writeText(text)
+      if (isNative()) {
+        await Clipboard.write({ string: text })
+        return
+      }
       const nav = getNavigator()
       if (nav?.clipboard?.writeText) return nav.clipboard.writeText(text)
       return writeClipboardFallback(text)
     },
   },
 
+  // ── Location ──────────────────────────────────────────────────────────────
   location: {
     isAvailable() {
-      return Boolean(getNativeBridge()?.location?.getCurrentPosition || getNavigator()?.geolocation)
+      return isNative() || Boolean(getNavigator()?.geolocation)
     },
     async getCurrentPosition(options = {}) {
-      const bridge = getNativeBridge()
-      if (bridge?.location?.getCurrentPosition) return bridge.location.getCurrentPosition(options)
-      const geolocation = getNavigator()?.geolocation
-      if (!geolocation) throw new Error('Location is unavailable on this device.')
-      return new Promise((resolve, reject) => geolocation.getCurrentPosition(resolve, reject, options))
+      if (isNative()) {
+        // Capacitor Geolocation returns { coords, timestamp } — same shape as browser API
+        return Geolocation.getCurrentPosition({
+          enableHighAccuracy: options.enableHighAccuracy ?? false,
+          timeout:            options.timeout            ?? 10000,
+          maximumAge:         options.maximumAge         ?? 0,
+        })
+      }
+      const geo = getNavigator()?.geolocation
+      if (!geo) throw new Error('Location is unavailable on this device.')
+      return new Promise((resolve, reject) => geo.getCurrentPosition(resolve, reject, options))
     },
   },
 
+  // ── Connectivity ──────────────────────────────────────────────────────────
   connectivity: {
-    isOnline() {
-      const bridge = getNativeBridge()
-      if (bridge?.connectivity?.isOnline) return bridge.connectivity.isOnline()
+    async isOnline() {
+      if (isNative()) {
+        const { connected } = await Network.getStatus()
+        return connected
+      }
       return getNavigator()?.onLine ?? true
     },
     subscribe(callback) {
-      const bridge = getNativeBridge()
-      if (bridge?.connectivity?.subscribe) return bridge.connectivity.subscribe(callback)
+      if (isNative()) {
+        // Remove any previous listener before adding a new one
+        _networkListenerHandle?.remove()
+        const handle = Network.addListener('networkStatusChange', ({ connected }) => callback(connected))
+        _networkListenerHandle = handle
+        return () => handle.remove()
+      }
       const win = getWindow()
       if (!win) return () => {}
-      const online = () => callback(true)
+      const online  = () => callback(true)
       const offline = () => callback(false)
-      win.addEventListener('online', online)
+      win.addEventListener('online',  online)
       win.addEventListener('offline', offline)
       return () => {
-        win.removeEventListener('online', online)
+        win.removeEventListener('online',  online)
         win.removeEventListener('offline', offline)
       }
     },
   },
 
+  // ── Links ─────────────────────────────────────────────────────────────────
   links: {
     callPhone(number) {
-      if (!/^\+?[\d-]+$/.test(number)) throw new Error('Invalid phone number.')
-      const bridge = getNativeBridge()
-      if (bridge?.links?.callPhone) return bridge.links.callPhone(number)
-      const win = getWindow()
-      if (win) win.location.href = `tel:${number}`
+      if (!/^\+?[\d\s\-().]+$/.test(number)) throw new Error('Invalid phone number.')
+      getWindow().location.href = `tel:${number.replace(/\s/g, '')}`
     },
     openMap(destination) {
-      const bridge = getNativeBridge()
-      if (bridge?.links?.openMap) return bridge.links.openMap(destination)
       const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`
       getWindow()?.open(url, '_blank', 'noopener,noreferrer')
     },
     openExternal(url) {
       const secureUrl = safeHttpsUrl(url)
-      const bridge = getNativeBridge()
-      if (bridge?.links?.openExternal) return bridge.links.openExternal(secureUrl)
       getWindow()?.open(secureUrl, '_blank', 'noopener,noreferrer')
     },
   },
 
+  // ── App lifecycle ─────────────────────────────────────────────────────────
   lifecycle: {
     subscribe(callback) {
-      const bridge = getNativeBridge()
-      if (bridge?.lifecycle?.subscribe) return bridge.lifecycle.subscribe(callback)
+      if (isNative()) {
+        const handle = App.addListener('appStateChange', ({ isActive }) => callback({ active: isActive }))
+        return () => handle.remove()
+      }
       const win = getWindow()
       if (!win?.document) return () => {}
       const handleVisibility = () => callback({ active: win.document.visibilityState === 'visible' })
@@ -130,44 +164,39 @@ export const platformServices = {
     },
   },
 
+  // ── Speech recognition — hook-level; see useSpeechRecognition.js ─────────
   speechRecognition: {
     getConstructor() {
-      const bridge = getNativeBridge()
-      return bridge?.speechRecognition?.Recognition || getWindow()?.SpeechRecognition || getWindow()?.webkitSpeechRecognition || null
+      // On native, useSpeechRecognition uses @capacitor-community/speech-recognition directly
+      if (isNative()) return null
+      return getWindow()?.SpeechRecognition || getWindow()?.webkitSpeechRecognition || null
     },
   },
 
+  // ── Speech synthesis — hook-level; see useSpeechSynthesis.js ─────────────
   speechSynthesis: {
     getEngine() {
-      return getNativeBridge()?.speechSynthesis?.engine || getWindow()?.speechSynthesis || null
+      // On native, useSpeechSynthesis uses @capacitor-community/text-to-speech directly
+      if (isNative()) return null
+      return getWindow()?.speechSynthesis || null
     },
     createUtterance(text) {
-      const bridge = getNativeBridge()
-      if (bridge?.speechSynthesis?.createUtterance) return bridge.speechSynthesis.createUtterance(text)
+      if (isNative()) return null
       const Utterance = getWindow()?.SpeechSynthesisUtterance
       return Utterance ? new Utterance(text) : null
     },
   },
 
+  // ── Storage ───────────────────────────────────────────────────────────────
   storage: {
     getItem(key) {
-      const bridge = getNativeBridge()
-      if (bridge?.storage?.getItem) return bridge.storage.getItem(key)
-      try { return getWindow()?.localStorage?.getItem(key) ?? memoryStorage.get(key) ?? null } catch { return memoryStorage.get(key) ?? null }
+      try { return getWindow()?.localStorage?.getItem(key) ?? null } catch { return null }
     },
     setItem(key, value) {
-      const bridge = getNativeBridge()
-      if (bridge?.storage?.setItem) return bridge.storage.setItem(key, value)
-      const storage = getWindow()?.localStorage
-      if (!storage) return memoryStorage.set(key, value)
-      try { storage.setItem(key, value) } catch { memoryStorage.set(key, value) }
+      try { getWindow()?.localStorage?.setItem(key, value) } catch { /* storage full or blocked */ }
     },
     removeItem(key) {
-      const bridge = getNativeBridge()
-      if (bridge?.storage?.removeItem) return bridge.storage.removeItem(key)
-      const storage = getWindow()?.localStorage
-      if (!storage) return memoryStorage.delete(key)
-      try { storage.removeItem(key) } catch { memoryStorage.delete(key) }
+      try { getWindow()?.localStorage?.removeItem(key) } catch { /* blocked */ }
     },
   },
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- KothaSetu terracotta brand palette -->
+    <color name="colorPrimary">#C8560A</color>
+    <color name="colorPrimaryDark">#A04008</color>
+    <color name="colorAccent">#E8872A</color>
+    <!-- Splash / status bar background -->
+    <color name="colorSplashBackground">#C8560A</color>
+</resources>
