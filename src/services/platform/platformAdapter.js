@@ -86,6 +86,13 @@ export const platformServices = {
     isAvailable() {
       return isNative() || Boolean(getNavigator()?.geolocation)
     },
+    async requestPermission() {
+      if (!isNative()) return true
+      const current = await Geolocation.checkPermissions()
+      if (current.location === 'granted') return true
+      const requested = await Geolocation.requestPermissions({ permissions: ['location'] })
+      return requested.location === 'granted'
+    },
     async getCurrentPosition(options = {}) {
       if (isNative()) {
         // Capacitor Geolocation returns { coords, timestamp } — same shape as browser API
