@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mic, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck, History, Keyboard, Languages, RotateCcw } from 'lucide-react'
+import { Mic, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck, History, Keyboard, Languages, RotateCcw, MessageSquare } from 'lucide-react'
 import LanguageSelector from '../components/translation/LanguageSelector'
 import Waveform from '../components/translation/Waveform'
+import ConversationMode from '../components/translation/ConversationMode'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { translateText } from '../services/translation'
@@ -98,6 +99,7 @@ export default function Translator() {
         {[
           { id: 'text', label: 'Type', icon: Keyboard },
           { id: 'voice', label: 'Speak', icon: Mic },
+          { id: 'convo', label: 'Convo', icon: MessageSquare },
         ].map(({ id, label, icon: ModeIcon }) => (
           <button key={id} aria-pressed={mode === id} onClick={() => { setMode(id); if (isListening) stopListening() }} style={{
             padding: '7px 16px', borderRadius: 999,
@@ -115,7 +117,11 @@ export default function Translator() {
         ))}
       </div>
 
-      <div className="lang-selector-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+      {mode === 'convo' ? (
+        <section style={{ marginTop: 4 }}>
+          <ConversationMode />
+        </section>
+      ) : (<><div className="lang-selector-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 180 }}>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
           <LanguageSelector variant="select" value={fromLang} onChange={(v) => { setFromLang(v); if (v === toLang) setToLang(fromLang); setOutputText(''); setError(null) }} />
@@ -378,6 +384,7 @@ export default function Translator() {
           )}
         </section>
       )}
+      </>)}
     </main>
   )
 }

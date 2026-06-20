@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Mic, Compass, Bookmark, Home, Sun, Moon, Menu, X, MessageSquare, BookOpen, MapPinned, ShieldAlert, History, HeartHandshake } from 'lucide-react'
+import { Mic, Compass, Bookmark, Home, Sun, Moon, Menu, X, MessageSquare, BookOpen, MapPinned, ShieldAlert, History, HeartHandshake, Landmark } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
@@ -14,7 +14,7 @@ const mobileNavItems = [
   { to: '/discover', icon: Compass, label: 'Explore' },
   { to: '/phrases', icon: BookOpen, label: 'Phrases' },
   { to: '/translate', icon: Mic, label: 'Translate', primary: true },
-  { to: '/conversation', icon: MessageSquare, label: 'Convo' },
+  { to: '/guide', icon: Landmark, label: 'Guide' },
 ]
 
 const moreItems = [
@@ -82,7 +82,9 @@ export default function Navbar() {
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>
               {location.pathname === '/history'
                 ? 'Translation History'
-                : location.pathname === '/culture' || location.pathname.startsWith('/places')
+                : location.pathname === '/guide'
+                  ? 'Guide'
+                  : location.pathname === '/culture' || location.pathname.startsWith('/places')
                   ? 'Explore'
                   : location.pathname === '/phrases'
                     ? 'Phrasebook'
