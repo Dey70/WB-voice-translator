@@ -1,0 +1,427 @@
+/* ══════════════════════════════════════════════════════════════
+   TRANSLATOR — Kolkata heritage redesign
+   ══════════════════════════════════════════════════════════════ */
+
+/* Hide top navbar same as home/phrases */
+.translator-page-active .app-navbar { display:none!important; }
+
+.tr-page { min-height:100dvh; position:relative; color:#E8EAF6; }
+
+/* Reuses .pb-bg and .pb-bg-overlay from phrases for the background */
+
+.tr-content {
+  position:relative; z-index:1;
+  padding:0 20px calc(104px + env(safe-area-inset-bottom,0px));
+}
+
+/* Header — reuses bh-* */
+.tr-content .bh-header { padding-top:20px; margin-bottom:16px; }
+
+/* History button */
+.tr-history-btn {
+  display:flex; align-items:center; gap:5px;
+  padding:6px 12px; border-radius:20px;
+  border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.07);
+  color:rgba(255,255,255,.55); font-size:11px; font-weight:600;
+  text-decoration:none; flex-shrink:0;
+  transition:background .15s;
+}
+.tr-history-btn:hover { background:rgba(255,255,255,.13); }
+
+/* Heading */
+.tr-heading {
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:30px; font-weight:700; line-height:1.2;
+  color:#F4EDE1; margin:0 0 6px;
+  text-shadow:0 1px 0 rgba(0,0,0,.9),0 2px 8px rgba(0,0,0,.7),0 6px 24px rgba(0,0,0,.5);
+}
+.tr-heading em { font-style:italic; color:#E0652E; }
+.tr-sub { font-size:13px; color:rgba(255,255,255,.5); margin:0 0 18px; line-height:1.5; }
+
+/* Language panel — tighter than phrases panel */
+.tr-lang-panel { margin-bottom:14px; }
+
+/* ── Mode tabs ── */
+.tr-mode-tabs {
+  display:flex; gap:8px; margin-bottom:14px;
+}
+.tr-mode-tab {
+  display:flex; align-items:center; gap:6px;
+  padding:8px 18px; border-radius:22px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.07);
+  color:rgba(255,255,255,.5); font-size:12px; font-weight:600;
+  cursor:pointer; min-height:auto; transition:all .18s;
+}
+.tr-mode-tab:hover { background:rgba(255,255,255,.12); color:#fff; }
+.tr-mode-tab.active {
+  border-color:#D9A441; background:rgba(217,164,65,.15); color:#D9A441;
+}
+
+/* ── Mic panel ── */
+.tr-mic-panel {
+  padding:20px 16px 18px;
+  border-radius:18px;
+  background:rgba(18,10,28,.6);
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  display:flex; flex-direction:column; align-items:center; gap:14px;
+  margin-bottom:14px;
+}
+
+/* Alpana wavy decoration at top */
+.tr-alpana-wave {
+  width:100%; height:20px; color:#D9A441;
+  display:block; flex-shrink:0;
+}
+
+/* Ripple rings container */
+.tr-mic-rings-wrap {
+  position:relative; display:flex; align-items:center; justify-content:center;
+  width:160px; height:160px;
+}
+.tr-ripple {
+  position:absolute; border-radius:50%;
+  border:2px solid #C8560A;
+  animation:trRipple 1.2s ease-out infinite;
+  pointer-events:none;
+}
+
+/* Mic button */
+.tr-mic-btn {
+  position:relative; z-index:1;
+  width:76px; height:76px; border-radius:50%;
+  background:#C8560A;
+  border:3px solid rgba(200,86,10,.35);
+  cursor:pointer; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 0 6px rgba(200,86,10,.12), 0 8px 28px rgba(200,86,10,.35);
+  transition:transform .2s, box-shadow .2s;
+}
+.tr-mic-btn:hover:not(:disabled) { transform:scale(1.06); }
+.tr-mic-btn.listening {
+  background:#B03020;
+  box-shadow:0 0 0 6px rgba(176,48,32,.2), 0 8px 28px rgba(176,48,32,.45);
+  animation:none;
+}
+.tr-mic-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+/* Five-bar waveform */
+.tr-waveform {
+  display:flex; align-items:flex-end; gap:3px; height:22px;
+}
+.tr-bar {
+  width:4px; border-radius:2px;
+  background:#D9A441; height:6px;
+  transition:height .1s;
+}
+.tr-bar.active {
+  animation:trBarBounce .6s ease-in-out infinite;
+}
+
+.tr-mic-label {
+  font-size:13px; color:rgba(255,255,255,.6);
+  text-align:center; margin:0; font-weight:500;
+}
+.tr-mic-warn {
+  font-size:11px; color:rgba(248,113,113,.8);
+  text-align:center; margin:0;
+}
+.tr-interim {
+  padding:8px 14px; border-radius:10px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.55); font-size:13px;
+  text-align:center; max-width:100%;
+}
+
+/* ── Cards (source & result) ── */
+.tr-card {
+  padding:14px; border-radius:16px;
+  background:rgba(18,10,28,.62);
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  margin-bottom:12px;
+}
+.tr-card-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 10px 3px 8px; border-radius:20px;
+  border:1.5px solid; font-size:10px; font-weight:800;
+  letter-spacing:.05em; margin-bottom:10px;
+}
+.tr-card-badge span {
+  font-family:'Baloo Da 2','Hind Siliguri',sans-serif;
+  font-size:12px; font-weight:700;
+}
+.tr-textarea {
+  width:100%; min-height:88px; background:transparent;
+  border:none; outline:none; resize:none;
+  color:#F4EDE1; font-size:16px; line-height:1.6;
+  font-family:'Baloo Da 2','Hind Siliguri',sans-serif;
+  padding:0; box-sizing:border-box;
+}
+.tr-textarea::placeholder { color:rgba(255,255,255,.28); }
+.tr-card-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:10px; border-top:1px solid rgba(255,255,255,.08);
+  font-size:11px; color:rgba(255,255,255,.35);
+}
+.tr-clear-btn {
+  background:none; border:none; color:rgba(255,255,255,.4);
+  font-size:12px; font-weight:600; cursor:pointer; padding:0; min-height:auto;
+}
+.tr-clear-btn:disabled { opacity:.3; cursor:default; }
+
+/* Result card */
+.tr-result-card { transition:border-color .2s; }
+.tr-result-card.has-result { border-color:rgba(255,255,255,.18); }
+.tr-result-text {
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:16px; line-height:1.6; min-height:80px;
+  margin-bottom:10px; display:flex; align-items:flex-start; gap:8px;
+}
+.tr-result-loader { margin-top:3px; animation:trSpin .8s linear infinite; flex-shrink:0; }
+.tr-result-footer { gap:8px; }
+.tr-action-btn {
+  display:flex; align-items:center; gap:5px;
+  padding:6px 13px; border-radius:9px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.07); color:rgba(255,255,255,.6);
+  font-size:12px; font-weight:600; cursor:pointer; min-height:auto;
+  transition:all .15s;
+}
+.tr-action-btn:hover:not(:disabled) { background:rgba(255,255,255,.13); }
+.tr-action-btn:disabled { opacity:.3; cursor:default; }
+.tr-action-btn.success { border-color:#2D6A4F; color:#4ade80; background:rgba(74,222,128,.08); }
+.tr-action-btn.active  { border-color:#D9A441; color:#D9A441; background:rgba(217,164,65,.1); }
+.tr-no-voice { font-size:10px; color:rgba(255,200,80,.5); margin-left:4px; align-self:center; }
+
+.tr-speech-error {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  margin-top:8px; padding:8px 10px; border-radius:8px;
+  background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.2);
+  color:#f87171; font-size:11px;
+}
+.tr-speech-error button {
+  background:rgba(248,113,113,.15); border:1px solid rgba(248,113,113,.3);
+  border-radius:6px; color:#f87171; cursor:pointer; font-size:11px;
+  padding:3px 9px; min-height:auto; font-weight:600;
+}
+.tr-error {
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:8px 10px; border-radius:8px;
+  background:rgba(248,113,113,.08); border:1px solid rgba(248,113,113,.2);
+  color:#f87171; font-size:11px; margin-bottom:8px;
+}
+.tr-error button {
+  display:flex; align-items:center; gap:4px;
+  background:rgba(248,113,113,.15); border:1px solid rgba(248,113,113,.3);
+  border-radius:6px; color:#f87171; cursor:pointer; font-size:11px;
+  padding:3px 9px; min-height:auto; font-weight:600;
+}
+
+/* ── CTA button ── */
+.tr-cta {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; padding:15px;
+  border-radius:14px; border:none;
+  background:#C8560A; color:#fff;
+  font-size:15px; font-weight:700; cursor:pointer;
+  min-height:auto; margin-top:4px;
+  transition:background .18s, opacity .18s;
+}
+.tr-cta:hover:not(:disabled) { background:#D96010; }
+.tr-cta:disabled { opacity:.45; cursor:default; }
+.tr-spinner { animation:trSpin .8s linear infinite; }
+
+/* ══════════════════════════════════════════════════════════════
+   CONVERSATION MODE — Bengali ethnic mics + dark chat
+   ══════════════════════════════════════════════════════════════ */
+
+.cv-root {
+  display:flex; flex-direction:column; gap:12px;
+}
+
+/* Chat box — reuses .tr-card but with fixed height */
+.cv-chat-box {
+  min-height:260px; max-height:calc(100dvh - 420px);
+  overflow-y:auto; display:flex; flex-direction:column; gap:10px;
+  padding:14px;
+  /* smooth scroll for Android */
+  -webkit-overflow-scrolling:touch;
+  /* hide scrollbar */
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+.cv-chat-box::-webkit-scrollbar { display:none; }
+
+.cv-empty {
+  flex:1; display:flex; align-items:center; justify-content:center;
+}
+.cv-empty p {
+  font-size:13px; color:rgba(255,255,255,.3);
+  font-style:italic; text-align:center;
+}
+
+/* Message bubbles */
+.cv-msg { display:flex; flex-direction:column; gap:4px; }
+.cv-msg.msg-a { align-items:flex-start; }
+.cv-msg.msg-b { align-items:flex-end; }
+
+.cv-msg-meta {
+  font-size:10px; color:rgba(255,255,255,.3);
+  padding:0 4px; font-weight:500;
+}
+
+.cv-msg-bubble {
+  max-width:90%; padding:10px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  display:flex; flex-direction:column; gap:6px;
+}
+
+.cv-msg-original {
+  font-family:'Baloo Da 2','Hind Siliguri',sans-serif;
+  font-size:16px; line-height:1.5; color:#F4EDE1;
+  margin:0;
+}
+
+.cv-msg-divider {
+  height:1px; background:rgba(255,255,255,.08);
+}
+
+.cv-msg-translation {
+  display:flex; align-items:flex-start; gap:7px; flex-wrap:wrap;
+}
+
+.cv-msg-translated {
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:14px; line-height:1.5; margin:0; flex:1;
+  font-style:italic;
+}
+
+.cv-translating {
+  font-size:12px; color:rgba(255,255,255,.38); font-style:italic;
+}
+
+.cv-replay {
+  flex-shrink:0; background:none; border:none; padding:2px 4px;
+  color:rgba(255,255,255,.4); cursor:pointer; min-height:auto;
+  margin-top:1px;
+}
+.cv-replay:hover { color:rgba(255,255,255,.7); }
+
+/* Interim dots bubble */
+.cv-interim {
+  display:flex; padding:0 4px;
+}
+.cv-interim.msg-b { justify-content:flex-end; }
+.cv-interim-dots {
+  display:flex; gap:4px; padding:10px 14px;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+}
+.cv-interim-dots span {
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(255,255,255,.5);
+  animation:cvDot 1.2s ease-in-out infinite;
+}
+.cv-interim-dots span:nth-child(2) { animation-delay:.2s; }
+.cv-interim-dots span:nth-child(3) { animation-delay:.4s; }
+
+/* ── Mic row ── */
+.cv-mic-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 0 4px;
+}
+
+/* Mic wrap — contains ring layer + label */
+.cv-mic-wrap {
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  flex:1;
+}
+
+/* Relative container for petal SVG + ripples + button */
+.cv-mic-ring-wrap {
+  position:relative;
+  width:120px; height:120px;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* Ripple rings */
+.cv-ripple {
+  position:absolute; border-radius:50%;
+  border:2px solid;
+  animation:cvRipple 1.2s ease-out infinite;
+  pointer-events:none;
+}
+
+/* Main ethnic mic button */
+.cv-mic-btn {
+  position:relative; z-index:1;
+  width:68px; height:68px; border-radius:50%;
+  background:var(--mc, #C8560A);
+  border:3px solid color-mix(in srgb, var(--mc, #C8560A) 40%, transparent);
+  cursor:pointer; padding:0;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 0 0 5px color-mix(in srgb, var(--mc, #C8560A) 14%, transparent),
+             0 8px 24px color-mix(in srgb, var(--mc, #C8560A) 30%, transparent);
+  transition:transform .2s, box-shadow .2s;
+  /* inner ethnic ring */
+  overflow:visible;
+}
+.cv-mic-btn:hover:not(:disabled) { transform:scale(1.06); }
+.cv-mic-btn.active {
+  box-shadow:0 0 0 5px color-mix(in srgb, var(--mc, #C8560A) 22%, transparent),
+             0 8px 24px color-mix(in srgb, var(--mc, #C8560A) 45%, transparent);
+}
+
+/* Dashed inner ring — ethnic halo */
+.cv-mic-inner {
+  position:absolute; inset:-9px; border-radius:50%;
+  border:1px dashed color-mix(in srgb, var(--mc, #C8560A) 50%, white);
+  pointer-events:none;
+}
+
+/* Bindi — small dot at bottom of button */
+.cv-mic-bindi {
+  position:absolute; bottom:-3px; left:50%; transform:translateX(-50%);
+  width:6px; height:6px; border-radius:50%;
+  border:1px solid rgba(18,10,28,.4);
+  pointer-events:none;
+}
+
+/* Label below mic */
+.cv-mic-label {
+  display:flex; flex-direction:column; align-items:center; gap:1px;
+  text-align:center;
+}
+.cv-mic-label span:first-child {
+  font-size:13px; font-weight:700;
+  font-family:'Baloo Da 2',sans-serif;
+}
+.cv-mic-label span:last-child {
+  font-size:10px; color:rgba(255,255,255,.38);
+  font-weight:500;
+}
+
+/* Clear button in middle */
+.cv-clear {
+  width:36px; height:36px; border-radius:50%;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.14);
+  color:rgba(255,255,255,.4); cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .15s;
+  flex-shrink:0;
+}
+.cv-clear:hover { background:rgba(255,255,255,.13); }
+
+/* Fade-in for new messages */
+@keyframes fadeInMsg {
+  from { opacity:0; transform:translateY(6px); }
+  to   { opacity:1; transform:none; }
+}
+.fade-in { animation:fadeInMsg .25s ease; }

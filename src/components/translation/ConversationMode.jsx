@@ -1,23 +1,48 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Mic, Volume2, Trash2 } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { Trash2, Volume2 } from 'lucide-react'
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
 import { useSpeechSynthesis } from '../../hooks/useSpeechSynthesis'
 import { translateText } from '../../services/translation'
-import LanguageSelector from './LanguageSelector'
-import Waveform from './Waveform'
 import { getLanguage } from '../../utils/constants'
 
-export default function ConversationMode() {
-  const [langA, setLangA] = useState('bn')
-  const [langB, setLangB] = useState('hi')
+/* ── Default languages — Bengali ↔ Hindi ── */
+const LANG_A_DEFAULT = 'bn'
+const LANG_B_DEFAULT = 'hi'
+
+
+/* Alpana petal ring drawn in SVG — ethnic mic decoration */
+function AlpanaPetals({ color1, color2, size = 120 }) {
+  const c = size / 2
+  const r = size * 0.28
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+      style={{ position: 'absolute', pointerEvents: 'none', opacity: 0.55 }}
+      aria-hidden="true">
+      {[0,45,90,135,180,225,270,315].map((deg, i) => (
+        <ellipse key={i} cx={c} cy={c} rx={size * 0.055} ry={size * 0.14}
+          fill="none"
+          stroke={i % 2 === 0 ? color1 : color2}
+          strokeWidth="1.4"
+          transform={`rotate(${deg} ${c} ${c}) translate(0 ${-r})`} />
+      ))}
+      <circle cx={c} cy={c} r={r - 2}
+        fill="none" stroke={color1} strokeWidth="0.8" strokeDasharray="3 4" strokeOpacity="0.4" />
+    </svg>
+  )
+}
+
+export default function ConversationMode({ langA: langAProp, langB: langBProp }) {
+  const langA = langAProp || LANG_A_DEFAULT
+  const langB = langBProp || LANG_B_DEFAULT
+
   const [activeSpeaker, setActiveSpeaker] = useState(null)
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages]           = useState([])
   const [isTranslating, setIsTranslating] = useState(false)
-  const activeSpeakerRef = useRef(null)
+  const [speechError, setSpeechError]     = useState(null)
   const messagesEndRef = useRef(null)
 
-  const { transcript, interimText, isListening, startListening, stopListening, resetTranscript, isSupported, error: speechError } = useSpeechRecognition()
-  const { speak, isSpeaking, stop } = useSpeechSynthesis()
+  const { isListening, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition()
+  const { speak, stop } = useSpeechSynthesis()
 
   const langAData = getLanguage(langA)
   const langBData = getLanguage(langB)
@@ -26,263 +51,201 @@ export default function ConversationMode() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const handleSpeak = (speaker) => {
-    if (isListening || isTranslating) { stopListening(); return }
-    const fromLang = speaker === 'A' ? langA : langB
-    activeSpeakerRef.current = speaker
-    setActiveSpeaker(speaker)
-    resetTranscript()
-    startListening(fromLang)
-  }
+  useEffect(() => {
+    setMessages([])
+    stop()
+  }, [langA, langB, stop])
 
   const processMessage = useCallback(async (text, speaker) => {
-    if (!text.trim()) { setActiveSpeaker(null); return }
-    const fromLang = speaker === 'A' ? langA : langB
-    const toLang = speaker === 'A' ? langB : langA
+    if (!text.trim()) return
+    const from = speaker === 'A' ? langA : langB
+    const to   = speaker === 'A' ? langB : langA
     const msgId = Date.now()
-    setMessages((prev) => [...prev, {
-      id: msgId, speaker, fromLang, toLang,
+
+    setMessages(prev => [...prev, {
+      id: msgId, speaker, fromLang: from, toLang: to,
       originalText: text, translatedText: null,
       timestamp: new Date().toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' }),
       translating: true,
     }])
     setIsTranslating(true)
     try {
-      const translated = await translateText(text, fromLang, toLang)
-      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, translatedText: translated, translating: false } : m))
-      setTimeout(() => speak(translated, toLang), 300)
+      const translated = await translateText(text, from, to)
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, translatedText: translated, translating: false } : m))
+      setTimeout(() => speak(translated, to), 300)
     } catch {
-      setMessages((prev) => prev.map((m) => m.id === msgId ? { ...m, translatedText: 'Translation failed - check internet', translating: false } : m))
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, translatedText: 'Translation failed — check internet', translating: false } : m))
     } finally {
       setIsTranslating(false)
-      setActiveSpeaker(null)
     }
-  }, [langA, langB, speak])
+  }, [speak, langA, langB])
 
-  useEffect(() => {
-    if (!isListening && transcript && activeSpeakerRef.current) {
-      const speaker = activeSpeakerRef.current
-      activeSpeakerRef.current = null
-      processMessage(transcript, speaker)
-    }
-  }, [isListening, processMessage, transcript])
+  /* ── Fix Mic B: pass callback directly to startListening instead of watching transcript state ── */
+  const handleSpeak = (speaker) => {
+    setSpeechError(null)
+    if (isListening || isTranslating) return
+
+    const fromLang = speaker === 'A' ? langA : langB
+    setActiveSpeaker(speaker)
+    resetTranscript()
+
+    startListening(fromLang, (text) => {
+      setActiveSpeaker(null)
+      if (text?.trim()) processMessage(text, speaker)
+      else setSpeechError('No speech captured. Tap mic and try again.')
+    })
+  }
 
   const replayMessage = (msg) => {
     if (msg.translatedText) { stop(); setTimeout(() => speak(msg.translatedText, msg.toLang), 100) }
   }
 
-  const isButtonDisabled = (speaker) => isTranslating || (isListening && activeSpeaker !== speaker)
+  const isDisabled = (speaker) => isTranslating || (isListening && activeSpeaker !== speaker)
 
-  const renderMicButton = (speaker, langData) => {
-    const active = isListening && activeSpeaker === speaker
-    const disabled = isButtonDisabled(speaker)
-    const idleGradient = speaker === 'A'
-      ? 'linear-gradient(145deg,#C8560A 0%,#E8872A 60%,#C8960C 100%)'
-      : 'linear-gradient(145deg,#0D7377 0%,#14A98A 60%,#2D6A4F 100%)'
-    const petalColorA = speaker === 'A' ? '#C8560A' : '#0D7377'
-    const petalColorB = speaker === 'A' ? '#C8960C' : '#2D6A4F'
+  /* ── Ethnic mic button — alpana petal ring + solid button ── */
+  const MicButton = ({ speaker }) => {
+    const langData  = speaker === 'A' ? langAData : langBData
+    const isActive  = isListening && activeSpeaker === speaker
+    const disabled  = isDisabled(speaker)
+    /* A = terracotta, B = deep teal */
+    const baseColor = speaker === 'A' ? '#C8560A' : '#0E7C7B'
+    const accentCol = speaker === 'A' ? '#C8960C' : '#2D8A70'
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {!active && !disabled && (
-            <svg width="136" height="136" viewBox="0 0 136 136"
-              style={{ position: 'absolute', pointerEvents: 'none', opacity: 0.5 }} aria-hidden="true">
-              {[0,45,90,135,180,225,270,315].map((deg, i) => (
-                <ellipse key={i} cx="68" cy="68" rx="7" ry="18"
-                  fill="none"
-                  stroke={i % 2 === 0 ? petalColorA : petalColorB}
-                  strokeWidth="1.4"
-                  transform={`rotate(${deg} 68 68) translate(0 -32)`}
-                />
-              ))}
-              <circle cx="68" cy="68" r="36" fill="none" stroke="var(--border)" strokeWidth="1" strokeDasharray="3 4"/>
-            </svg>
+      <div className="cv-mic-wrap">
+        <div className="cv-mic-ring-wrap">
+          {/* Alpana petals — shown only when idle */}
+          {!isActive && !disabled && (
+            <AlpanaPetals color1={baseColor} color2={accentCol} size={120} />
           )}
-          {active && [1,2,3].map(n => (
-            <span key={n} style={{
-              position: 'absolute',
-              width: 76 + n * 24, height: 76 + n * 24, borderRadius: '50%',
-              border: `${3 - n + 1}px solid rgba(192,57,43,${0.3 - n * 0.08})`,
-              animation: `micRipple ${0.9 + n * 0.28}s ease-out infinite`,
-              animationDelay: `${n * 0.18}s`, pointerEvents: 'none',
-            }}/>
+
+          {/* Ripple rings — shown when listening */}
+          {isActive && [1,2,3].map(n => (
+            <span key={n} className="cv-ripple" style={{
+              width: 68 + n * 26, height: 68 + n * 26,
+              borderColor: baseColor,
+              animationDelay: `${n * 0.2}s`,
+              opacity: 0.4 - n * 0.1,
+            }} />
           ))}
+
+          {/* Main button */}
           <button
-            onClick={() => handleSpeak(speaker)}
-            disabled={disabled}
+            className={`cv-mic-btn ${isActive ? 'active' : ''}`}
             style={{
-              position: 'relative', zIndex: 1,
-              width: 76, height: 76, borderRadius: '50%',
-              background: active ? 'linear-gradient(135deg,#C0392B,#E8872A)' : idleGradient,
-              border: active ? '3px solid rgba(192,57,43,0.35)' : `3px solid ${petalColorB}55`,
+              '--mc': baseColor,
+              opacity: disabled ? 0.32 : 1,
               cursor: disabled ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 2,
-              opacity: disabled ? 0.35 : 1,
-              transition: 'all 0.3s cubic-bezier(.34,1.56,.64,1)',
-              boxShadow: active
-                ? '0 0 0 4px rgba(192,57,43,0.18),0 8px 28px rgba(192,57,43,0.4)'
-                : `0 0 0 4px ${petalColorB}18,0 6px 22px ${petalColorA}45`,
-              transform: active ? 'scale(1.07)' : 'scale(1)',
             }}
+            onClick={() => isActive ? stopListening() : handleSpeak(speaker)}
+            disabled={disabled}
+            aria-label={isActive ? 'Stop listening' : `Person ${speaker} — tap to speak`}
           >
-            <Mic size={26} color="white" strokeWidth={2} />
-            <div style={{ display: 'flex', gap: 3 }}>
-              {[0,1,2].map(i => <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.5)' }}/>)}
-            </div>
+            {/* Alpana inner ring */}
+            <span className="cv-mic-inner" aria-hidden="true" />
+            {/* Mic SVG — hand-drawn ethnic feel */}
+            <svg width="26" height="32" viewBox="0 0 26 32" fill="none" aria-hidden="true">
+              <rect x="8" y="1" width="10" height="16" rx="5" fill="white" fillOpacity="0.92" />
+              <path d="M3 14C3 20.627 8.373 26 13 26C17.627 26 23 20.627 23 14"
+                stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" strokeOpacity="0.9" />
+              <line x1="13" y1="26" x2="13" y2="31" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.8" />
+              <line x1="8" y1="31" x2="18" y2="31" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.8" />
+              <circle cx="13" cy="9" r="2" fill={baseColor} />
+            </svg>
+            {/* Bindi dot at bottom */}
+            <span className="cv-mic-bindi" style={{ background: isActive ? '#fff' : accentCol }} />
           </button>
-          <div style={{
-            position: 'absolute', bottom: -12, left: '50%', transform: 'translateX(-50%)',
-            width: 7, height: 7, borderRadius: '50%',
-            background: active ? '#C0392B' : petalColorB,
-            boxShadow: `0 0 7px ${active ? 'rgba(192,57,43,0.7)' : petalColorB + '99'}`,
-            transition: 'all 0.3s',
-          }}/>
         </div>
-        <div style={{ textAlign: 'center', marginTop: 6 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: langData.color, fontFamily: "'Hind',sans-serif" }}>
-            Person {speaker}
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-            {active ? 'Tap to stop' : langData.nativeName}
-          </div>
-          {active && (
-            <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center' }}>
-              <Waveform active color={langData.color} />
-            </div>
-          )}
+
+        <div className="cv-mic-label">
+          <span style={{ color: langData.color }}>{langData.nativeName}</span>
+          <span>{isActive ? 'Tap to stop' : `Person ${speaker}`}</span>
         </div>
-        <style>{`@keyframes micRipple{0%{transform:scale(1);opacity:1}100%{transform:scale(1.6);opacity:0}}`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <p style={{ color: 'var(--text-secondary)', fontSize: 14, textAlign: 'center', margin: 0 }}>
-        Two people, two languages — speak naturally
-      </p>
+    <div className="cv-root">
 
-      <div className="glass" style={{ borderRadius: 16, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Person A speaks</div>
-          <LanguageSelector value={langA} onChange={setLangA} exclude={langB} />
-        </div>
-        <div style={{ fontSize: 24, color: 'var(--text-muted)' }}>vs</div>
-        <div>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Person B speaks</div>
-          <LanguageSelector value={langB} onChange={setLangB} exclude={langA} />
-        </div>
-      </div>
-
-      <p className="conversation-instruction" aria-live="polite">
-        {isListening
-          ? `Listening to Person ${activeSpeaker}. Tap again when finished.`
-          : isTranslating
-            ? 'Translating the message...'
-            : 'Choose the speaker, tap their microphone once, and speak naturally.'}
-      </p>
-
-      {speechError && (
-        <div style={{ padding: '10px 16px', background: 'rgba(248,113,113,0.1)', borderRadius: 10, color: '#f87171', fontSize: 13 }}>
-          {speechError}
-        </div>
-      )}
-
-      <div className="glass" style={{
-        borderRadius: 16, minHeight: 240, maxHeight: 360,
-        overflowY: 'auto', padding: 20,
-        display: 'flex', flexDirection: 'column', gap: 16,
-      }}>
+      {/* ── Chat box ── */}
+      <div className="tr-card cv-chat-box">
         {messages.length === 0 ? (
-          <div style={{ textAlign: 'center', color: 'var(--text-muted)', margin: 'auto', padding: 32 }}>
-            <div style={{ fontSize: 16, marginBottom: 6 }}>Start the conversation</div>
-            <div style={{ fontSize: 13 }}>Person A or B taps their mic button below</div>
+          <div className="cv-empty">
+            <p>Tap a mic below to begin</p>
           </div>
-        ) : messages.map((msg) => {
-          const fromData = getLanguage(msg.fromLang)
-          const toData = getLanguage(msg.toLang)
-          const isA = msg.speaker === 'A'
-          const accentColor = isA ? langAData.color : langBData.color
-          return (
-            <div key={msg.id} className="fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: isA ? 'flex-start' : 'flex-end' }}>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, paddingLeft: isA ? 4 : 0, paddingRight: isA ? 0 : 4 }}>
-                {'Person ' + (isA ? 'A' : 'B') + ' · ' + fromData.flag + ' ' + fromData.nativeName + ' · ' + msg.timestamp}
-              </div>
-              <div style={{
-                maxWidth: '85%',
-                background: isA ? 'rgba(108,99,255,0.10)' : 'rgba(45,212,191,0.08)',
-                border: '1px solid ' + (isA ? 'rgba(108,99,255,0.25)' : 'rgba(45,212,191,0.2)'),
-                borderRadius: isA ? '4px 16px 16px 16px' : '16px 4px 16px 16px',
-                padding: '14px 18px',
-              }}>
-                <div className="translation-copy" lang={msg.fromLang} style={{ fontSize: 16, color: 'var(--text-primary)', marginBottom: 10, lineHeight: 1.5 }}>
-                  {msg.originalText}
-                </div>
-                <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                  <span style={{ fontSize: 14, flexShrink: 0 }}>{toData.flag}</span>
-                  <div style={{ flex: 1 }}>
-                    {msg.translating ? (
-                      <div style={{ color: 'var(--text-muted)', fontSize: 14, fontStyle: 'italic' }}>Translating to {toData.name}...</div>
-                    ) : (
-                      <div className="translation-copy" lang={msg.toLang} style={{ fontSize: 15, color: accentColor, lineHeight: 1.5 }}>
-                        {msg.translatedText}
-                      </div>
+        ) : (
+          messages.map(msg => {
+            const fromData  = getLanguage(msg.fromLang)
+            const toData    = getLanguage(msg.toLang)
+            const isA       = msg.speaker === 'A'
+            const mainColor = isA ? langAData.color : langBData.color
+            return (
+              <div key={msg.id} className={`cv-msg ${isA ? 'msg-a' : 'msg-b'} fade-in`}>
+                <span className="cv-msg-meta">
+                  {`Person ${msg.speaker} · ${fromData.nativeName} · ${msg.timestamp}`}
+                </span>
+                <div className="cv-msg-bubble" style={{ borderColor: mainColor + '44' }}>
+                  {/* Original */}
+                  <p className="cv-msg-original" lang={msg.fromLang}>{msg.originalText}</p>
+                  <div className="cv-msg-divider" />
+                  {/* Translation */}
+                  <div className="cv-msg-translation">
+                    <span className="pb-lang-badge" style={{ background: toData.color + '22', color: toData.color, borderColor: toData.color + '55' }}>
+                      {toData.label}
+                    </span>
+                    {msg.translating
+                      ? <span className="cv-translating">Translating…</span>
+                      : <p className="cv-msg-translated" lang={msg.toLang} style={{ color: mainColor }}>{msg.translatedText}</p>
+                    }
+                    {msg.translatedText && !msg.translating && (
+                      <button className="cv-replay" onClick={() => replayMessage(msg)} aria-label="Replay">
+                        <Volume2 size={13} />
+                      </button>
                     )}
                   </div>
-                  {msg.translatedText && !msg.translating && (
-                    <button onClick={() => replayMessage(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 2, flexShrink: 0 }}>
-                      <Volume2 size={14} />
-                    </button>
-                  )}
                 </div>
               </div>
-            </div>
-          )
-        })}
-        {isListening && interimText && (
-          <div style={{
-            padding: '10px 16px',
-            background: 'rgba(108,99,255,0.05)',
-            border: '1px dashed var(--border)',
-            borderRadius: 10, color: 'var(--text-muted)',
-            fontSize: 14, fontStyle: 'italic',
-            alignSelf: activeSpeaker === 'A' ? 'flex-start' : 'flex-end',
-            maxWidth: '80%',
-          }}>
-            {interimText}
+            )
+          })
+        )}
+
+        {/* Interim transcript bubble */}
+        {isListening && activeSpeaker && (
+          <div className={`cv-interim ${activeSpeaker === 'A' ? 'msg-a' : 'msg-b'}`}>
+            <span className="cv-interim-dots">
+              <span /><span /><span />
+            </span>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
-      {!isSupported ? (
-        <div style={{ textAlign: 'center', color: '#f87171', padding: 16, fontSize: 13 }}>
-          Voice requires Chrome or Edge on desktop.
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 16, alignItems: 'center' }}>
-          {renderMicButton('A', langAData)}
-          <button onClick={() => setMessages([])} title="Clear conversation" style={{
-            width: 44, height: 44, borderRadius: 22,
-            background: 'var(--bg-card)', border: '1px solid var(--border)',
-            color: 'var(--text-muted)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Trash2 size={16} />
+      {/* Speech error */}
+      {speechError && (
+        <p className="tr-mic-warn" style={{ textAlign: 'center', marginBottom: 6 }}>{speechError}</p>
+      )}
+
+      {!isSupported && (
+        <p className="tr-mic-warn" style={{ textAlign: 'center' }}>Voice requires Chrome or Edge on desktop.</p>
+      )}
+
+      {/* ── Mic row ── */}
+      {isSupported && (
+        <div className="cv-mic-row">
+          <MicButton speaker="A" />
+          <button className="cv-clear" onClick={() => { setMessages([]); stop() }} aria-label="Clear conversation">
+            <Trash2 size={15} />
           </button>
-          {renderMicButton('B', langBData)}
+          <MicButton speaker="B" />
         </div>
       )}
 
-      {isSpeaking && (
-        <div style={{ textAlign: 'center', marginTop: 8, color: 'var(--accent-secondary)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <Waveform active color="var(--accent-secondary)" />
-          Speaking translation...
-          <button onClick={stop} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12 }}>Stop</button>
-        </div>
-      )}
+      <style>{`
+        @keyframes cvRipple { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.7);opacity:0} }
+        @keyframes cvDot    { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
+      `}</style>
     </div>
   )
 }

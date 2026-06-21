@@ -52,16 +52,14 @@ function useNativeSpeechSynthesis() {
       // speak() resolves when the utterance finishes
       setIsPreparing(false)
       setIsSpeaking(true)
-      await TextToSpeech.speak({
-        text:   content,
-        lang,
-        rate:   0.9,
-        pitch:  1.0,
-        volume: 1.0,
-        category: 'ambient',
-      })
+      try {
+        await TextToSpeech.speak({ text: content, lang, rate: 0.9, pitch: 1.0, volume: 1.0, category: 'ambient' })
+      } catch {
+        // Language engine may not be installed — retry with device default voice
+        await TextToSpeech.speak({ text: content, rate: 0.9, pitch: 1.0, volume: 1.0, category: 'ambient' }).catch(() => {})
+      }
     } catch {
-      // speak() may reject if interrupted — that's fine
+      // outer catch for interrupted/cancelled
     } finally {
       if (mountedRef.current && requestRef.current === requestId) {
         setIsSpeaking(false)
@@ -127,7 +125,10 @@ function findVoice(langCode, voices) {
   }
   const base    = codes[0].split('-')[0].toLowerCase()
   const partial = voices.find((v) => v.lang.toLowerCase().split('-')[0] === base)
-  return { voice: partial || null, lang: partial?.lang || codes[0] }
+  if (partial) return { voice: partial, lang: partial.lang }
+  // No voice for target language — fall back to first available so TTS still plays
+  const fallback = voices[0] || null
+  return { voice: fallback, lang: fallback?.lang || codes[0] }
 }
 
 function useWebSpeechSynthesis() {

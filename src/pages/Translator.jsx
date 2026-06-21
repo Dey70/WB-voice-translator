@@ -1,44 +1,112 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mic, Volume2, VolumeX, Copy, ArrowLeftRight, Loader, CheckCheck, History, Keyboard, Languages, RotateCcw, MessageSquare } from 'lucide-react'
-import LanguageSelector from '../components/translation/LanguageSelector'
-import Waveform from '../components/translation/Waveform'
+import {
+  ArrowLeftRight, CheckCheck, Copy, History, Keyboard,
+  Loader, MessageSquare, Mic, RotateCcw, Volume2, VolumeX,
+} from 'lucide-react'
 import ConversationMode from '../components/translation/ConversationMode'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { translateText } from '../services/translation'
 import { useAppStore } from '../store/appStore'
-import { getLanguage } from '../utils/constants'
+import { getLanguage, LANGUAGES } from '../utils/constants'
 import { platformServices } from '../services/platform/platformAdapter'
+import kolkataImg from '../assets/kolkata-heritage.jpg'
+
+/* Native letter for each language circle */
+const CIRCLE_SCRIPT = { bn: 'ব', hi: 'ह', ne: 'न', en: 'EN' }
+
+function AlpanaPetals({ color1, color2, size = 120 }) {
+  const c = size / 2
+  const r = size * 0.28
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}
+      style={{ position: 'absolute', pointerEvents: 'none', opacity: 0.55 }}
+      aria-hidden="true">
+      {[0,45,90,135,180,225,270,315].map((deg, i) => (
+        <ellipse key={i} cx={c} cy={c} rx={size * 0.055} ry={size * 0.14}
+          fill="none"
+          stroke={i % 2 === 0 ? color1 : color2}
+          strokeWidth="1.4"
+          transform={`rotate(${deg} ${c} ${c}) translate(0 ${-r})`} />
+      ))}
+      <circle cx={c} cy={c} r={r - 2}
+        fill="none" stroke={color1} strokeWidth="0.8" strokeDasharray="3 4" strokeOpacity="0.4" />
+    </svg>
+  )
+}
+
+function AlpanaBar() {
+  return (
+    <svg className="bh-alpana" viewBox="0 0 240 18" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="9" x2="88" y2="9" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.5" />
+      <circle cx="96"  cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
+      <circle cx="108" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
+      <circle cx="108" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
+      <polygon points="120,4 123,9 120,14 117,9" fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.8" />
+      <circle cx="132" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
+      <circle cx="132" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
+      <circle cx="144" cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
+      <line x1="152" y1="9" x2="240" y2="9" stroke="currentColor" strokeOpacity="0.5" strokeWidth="0.8" />
+    </svg>
+  )
+}
+
+/* Five-bar animated waveform */
+function WaveformBars({ active }) {
+  return (
+    <div className="tr-waveform" aria-hidden="true">
+      {[0,1,2,3,4].map(i => (
+        <span key={i} className={`tr-bar ${active ? 'active' : ''}`} style={{ animationDelay: `${i * 0.1}s` }} />
+      ))}
+    </div>
+  )
+}
+
+/* Alpana wavy decoration for mic panel top */
+function AlpanaWave() {
+  return (
+    <svg className="tr-alpana-wave" viewBox="0 0 280 20" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <path d="M0,10 Q35,0 70,10 Q105,20 140,10 Q175,0 210,10 Q245,20 280,10"
+        fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.3" />
+      <path d="M0,14 Q35,4 70,14 Q105,24 140,14 Q175,4 210,14 Q245,24 280,14"
+        fill="none" stroke="currentColor" strokeWidth="0.6" strokeOpacity="0.15" />
+    </svg>
+  )
+}
 
 export default function Translator() {
-  const [fromLang, setFromLang] = useState('bn')
-  const [toLang, setToLang] = useState('hi')
-  const [inputText, setInputText] = useState('')
+  const [fromLang, setFromLang]     = useState('bn')
+  const [toLang, setToLang]         = useState('hi')
+  const [inputText, setInputText]   = useState('')
   const [outputText, setOutputText] = useState('')
   const [isTranslating, setIsTranslating] = useState(false)
-  const [mode, setMode] = useState('voice')
+  const [mode, setMode]   = useState('voice')
   const [copied, setCopied] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError]   = useState(null)
 
   const { interimText, isListening, startListening, stopListening, resetTranscript, isSupported, isIOS, error: speechError } = useSpeechRecognition()
   const { speak, isSpeaking, isPreparing, stop, noVoiceAvailable } = useSpeechSynthesis()
   const { addToHistory } = useAppStore()
 
-  const fromLangData = getLanguage(fromLang)
-  const toLangData = getLanguage(toLang)
+  const from = getLanguage(fromLang)
+  const to   = getLanguage(toLang)
+
+  useEffect(() => {
+    document.body.classList.add('translator-page-active')
+    return () => document.body.classList.remove('translator-page-active')
+  }, [])
 
   const handleTranslate = async () => {
     const text = inputText.trim()
     if (!text) return
-    setIsTranslating(true)
-    setError(null)
+    setIsTranslating(true); setError(null)
     try {
       const result = await translateText(text, fromLang, toLang)
       setOutputText(result)
-      addToHistory({ fromLang, toLang, originalText: text, translatedText: result, fromLangName: fromLangData.name, toLangName: toLangData.name })
-    } catch (translationError) {
-      setError(translationError.message || 'Translation failed. Check your connection and try again.')
+      addToHistory({ fromLang, toLang, originalText: text, translatedText: result, fromLangName: from.name, toLangName: to.name })
+    } catch (err) {
+      setError(err.message || 'Translation failed. Check your connection.')
     } finally {
       setIsTranslating(false)
     }
@@ -47,345 +115,275 @@ export default function Translator() {
   const handleMicClick = () => {
     if (isListening) { stopListening() }
     else {
-      resetTranscript()
-      setInputText('')
-      setOutputText('')
-      setError(null)
+      resetTranscript(); setInputText(''); setOutputText(''); setError(null)
       startListening(fromLang, setInputText)
     }
   }
 
   const handleSwap = () => {
-    const pf = fromLang, pt = toLang, previousInput = inputText, previousOutput = outputText
+    const pf = fromLang, pt = toLang, pi = inputText, po = outputText
     setFromLang(pt); setToLang(pf)
-    setInputText(previousOutput); setOutputText(previousOutput ? previousInput : '')
+    setInputText(po); setOutputText(po ? pi : '')
     setError(null)
+  }
+
+  const tapCircle = (code) => {
+    if (code === fromLang) return
+    if (code === toLang) { handleSwap(); return }
+    setFromLang(code)
+    setOutputText(''); setError(null)
+  }
+
+  const cycleFrom = () => {
+    const opts = LANGUAGES.filter(l => l.code !== toLang)
+    const idx = opts.findIndex(l => l.code === fromLang)
+    setFromLang(opts[(idx + 1) % opts.length].code)
+    setOutputText(''); setError(null)
+  }
+
+  const cycleTo = () => {
+    const opts = LANGUAGES.filter(l => l.code !== fromLang)
+    const idx = opts.findIndex(l => l.code === toLang)
+    setToLang(opts[(idx + 1) % opts.length].code)
+    setOutputText(''); setError(null)
   }
 
   const handleCopy = async () => {
     try {
       await platformServices.clipboard.writeText(outputText)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopied(true); setTimeout(() => setCopied(false), 2000)
     } catch {
-      setError('Could not copy the translation. Please select the text manually.')
+      setError('Could not copy. Please select the text manually.')
     }
   }
 
-  const clearTranslation = () => {
-    stopListening()
-    resetTranscript()
-    setInputText('')
-    setOutputText('')
-    setError(null)
+  const clearAll = () => {
+    stopListening(); resetTranscript()
+    setInputText(''); setOutputText(''); setError(null)
   }
 
+  const canTranslate = inputText.trim() && !isTranslating && !outputText
+
   return (
-    <main className="translator-page immersive-page" style={{ maxWidth: 1100, margin: '0 auto', padding: '24px 16px' }}>
+    <main className="tr-page">
 
-      <div className="translator-heading">
-        <h1 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 700, marginBottom: 6 }}>
-          <span className="gradient-text">Voice & Text</span> Translator
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 'clamp(13px, 2vw, 16px)' }}>
-          Speak or type in Bengali, Nepali, or Hindi
-        </p>
-        <Link to="/history" className="translator-history-link">
-          <History size={16} /> Translation history
-        </Link>
+      {/* Background */}
+      <div className="pb-bg" aria-hidden="true">
+        <img src={kolkataImg} alt="" />
+        <div className="pb-bg-overlay" />
       </div>
 
-      <div className="mode-buttons" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-        {[
-          { id: 'text', label: 'Type', icon: Keyboard },
-          { id: 'voice', label: 'Speak', icon: Mic },
-          { id: 'convo', label: 'Convo', icon: MessageSquare },
-        ].map(({ id, label, icon: ModeIcon }) => (
-          <button key={id} aria-pressed={mode === id} onClick={() => { setMode(id); if (isListening) stopListening() }} style={{
-            padding: '7px 16px', borderRadius: 999,
-            border: mode === id ? '2px solid var(--accent-primary)' : '1px solid var(--border)',
-            background: mode === id
-              ? 'linear-gradient(135deg,rgba(200,86,10,0.18),rgba(232,135,42,0.12))'
-              : 'var(--bg-card)',
-            color: mode === id ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            cursor: 'pointer', fontSize: 12, fontWeight: mode === id ? 700 : 400,
-            transition: 'all 0.2s',
-            boxShadow: mode === id ? '0 2px 10px rgba(200,86,10,0.2)' : 'none',
-          }}>
-            <ModeIcon size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />{label}
-          </button>
-        ))}
-      </div>
+      <div className="tr-content">
 
-      {mode === 'convo' ? (
-        <section style={{ marginTop: 4 }}>
-          <ConversationMode />
-        </section>
-      ) : (<><div className="lang-selector-row" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>From</div>
-          <LanguageSelector variant="select" value={fromLang} onChange={(v) => { setFromLang(v); if (v === toLang) setToLang(fromLang); setOutputText(''); setError(null) }} />
-        </div>
-        <button className="swap-btn" onClick={handleSwap} title="Swap languages" style={{
-          marginTop: 20, width: 42, height: 42, borderRadius: 21,
-          background: 'linear-gradient(135deg,#C8560A,#E8872A)',
-          border: 'none',
-          color: 'white', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, transition: 'all 0.25s cubic-bezier(.34,1.56,.64,1)',
-          boxShadow: '0 3px 12px rgba(200,86,10,0.4)',
-        }}
-          onMouseEnter={e => e.currentTarget.style.transform = 'rotate(180deg) scale(1.1)'}
-          onMouseLeave={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1)'}
-        >
-          <ArrowLeftRight size={16} />
-        </button>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>To</div>
-          <LanguageSelector variant="select" value={toLang} onChange={(v) => { setToLang(v); if (v === fromLang) setFromLang(toLang); setOutputText(''); setError(null) }} exclude={fromLang} />
-        </div>
-      </div>
-
-      <div className="translation-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 28 }}>
-        <div className="glass translation-surface" style={{ borderRadius: 14, padding: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: 7,
-                background: fromLangData.color + '25',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, fontWeight: 700, color: fromLangData.color,
-              }}>{fromLangData.label || fromLang.toUpperCase()}</div>
-              <span style={{ fontWeight: 600, color: fromLangData.color, fontSize: 14 }}>{fromLangData.nativeName}</span>
-            </div>
-            {isListening && <Waveform active={true} color={fromLangData.color} />}
-          </div>
-
-          <textarea
-            className="translation-copy"
-            lang={fromLang}
-            maxLength={500}
-            value={isListening && interimText && !inputText ? interimText : inputText}
-            onChange={(e) => { setInputText(e.target.value); setOutputText(''); setError(null) }}
-            placeholder={"Type or speak in " + fromLangData.name + "..."}
-            style={{
-              width: '100%', minHeight: 'clamp(120px, 20vw, 160px)',
-              background: 'transparent', border: 'none', outline: 'none',
-              resize: 'vertical', color: isListening && interimText && !inputText ? 'var(--text-muted)' : 'var(--text-primary)',
-              fontSize: 'clamp(15px, 2vw, 18px)', lineHeight: 1.6, fontFamily: 'inherit',
-            }}
-          />
-
-          {speechError && (
-            <div style={{ marginTop: 8, padding: '8px 12px', background: 'rgba(248,113,113,0.1)', borderRadius: 8, color: '#f87171', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <span>{speechError}</span>
-              <button onClick={handleMicClick} style={{
-                background: 'rgba(248,113,113,0.2)', border: '1px solid rgba(248,113,113,0.4)',
-                borderRadius: 6, color: '#f87171', cursor: 'pointer', fontSize: 12,
-                padding: '4px 10px', flexShrink: 0, fontWeight: 600,
-              }}>Try again</button>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)' }}>
-            <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              {isListening ? 'Listening...' : inputText.length + ' chars'}
-            </span>
-            <button onClick={clearTranslation} disabled={!inputText && !outputText} style={{
-              background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 12,
-            }}>Clear</button>
-          </div>
+        {/* ── Header ── */}
+        <div className="bh-header">
+          <Link to="/" className="bh-brand-block" style={{ textDecoration: 'none' }}>
+            <span className="bh-brand">কথাসেতু</span>
+            <AlpanaBar />
+          </Link>
+          <Link to="/history" className="tr-history-btn" aria-label="History">
+            <History size={15} />
+            <span>History</span>
+          </Link>
         </div>
 
-        <div className="glass translation-surface" style={{ borderRadius: 14, padding: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                width: 26, height: 26, borderRadius: 7,
-                background: toLangData.color + '25',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 10, fontWeight: 700, color: toLangData.color,
-              }}>{toLangData.label || toLang.toUpperCase()}</div>
-              <span style={{ fontWeight: 600, color: toLangData.color, fontSize: 14 }}>{toLangData.nativeName}</span>
+        {/* ── Hero ── */}
+        <h1 className="tr-heading"><em>Voice &amp; text</em> translator</h1>
+        <p className="tr-sub">Speak or type in Bengali, Nepali or Hindi.</p>
+
+        {/* ── Language circles ── */}
+        <div className="pb-lang-panel tr-lang-panel">
+          <div className="pb-lang-circles-row">
+            <div className="pb-lang-circle-item">
+              <button className="pb-lang-circle is-from" style={{ '--lc': from.color }}
+                onClick={cycleFrom} aria-label={`From: ${from.name}`}>
+                <div className="pb-lc-inner-ring" aria-hidden="true" />
+                <span className="pb-lc-script">{CIRCLE_SCRIPT[fromLang] || from.label}</span>
+              </button>
+              <span className="pb-lc-name" style={{ color: from.color }}>{from.name}</span>
             </div>
-            {isTranslating && <Loader size={14} style={{ color: 'var(--accent-primary)' }} />}
-          </div>
 
-          <div className="translation-copy" lang={toLang} style={{
-            minHeight: 'clamp(120px, 20vw, 160px)',
-            fontSize: 'clamp(15px, 2vw, 18px)', lineHeight: 1.6,
-            color: outputText ? 'var(--text-primary)' : 'var(--text-muted)',
-            fontStyle: outputText ? 'normal' : 'italic',
-          }}>
-            {outputText || (isTranslating ? 'Translating...' : 'Translation will appear here')}
-          </div>
-
-          {error && (
-            <div className="translate-error" role="alert">
-              <span>{error}</span>
-              {error.startsWith('Translation failed') && <button onClick={handleTranslate} disabled={!inputText.trim() || isTranslating}><RotateCcw size={13} /> Retry</button>}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: 6, marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', flexWrap: 'wrap' }}>
-            <button onClick={handleCopy} disabled={!outputText} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '6px 13px', borderRadius: 8,
-              background: copied
-                ? 'linear-gradient(135deg,rgba(45,106,79,0.18),rgba(45,106,79,0.08))'
-                : 'var(--bg-secondary)',
-              border: `1px solid ${copied ? '#2D6A4F' : 'var(--border)'}`,
-              color: copied ? '#2D6A4F' : 'var(--text-secondary)',
-              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: copied ? 600 : 400,
-              transition: 'all 0.2s',
-            }}>
-              {copied ? <CheckCheck size={13} /> : <Copy size={13} />}
-              {copied ? '✓ Copied' : 'Copy'}
+            <button className="pb-lang-swap" onClick={handleSwap} aria-label="Swap languages">
+              <ArrowLeftRight size={16} />
             </button>
-            <button onClick={() => (isSpeaking || isPreparing) ? stop() : speak(outputText, toLang)} disabled={!outputText} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '6px 13px', borderRadius: 8,
-              background: isSpeaking
-                ? 'linear-gradient(135deg,rgba(200,86,10,0.2),rgba(232,135,42,0.1))'
-                : 'var(--bg-secondary)',
-              border: `1px solid ${isSpeaking ? 'var(--accent-primary)' : 'var(--border)'}`,
-              color: isSpeaking ? 'var(--accent-primary)' : 'var(--text-secondary)',
-              cursor: outputText ? 'pointer' : 'not-allowed', fontSize: 12, fontWeight: isSpeaking ? 600 : 400,
-              transition: 'all 0.2s',
-            }}>
-              {isSpeaking || isPreparing ? <VolumeX size={13} /> : <Volume2 size={13} />}
-              {isPreparing ? 'Preparing...' : isSpeaking ? 'Stop' : 'Speak'}
-            </button>
-            {isSpeaking && <Waveform active={true} color={toLangData.color} />}
+
+            <div className="pb-lang-circle-item">
+              <button className="pb-lang-circle is-to" style={{ '--lc': to.color }}
+                onClick={cycleTo} aria-label={`To: ${to.name}`}>
+                <div className="pb-lc-inner-ring" aria-hidden="true" />
+                <span className="pb-lc-script">{CIRCLE_SCRIPT[toLang] || to.label}</span>
+              </button>
+              <span className="pb-lc-name" style={{ color: to.color }}>{to.name}</span>
+            </div>
           </div>
-
-          {noVoiceAvailable && <p className="translate-voice-warning">No compatible voice is installed for {toLangData.name}. You can still copy and show the text.</p>}
-
+          <p className="pb-lang-hint-center">Tap a circle to change language</p>
         </div>
-      </div>
 
-      <button className="translate-primary" onClick={handleTranslate} disabled={!inputText.trim() || isTranslating || Boolean(outputText)}>
-        {isTranslating ? <Loader size={19} className="translate-spinner" /> : outputText ? <CheckCheck size={19} /> : <Languages size={19} />}
-        {isTranslating ? 'Translating...' : outputText ? 'Translation ready' : `Translate to ${toLangData.name}`}
-      </button>
+        {/* ── Mode tabs ── */}
+        <div className="tr-mode-tabs" role="tablist">
+          {[
+            { id: 'text',  label: 'Type',  Icon: Keyboard },
+            { id: 'voice', label: 'Speak', Icon: Mic },
+            { id: 'convo', label: 'Convo', Icon: MessageSquare },
+          ].map(({ id, label, Icon }) => (
+            <button key={id} role="tab" aria-selected={mode === id}
+              className={`tr-mode-tab ${mode === id ? 'active' : ''}`}
+              onClick={() => { setMode(id); if (isListening) stopListening() }}>
+              <Icon size={13} />{label}
+            </button>
+          ))}
+        </div>
 
-      {mode === 'voice' && (
-        <section className="translator-voice-panel">
-          {!isSupported && (
-            <div style={{ color: '#f87171', fontSize: 13, textAlign: 'center', padding: '12px 16px', background: 'rgba(248,113,113,0.08)', borderRadius: 10, border: '1px solid rgba(248,113,113,0.2)', maxWidth: 340 }}>
-              Voice input requires Chrome or Edge browser on desktop.
-            </div>
-          )}
-          {isSupported && isIOS && (
-            <div style={{ color: '#fbbf24', fontSize: 12, textAlign: 'center', padding: '8px 14px', background: 'rgba(251,191,36,0.08)', borderRadius: 8, border: '1px solid rgba(251,191,36,0.2)', maxWidth: 340 }}>
-              Voice on iPhone may be limited. If it fails, please type in the box above.
-            </div>
-          )}
-          {/* Indian-touch mic button */}
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {mode === 'convo' ? (
+          <ConversationMode langA={fromLang} langB={toLang} />
+        ) : (<>
 
-            {/* Rangoli petal ring — 8 petals, visible only when idle */}
-            {!isListening && isSupported && (
-              <svg width="160" height="160" viewBox="0 0 160 160"
-                style={{ position: 'absolute', pointerEvents: 'none', opacity: 0.55 }}
-                aria-hidden="true">
-                {[0,45,90,135,180,225,270,315].map((deg, i) => (
-                  <ellipse key={i}
-                    cx="80" cy="80" rx="9" ry="22"
-                    fill="none"
-                    stroke={i % 2 === 0 ? '#C8560A' : '#C8960C'}
-                    strokeWidth="1.5"
-                    transform={`rotate(${deg} 80 80) translate(0 -38)`}
-                  />
+          {/* ── Mic panel (voice mode) ── */}
+          {mode === 'voice' && (
+            <div className="tr-mic-panel">
+              <AlpanaWave />
+
+              {/* Mic ring container */}
+              <div className="tr-mic-rings-wrap">
+                {/* Ethnic alpana petals — shown when idle */}
+                {!isListening && isSupported && (
+                  <AlpanaPetals color1="#C8560A" color2="#C8960C" size={140} />
+                )}
+
+                {/* Ripple rings when listening */}
+                {isListening && [1,2,3].map(n => (
+                  <span key={n} className="tr-ripple" style={{
+                    width: 76 + n * 28, height: 76 + n * 28,
+                    animationDelay: `${n * 0.22}s`,
+                    opacity: 0.35 - n * 0.08,
+                  }} />
                 ))}
-                <circle cx="80" cy="80" r="42" fill="none" stroke="#E8D5B7" strokeWidth="1" strokeDasharray="4 5"/>
-              </svg>
-            )}
 
-            {/* Listening state: animated concentric ripple rings */}
-            {isListening && (
-              <>
-                {[1,2,3].map(n => (
-                  <span key={n} style={{
-                    position: 'absolute',
-                    width: 72 + n * 28, height: 72 + n * 28,
-                    borderRadius: '50%',
-                    border: `${4 - n}px solid rgba(192,57,43,${0.28 - n * 0.07})`,
-                    animation: `micRipple ${0.9 + n * 0.3}s ease-out infinite`,
-                    animationDelay: `${n * 0.2}s`,
-                    pointerEvents: 'none',
-                  }}/>
-                ))}
-              </>
-            )}
-
-            {/* Main button — lotus-shaped border via clip-path */}
-            <button
-              onClick={handleMicClick}
-              disabled={!isSupported}
-              style={{
-                position: 'relative', zIndex: 1,
-                width: 80, height: 80,
-                borderRadius: '50%',
-                background: isListening
-                  ? 'linear-gradient(135deg, #C0392B, #E8872A)'
-                  : 'linear-gradient(145deg, #C8560A 0%, #E8872A 55%, #C8960C 100%)',
-                border: isListening ? '3px solid rgba(192,57,43,0.4)' : '3px solid rgba(200,150,12,0.5)',
-                cursor: isSupported ? 'pointer' : 'not-allowed',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexDirection: 'column', gap: 2,
-                transition: 'all 0.3s cubic-bezier(.34,1.56,.64,1)',
-                boxShadow: isListening
-                  ? '0 0 0 4px rgba(192,57,43,0.2), 0 8px 32px rgba(192,57,43,0.45)'
-                  : '0 0 0 4px rgba(200,150,12,0.15), 0 8px 28px rgba(200,86,10,0.4)',
-                transform: isListening ? 'scale(1.08)' : 'scale(1)',
-              }}
-            >
-              <Mic size={26} color="white" strokeWidth={2} />
-              {/* Small decorative dot row beneath mic icon */}
-              <div style={{ display: 'flex', gap: 3, marginTop: 1 }}>
-                {[0,1,2].map(i => (
-                  <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: 'rgba(255,255,255,0.55)' }}/>
-                ))}
+                {/* Ethnic mic button */}
+                <button className={`cv-mic-btn ${isListening ? 'active' : ''}`}
+                  style={{ '--mc': '#C8560A', width: 76, height: 76, opacity: !isSupported ? 0.45 : 1, cursor: !isSupported ? 'not-allowed' : 'pointer' }}
+                  onClick={handleMicClick} disabled={!isSupported}
+                  aria-label={isListening ? 'Stop listening' : 'Start voice input'}>
+                  <span className="cv-mic-inner" aria-hidden="true" />
+                  <svg width="26" height="32" viewBox="0 0 26 32" fill="none" aria-hidden="true">
+                    <rect x="8" y="1" width="10" height="16" rx="5" fill="white" fillOpacity="0.92" />
+                    <path d="M3 14C3 20.627 8.373 26 13 26C17.627 26 23 20.627 23 14"
+                      stroke="white" strokeWidth="2" strokeLinecap="round" fill="none" strokeOpacity="0.9" />
+                    <line x1="13" y1="26" x2="13" y2="31" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.8" />
+                    <line x1="8" y1="31" x2="18" y2="31" stroke="white" strokeWidth="2" strokeLinecap="round" strokeOpacity="0.8" />
+                    <circle cx="13" cy="9" r="2" fill="#C8560A" />
+                  </svg>
+                  <span className="cv-mic-bindi" style={{ background: isListening ? '#fff' : '#C8960C' }} />
+                </button>
               </div>
-            </button>
 
-            {/* Bottom bindi dot */}
-            <div style={{
-              position: 'absolute', bottom: -14, left: '50%', transform: 'translateX(-50%)',
-              width: 8, height: 8, borderRadius: '50%',
-              background: isListening ? '#C0392B' : '#C8960C',
-              boxShadow: `0 0 8px ${isListening ? 'rgba(192,57,43,0.7)' : 'rgba(200,150,12,0.7)'}`,
-              transition: 'all 0.3s',
-            }}/>
-          </div>
+              {/* Waveform bars */}
+              <WaveformBars active={isListening} />
 
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, textAlign: 'center', marginTop: 20, fontFamily: "'Hind', sans-serif" }}>
-            {isListening
-              ? 'Listening in ' + fromLangData.name + '... tap to stop'
-              : 'Tap to speak in ' + fromLangData.name}
-          </p>
+              <p className="tr-mic-label">
+                {isListening
+                  ? `Listening in ${from.name}… tap to stop`
+                  : `Tap to speak in ${from.name}`}
+              </p>
 
-          <style>{`
-            @keyframes micRipple {
-              0%   { transform: scale(1);    opacity: 1; }
-              100% { transform: scale(1.55); opacity: 0; }
-            }
-          `}</style>
-          {isListening && interimText && (
-            <div style={{
-              padding: '10px 18px', background: 'var(--bg-card)',
-              borderRadius: 10, border: '1px solid var(--border)',
-              color: 'var(--text-muted)', fontSize: 14,
-              maxWidth: '90%', textAlign: 'center',
-            }}>
-              {interimText}
+              {!isSupported && (
+                <p className="tr-mic-warn">Voice input requires Chrome or Edge on desktop.</p>
+              )}
+              {isSupported && isIOS && (
+                <p className="tr-mic-warn" style={{ color: 'rgba(251,191,36,.8)' }}>
+                  Voice on iPhone may be limited — type if it fails.
+                </p>
+              )}
+              {isListening && interimText && (
+                <div className="tr-interim">{interimText}</div>
+              )}
             </div>
           )}
-        </section>
-      )}
-      </>)}
+
+          {/* ── Source card ── */}
+          <div className="tr-card">
+            <div className="tr-card-badge" style={{ background: from.color + '22', color: from.color, borderColor: from.color + '55' }}>
+              {from.label} <span>{from.nativeName}</span>
+            </div>
+            <textarea
+              className="tr-textarea"
+              lang={fromLang}
+              maxLength={500}
+              value={isListening && interimText && !inputText ? interimText : inputText}
+              onChange={e => { setInputText(e.target.value); setOutputText(''); setError(null) }}
+              placeholder={`Type or speak in ${from.name}…`}
+              style={{ color: isListening && interimText && !inputText ? 'rgba(255,255,255,.4)' : undefined }}
+            />
+            {speechError && (
+              <div className="tr-speech-error">
+                <span>{speechError}</span>
+                <button onClick={handleMicClick}>Try again</button>
+              </div>
+            )}
+            <div className="tr-card-footer">
+              <span>{isListening ? 'Listening…' : `${inputText.length} chars`}</span>
+              <button onClick={clearAll} disabled={!inputText && !outputText} className="tr-clear-btn">Clear</button>
+            </div>
+          </div>
+
+          {/* ── Result card ── */}
+          <div className={`tr-card tr-result-card ${outputText ? 'has-result' : ''}`}>
+            <div className="tr-card-badge" style={{ background: to.color + '22', color: to.color, borderColor: to.color + '55' }}>
+              {to.label} <span>{to.nativeName}</span>
+            </div>
+            <div className="tr-result-text" lang={toLang}
+              style={{ fontStyle: outputText ? 'normal' : 'italic', color: outputText ? '#F4EDE1' : 'rgba(255,255,255,.35)' }}>
+              {outputText || (isTranslating ? 'Translating…' : 'Translation will appear here')}
+              {isTranslating && <Loader size={14} className="tr-result-loader" />}
+            </div>
+
+            {error && (
+              <div className="tr-error" role="alert">
+                <span>{error}</span>
+                {error.includes('failed') && (
+                  <button onClick={handleTranslate} disabled={!inputText.trim() || isTranslating}>
+                    <RotateCcw size={12} /> Retry
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="tr-card-footer tr-result-footer">
+              <button className={`tr-action-btn ${copied ? 'success' : ''}`}
+                onClick={handleCopy} disabled={!outputText}>
+                {copied ? <CheckCheck size={13} /> : <Copy size={13} />}
+                {copied ? 'Copied' : 'Copy'}
+              </button>
+              <button className={`tr-action-btn ${isSpeaking ? 'active' : ''}`}
+                onClick={() => (isSpeaking || isPreparing) ? stop() : speak(outputText, toLang)}
+                disabled={!outputText}>
+                {isSpeaking || isPreparing ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                {isPreparing ? 'Preparing…' : isSpeaking ? 'Stop' : 'Speak'}
+              </button>
+              {noVoiceAvailable && (
+                <span className="tr-no-voice">No voice for {to.name}</span>
+              )}
+            </div>
+          </div>
+
+          {/* ── CTA ── */}
+          <button className="tr-cta" onClick={handleTranslate}
+            disabled={!canTranslate}>
+            {isTranslating
+              ? <><Loader size={17} className="tr-spinner" /> Translating…</>
+              : outputText
+              ? <><CheckCheck size={17} /> Translation ready</>
+              : `Translate to ${to.name}`}
+          </button>
+
+        </>)}
+      </div>
+
+      <style>{`
+        @keyframes trRipple { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.6);opacity:0} }
+        @keyframes trBarBounce { 0%,100%{height:6px} 50%{height:18px} }
+        @keyframes trSpin { to{transform:rotate(360deg)} }
+      `}</style>
     </main>
   )
 }
-
