@@ -182,6 +182,7 @@ export default function Home() {
   const [preciseLocation, setPreciseLocation] = useState(null)
   const [locationState, setLocationState] = useState('idle')
   const [locationError, setLocationError] = useState('')
+  const [showPlacePicker, setShowPlacePicker] = useState(false)
   const navigate = useNavigate()
   const destination = destinations[destinationIndex]
   const weatherTarget = preciseLocation || destination
@@ -222,12 +223,13 @@ export default function Home() {
     navigate(query.trim() ? `/places/explore?q=${encodeURIComponent(query.trim())}` : '/discover')
   }
 
-  const changeDestination = (event) => {
+  const changeDestination = (index) => {
     setWeatherState('loading')
     setPreciseLocation(null)
     setLocationState('idle')
     setLocationError('')
-    setDestinationIndex(Number(event.target.value))
+    setDestinationIndex(index)
+    setShowPlacePicker(false)
   }
 
   const usePreciseLocation = async () => {
@@ -302,14 +304,29 @@ export default function Home() {
         <div className={`destination-picker ${preciseLocation ? 'using-gps' : ''}`}>
           <span><Navigation size={16} /></span>
           <div><small>{preciseLocation ? 'Weather at your position' : 'Your destination'}</small><strong>{weatherTarget.name}</strong></div>
-          <button className="precise-location-button" onClick={usePreciseLocation} disabled={locationState === 'loading'}>
-            {locationState === 'loading' ? <LoaderCircle className="weather-spinner" size={14} /> : preciseLocation ? <RefreshCw size={14} /> : <LocateFixed size={14} />}
-            {locationState === 'loading' ? 'Locating' : preciseLocation ? 'Refresh GPS' : 'Use my location'}
-          </button>
-          <label className="manual-destination"><span className="sr-only">Choose destination manually</span><select value={preciseLocation ? '' : destinationIndex} onChange={changeDestination} aria-label="Choose destination manually">
-              <option value="" disabled>{preciseLocation ? 'Choose manually' : 'Change area'}</option>
-              {destinations.map((place, index) => <option key={place.name} value={index}>{place.name}</option>)}
-            </select></label>
+          <div className="location-actions">
+            <button className="loc-action-btn places-btn" onClick={() => setShowPlacePicker((v) => !v)} aria-expanded={showPlacePicker} aria-haspopup="listbox">
+              <MapPin size={13} /> Choose place
+            </button>
+            <button className="loc-action-btn gps-btn" onClick={usePreciseLocation} disabled={locationState === 'loading'}>
+              {locationState === 'loading' ? <LoaderCircle className="weather-spinner" size={13} /> : <LocateFixed size={13} />}
+              {locationState === 'loading' ? 'Locating…' : 'My location'}
+            </button>
+          </div>
+          {showPlacePicker && (
+            <div className="place-picker-popup" role="listbox" aria-label="Choose a destination">
+              <div className="place-picker-header">
+                <strong>Choose destination</strong>
+                <button onClick={() => setShowPlacePicker(false)} aria-label="Close"><X size={14} /></button>
+              </div>
+              {destinations.map((place, index) => (
+                <button key={place.name} role="option" aria-selected={!preciseLocation && destinationIndex === index} className={!preciseLocation && destinationIndex === index ? 'selected' : ''} onClick={() => changeDestination(index)}>
+                  <span className="place-name">{place.name}</span>
+                  <span className="place-area">{place.area}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <p className="location-privacy-note"><ShieldAlert size={11} /> Coordinates are sent to weather and place-name services, but are not saved by KothaSetu.</p>
         {locationError && <div className="weather-location-error" role="alert">{locationError} Manual destination weather is still available.</div>}
