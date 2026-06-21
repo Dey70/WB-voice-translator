@@ -329,8 +329,9 @@ img,svg { max-width:100%; }
   .destination-picker { grid-template-columns:auto 1fr auto; }
 }
 
-/* Hide only the top navbar on home page — bottom nav stays visible */
-.home-page-active .app-navbar { display:none!important; }
+/* Hide only the top navbar on home/phrases pages — bottom nav stays visible */
+.home-page-active .app-navbar,
+.phrases-page-active .app-navbar { display:none!important; }
 
 /* ── Bioscope Home ─────────────────────────────────────────────────── */
 .bioscope-home {
@@ -355,7 +356,7 @@ img,svg { max-width:100%; }
 .bh-bg-overlay {
   position:absolute;
   inset:0;
-  background:linear-gradient(180deg,rgba(10,28,12,.72) 0%,rgba(10,28,12,.55) 40%,rgba(10,28,12,.82) 100%);
+  background:linear-gradient(170deg,rgba(18,10,28,.86) 0%,rgba(18,10,28,.76) 40%,rgba(18,10,28,.92) 100%);
 }
 
 /* Scrollable content sits above the fixed bg */
