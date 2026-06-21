@@ -1,409 +1,412 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import {
-  ArrowRight, BookOpen, Check, Cloud, CloudRain, Compass, Droplets,
-  Eye, LoaderCircle, LocateFixed, MapPin, MessageSquare, Mic, Navigation, RefreshCw,
-  Search, ShieldAlert, Sparkles, Sun, Sunrise, Sunset,
-  TriangleAlert, Umbrella, Wind, X,
+  ScrollText, Lightbulb, Newspaper, Library, HelpCircle,
+  Flame, Search, X, Heart, ChevronRight,
+  Cloud, CloudRain, Sun, Droplets, Wind, LoaderCircle,
+  MapPin, LocateFixed, Check, TriangleAlert,
 } from 'lucide-react'
 import { platformServices } from '../services/platform/platformAdapter'
+import { TOURISM_SPOTS } from '../data/tourismSpots'
+import teaGarden from '../assets/tea-garden.webp'
 
-const quickActions = [
-  { to: '/translate', icon: Mic, label: 'Translate', detail: 'Speak or type' },
-  { to: '/phrases', icon: BookOpen, label: 'Phrasebook', detail: 'Works offline' },
-  { to: '/discover', icon: Compass, label: 'Explore', detail: 'Local ideas' },
-  { to: '/emergency', icon: ShieldAlert, label: 'SOS', detail: 'Urgent help', urgent: true },
-]
-
+/* ── Destinations ─────────────────────────────────────── */
 const destinations = [
-  { name: 'Kolkata', area: 'South Bengal', latitude: 22.5726, longitude: 88.3639 },
-  { name: 'Darjeeling', area: 'Himalayan Hills', latitude: 27.041, longitude: 88.2663 },
-  { name: 'Digha', area: 'Coastal Bengal', latitude: 21.6266, longitude: 87.5074 },
+  { name: 'Kolkata',    area: 'South Bengal',     latitude: 22.5726, longitude: 88.3639 },
+  { name: 'Darjeeling', area: 'Himalayan Hills',   latitude: 27.041,  longitude: 88.2663 },
+  { name: 'Digha',      area: 'Coastal Bengal',    latitude: 21.6266, longitude: 87.5074 },
   { name: 'Sundarbans', area: 'South 24 Parganas', latitude: 21.9497, longitude: 89.1833 },
-  { name: 'Bishnupur', area: 'Bankura', latitude: 23.0672, longitude: 87.3165 },
-  { name: 'Kalimpong', area: 'Himalayan Hills', latitude: 27.0594, longitude: 88.4695 },
+  { name: 'Bishnupur',  area: 'Bankura',           latitude: 23.0672, longitude: 87.3165 },
+  { name: 'Kalimpong',  area: 'Himalayan Hills',   latitude: 27.0594, longitude: 88.4695 },
 ]
 
+/* ── Bioscope ─────────────────────────────────────────── */
+const STREAK = 4
+const STREAK_TOTAL = 5
+
+const bioCategories = [
+  { icon: ScrollText, label: 'Stories', to: '/culture',        active: true  },
+  { icon: Lightbulb,  label: 'Facts',   to: '/discover',       active: true  },
+  { icon: Newspaper,  label: 'News',    to: '/places/seasons', active: false },
+  { icon: Library,    label: 'Books',   to: '/phrases',        active: false },
+  { icon: HelpCircle, label: 'Trivia',  to: '/discover',       active: false },
+]
+
+const spotTaglines = {
+  'victoria-memorial': 'Marble dreams of empire.',
+  'sundarbans':        'Where tigers walk on water.',
+  'howrah-bridge':     'The city breathes across the Hooghly.',
+  'prinsep-ghat':      'Evenings were made for the river.',
+}
+
+function getDaySpotIndex() {
+  const start = new Date(new Date().getFullYear(), 0, 0)
+  return Math.floor((Date.now() - start) / 86400000) % TOURISM_SPOTS.length
+}
+
+/* ── Weather helpers ──────────────────────────────────── */
 const weatherLabels = {
-  0: 'Clear sky', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast', 45: 'Foggy', 48: 'Rime fog',
-  51: 'Light drizzle', 53: 'Drizzle', 55: 'Heavy drizzle', 56: 'Freezing drizzle', 57: 'Freezing drizzle',
-  61: 'Light rain', 63: 'Rain', 65: 'Heavy rain', 66: 'Freezing rain', 67: 'Freezing rain',
-  71: 'Light snow', 73: 'Snow', 75: 'Heavy snow', 77: 'Snow grains',
-  80: 'Rain showers', 81: 'Rain showers', 82: 'Heavy showers', 85: 'Snow showers', 86: 'Heavy snow showers',
-  95: 'Thunderstorms', 96: 'Storm with hail', 99: 'Storm with hail',
+  0: 'Clear sky', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast',
+  45: 'Foggy', 51: 'Light drizzle', 61: 'Light rain', 63: 'Rain',
+  65: 'Heavy rain', 80: 'Rain showers', 95: 'Thunderstorms',
 }
 
-const formatDay = (date, index) => index === 0
-  ? 'Today'
-  : new Intl.DateTimeFormat('en', { weekday: 'short' }).format(new Date(`${date}T12:00:00`))
-
-function createGpsLocation(coords) {
-  return {
-    name: 'GPS location',
-    area: `${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)} · Accuracy ±${Math.max(1, Math.round(coords.accuracy))} m`,
-    latitude: coords.latitude,
-    longitude: coords.longitude,
-    precise: true,
-  }
-}
-
-async function resolveGpsPlace(location) {
-  const params = new URLSearchParams({
-    format: 'jsonv2',
-    latitude: location.latitude,
-    longitude: location.longitude,
-    zoom: '18',
-    localityLanguage: 'en',
-  })
-  // BigDataCloud accepts browser requests without an API key and returns locality-level address fields.
-  const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?${params}`)
-  if (!response.ok) throw new Error('Place-name lookup is unavailable.')
-  const result = await response.json()
-  const locality = result.locality
-    || result.city
-    || result.principalSubdivision
-  if (!locality) throw new Error('No locality was found for these coordinates.')
-  const area = [result.city, result.principalSubdivision]
-    .filter((value, index, values) => value && value !== locality && values.indexOf(value) === index)
-    .slice(0, 2)
-    .join(', ')
-  return {
-    ...location,
-    name: locality,
-    area: `${area ? `${area} · ` : ''}GPS accuracy ±${location.accuracy} m`,
-  }
-}
-
-function getWeatherIcon(code, size = 20) {
+function getWeatherIcon(code, size = 18) {
   if ([0, 1].includes(code)) return <Sun size={size} />
-  if ([2, 3, 45, 48].includes(code)) return <Cloud size={size} />
+  if ([2, 3, 45].includes(code)) return <Cloud size={size} />
   return <CloudRain size={size} />
 }
 
-function buildTravelAdvice(weather) {
-  const current = weather.current
-  const today = weather.daily
-  const dos = []
-  const donts = []
+function buildAdvice(weather) {
+  const cur = weather.current
+  const day = weather.daily
+  const dos = [], donts = []
 
-  if (today.precipitation_probability_max[0] >= 50 || current.precipitation > 0) {
+  if (day.precipitation_probability_max[0] >= 50 || cur.precipitation > 0) {
     dos.push('Carry a compact umbrella and keep electronics covered.')
     donts.push('Do not enter waterlogged streets or fast-moving water.')
   } else {
     dos.push('Keep water with you, even for a short day out.')
   }
-  if (current.apparent_temperature >= 35) {
+  if (cur.apparent_temperature >= 35) {
     dos.push('Plan outdoor stops before 11 AM or after 4 PM.')
     donts.push('Avoid long walks in the midday sun.')
-  } else if (current.apparent_temperature <= 12) {
+  } else if (cur.apparent_temperature <= 12) {
     dos.push('Pack a warm outer layer for early mornings and evenings.')
   } else {
     dos.push('Choose light, breathable layers for changing conditions.')
   }
-  if (today.uv_index_max[0] >= 6) {
+  if (day.uv_index_max[0] >= 6) {
     dos.push('Use SPF 30+ sunscreen and reapply through the day.')
     donts.push('Do not underestimate UV when the sky looks cloudy.')
   }
-  if (current.wind_speed_10m >= 30) {
-    donts.push('Avoid exposed viewpoints and unsecured boat trips.')
-  }
+  if (cur.wind_speed_10m >= 30) donts.push('Avoid exposed viewpoints and unsecured boat trips.')
   if (donts.length === 0) donts.push('Do not leave valuables exposed in crowded areas.')
 
-  const headline = current.apparent_temperature >= 35
-    ? 'Heat-smart travel day'
-    : today.precipitation_probability_max[0] >= 50
-      ? 'Keep the day flexible'
-      : current.wind_speed_10m >= 30
-        ? 'Windy conditions ahead'
-        : 'Comfortable for exploring'
+  const headline = cur.apparent_temperature >= 35 ? 'Heat-smart travel day'
+    : day.precipitation_probability_max[0] >= 50 ? 'Keep the day flexible'
+    : cur.wind_speed_10m >= 30 ? 'Windy conditions ahead'
+    : 'Comfortable for exploring'
 
   return { dos: dos.slice(0, 3), donts: donts.slice(0, 2), headline }
 }
 
-function buildWeatherAlert(weather) {
-  const current = weather.current
-  const daily = weather.daily
-
-  if (current.apparent_temperature >= 40 || daily.temperature_2m_max[0] >= 40) {
-    return { level: 'danger', title: 'Excessive heat', detail: 'Severe heat is expected. Limit afternoon travel and watch for signs of heat stress.' }
-  }
-  if (daily.precipitation_probability_max[0] >= 75 || weather.current.weather_code >= 95) {
-    return { level: 'danger', title: 'Heavy rain risk', detail: 'Storms or intense rain may disrupt travel. Avoid flooded roads and exposed areas.' }
-  }
-  if (current.wind_speed_10m >= 35) {
-    return { level: 'caution', title: 'Strong wind caution', detail: 'Exposed viewpoints, ferry crossings and coastal routes may be uncomfortable.' }
-  }
-  if (daily.uv_index_max[0] >= 8) {
-    return { level: 'caution', title: 'Very high UV', detail: 'Unprotected skin can burn quickly. Seek shade during the middle of the day.' }
-  }
-  return { level: 'clear', title: 'No major weather concerns', detail: 'Conditions look manageable for most plans. Keep checking as your departure gets closer.' }
+function buildSummary(weather) {
+  const cur = weather.current
+  const pop = weather.daily.precipitation_probability_max[0]
+  if (cur.apparent_temperature >= 38) return 'Very hot — limit time outdoors'
+  if (pop >= 70) return 'Heavy rain likely — carry an umbrella'
+  if (pop >= 40) return 'Rain possible — pack light gear'
+  if (cur.wind_speed_10m >= 30) return 'Windy — secure loose items'
+  if ([0, 1].includes(cur.weather_code)) return 'Clear skies — great day to explore'
+  return 'Manageable conditions — enjoy your day'
 }
 
-function WeatherTrend({ weather, metric }) {
-  const start = Math.max(0, weather.hourly.time.findIndex((time) => time >= weather.current.time))
-  const end = Math.min(start + 8, weather.hourly.time.length)
-  const config = {
-    temperature: { values: weather.hourly.temperature_2m.slice(start, end), unit: '°' },
-    rain: { values: weather.hourly.precipitation_probability.slice(start, end), unit: '%' },
-    wind: { values: weather.hourly.wind_speed_10m.slice(start, end), unit: '' },
-  }[metric]
-  const times = weather.hourly.time.slice(start, end)
-  const min = Math.min(...config.values)
-  const max = Math.max(...config.values)
-  const spread = Math.max(max - min, 1)
-  const points = config.values.map((value, index) => ({
-    x: config.values.length === 1 ? 50 : 4 + (index / (config.values.length - 1)) * 92,
-    y: 74 - ((value - min) / spread) * 46,
-    value,
-  }))
-  const line = points.map((point) => `${point.x},${point.y}`).join(' ')
-  const area = `4,82 ${line} 96,82`
-
+/* ── Ethnic alpana SVG ornament ───────────────────────── */
+function AlpanaBar() {
   return (
-    <div className="weather-trend" role="img" aria-label={`${metric} forecast for the next eight hours`}>
-      <svg viewBox="0 0 100 86" preserveAspectRatio="none" aria-hidden="true">
-        <polygon points={area} />
-        <polyline points={line} />
-        {points.map((point, index) => <circle key={times[index]} cx={point.x} cy={point.y} r="1.2" />)}
-      </svg>
-      <div className="trend-values">{points.map((point, index) => <strong key={times[index]}>{Math.round(point.value)}{config.unit}</strong>)}</div>
-      <div className="trend-times">{times.map((time) => <span key={time}>{new Intl.DateTimeFormat('en', { hour: 'numeric' }).format(new Date(time))}</span>)}</div>
-    </div>
+    <svg className="bh-alpana" viewBox="0 0 240 18" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="9" x2="88" y2="9" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.5" />
+      <circle cx="96"  cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
+      <circle cx="108" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
+      <circle cx="108" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
+      <polygon points="120,4 123,9 120,14 117,9" fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.8" />
+      <circle cx="132" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
+      <circle cx="132" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
+      <circle cx="144" cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
+      <line x1="152" y1="9" x2="240" y2="9" stroke="currentColor" strokeOpacity="0.5" strokeWidth="0.8" />
+    </svg>
   )
 }
 
+/* ── Main component ───────────────────────────────────── */
 export default function Home() {
-  const [query, setQuery] = useState('')
-  const [destinationIndex, setDestinationIndex] = useState(0)
+  const navigate = useNavigate()
+  const [spotOffset, setSpotOffset] = useState(0)
+
+  /* location */
+  const [location, setLocation] = useState(destinations[1])
+  const [destIndex, setDestIndex] = useState(1)
+  const [showPlaces, setShowPlaces] = useState(false)
+  const [gpsState, setGpsState] = useState('idle')
+  const [gpsError, setGpsError] = useState('')
+
+  /* weather */
   const [weather, setWeather] = useState(null)
   const [weatherState, setWeatherState] = useState('loading')
   const [refreshKey, setRefreshKey] = useState(0)
-  const [trendMetric, setTrendMetric] = useState('temperature')
-  const [preciseLocation, setPreciseLocation] = useState(null)
-  const [locationState, setLocationState] = useState('idle')
-  const [locationError, setLocationError] = useState('')
-  const [showPlacePicker, setShowPlacePicker] = useState(false)
-  const navigate = useNavigate()
-  const destination = destinations[destinationIndex]
-  const weatherTarget = preciseLocation || destination
+  const [showPlacard, setShowPlacard] = useState(false)
 
+  const spot = TOURISM_SPOTS[(getDaySpotIndex() + spotOffset) % TOURISM_SPOTS.length]
+  const tagline = spotTaglines[spot.id] || 'Discover the soul of Bengal.'
+
+  /* hide ONLY top navbar on home, keep bottom nav */
+  useEffect(() => {
+    document.body.classList.add('home-page-active')
+    return () => document.body.classList.remove('home-page-active')
+  }, [])
+
+  /* silent GPS restore from cache on load */
+  useEffect(() => {
+    const cached = sessionStorage.getItem('wb_gps_location')
+    if (cached) {
+      try { const loc = JSON.parse(cached); setLocation(loc); setGpsState('ready') } catch {}
+    }
+  }, [])
+
+  /* fetch weather whenever location changes */
   useEffect(() => {
     const controller = new AbortController()
     const params = new URLSearchParams({
-      latitude: weatherTarget.latitude,
-      longitude: weatherTarget.longitude,
+      latitude: location.latitude,
+      longitude: location.longitude,
       current: 'temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m',
       hourly: 'temperature_2m,precipitation_probability,wind_speed_10m',
       daily: 'weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset',
       timezone: 'auto',
-      forecast_days: '8',
+      forecast_days: '3',
     })
-
-    fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: controller.signal })
-      .then((response) => {
-        if (!response.ok) throw new Error('Weather service unavailable')
-        return response.json()
-      })
-      .then((data) => {
-        setWeather(data)
-        setWeatherState('ready')
-      })
-      .catch((error) => {
-        if (error.name !== 'AbortError') setWeatherState('error')
-      })
-
-    return () => controller.abort()
-  }, [weatherTarget.latitude, weatherTarget.longitude, refreshKey])
-
-  const advice = useMemo(() => weather ? buildTravelAdvice(weather) : null, [weather])
-  const weatherAlert = useMemo(() => weather ? buildWeatherAlert(weather) : null, [weather])
-
-  const search = (event) => {
-    event.preventDefault()
-    navigate(query.trim() ? `/places/explore?q=${encodeURIComponent(query.trim())}` : '/discover')
-  }
-
-  const changeDestination = (index) => {
     setWeatherState('loading')
-    setPreciseLocation(null)
-    setLocationState('idle')
-    setLocationError('')
-    setDestinationIndex(index)
-    setShowPlacePicker(false)
-  }
+    fetch(`https://api.open-meteo.com/v1/forecast?${params}`, { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error(); return r.json() })
+      .then(data => { setWeather(data); setWeatherState('ready') })
+      .catch(e => { if (e.name !== 'AbortError') setWeatherState('error') })
+    return () => controller.abort()
+  }, [location.latitude, location.longitude, refreshKey])
 
-  const usePreciseLocation = async () => {
+  const handleGPS = async () => {
     if (!platformServices.location.isAvailable()) {
-      setLocationState('error')
-      setLocationError('Precise location is unavailable on this device.')
+      setGpsError('Location unavailable on this device.')
       return
     }
-    setLocationState('loading')
-    setLocationError('')
+    setGpsState('loading')
+    setGpsError('')
     try {
       const granted = await platformServices.location.requestPermission()
-      if (!granted) throw new Error('Location permission was not granted.')
+      if (!granted) throw new Error('Location permission denied.')
       const { coords } = await platformServices.location.getCurrentPosition({
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 60000,
+        enableHighAccuracy: true, timeout: 15000, maximumAge: 60000,
       })
-      const gpsLocation = {
-        ...createGpsLocation(coords),
-        accuracy: Math.max(1, Math.round(coords.accuracy)),
-      }
-      setWeatherState('loading')
-      setPreciseLocation(gpsLocation)
-      setLocationState('ready')
-      try {
-        const resolvedLocation = await resolveGpsPlace(gpsLocation)
-        setPreciseLocation(resolvedLocation)
-      } catch {
-        // Coordinates remain visible and continue to drive the forecast if naming is unavailable.
-      }
-    } catch (error) {
-      setLocationState('error')
-      setLocationError(error?.message || 'Your location could not be detected. Check that GPS is enabled.')
+      const loc = { name: 'Your location', latitude: coords.latitude, longitude: coords.longitude, gps: true }
+      setLocation(loc)
+      setGpsState('ready')
+      setRefreshKey(k => k + 1)
+      sessionStorage.removeItem('wb_gps_location')
+      // resolve place name in background
+      fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coords.latitude}&longitude=${coords.longitude}&localityLanguage=en`)
+        .then(r => r.json())
+        .then(d => {
+          const admins = (d.localityInfo?.administrative ?? [])
+            .filter(a => a.adminLevel >= 6 && a.name)
+            .sort((a, b) => b.adminLevel - a.adminLevel || b.order - a.order)
+          const name = d.locality || admins[0]?.name || d.city || 'Your location'
+          const resolved = { ...loc, name }
+          setLocation(resolved)
+          sessionStorage.setItem('wb_gps_location', JSON.stringify(resolved))
+        }).catch(() => {})
+    } catch (err) {
+      setGpsState('idle')
+      setGpsError(err?.message || 'Could not detect your location.')
     }
   }
 
-  const retryWeather = () => {
-    setWeatherState('loading')
-    setRefreshKey((key) => key + 1)
+  const pickDest = (dest, index) => {
+    setLocation(dest)
+    setDestIndex(index)
+    setGpsState('idle')
+    setShowPlaces(false)
+    setRefreshKey(k => k + 1)
+    sessionStorage.removeItem('wb_gps_location')
   }
 
+  const advice = weather ? buildAdvice(weather) : null
+  const summary = weather ? buildSummary(weather) : null
+
   return (
-    <main className="home-page mockup-home">
-      <section className="mockup-home-hero">
-        <div className="mockup-home-pattern" aria-hidden="true" />
-        <div className="mockup-greeting">
-          <span>Namaskar, traveller</span>
-          <h1>West Bengal,<br />without the <em>language</em> wall.</h1>
-          <p>Useful words, local context and calmer journeys, all in one place.</p>
-        </div>
-      </section>
+    <main className="bioscope-home">
 
-      <form className="mockup-search" onSubmit={search}>
-        <Search size={18} />
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search places, food or phrases" aria-label="Search KothaSetu" />
-        <button type="button" onClick={() => navigate('/translate')} aria-label="Open voice translator"><Mic size={17} /></button>
-      </form>
+      {/* Tea-garden background */}
+      <div className="bh-bg" aria-hidden="true">
+        <img src={teaGarden} alt="" />
+        <div className="bh-bg-overlay" />
+      </div>
 
-      <section className="mockup-quick-grid" aria-label="Quick actions">
-        {quickActions.map(({ to, icon: Icon, label, detail, urgent }) => (
-          <Link key={to} to={to} className={urgent ? 'urgent' : ''}><span><Icon size={20} /></span><strong>{label}</strong><small>{detail}</small></Link>
-        ))}
-      </section>
+      <div className="bh-content">
 
-      <section className="journey-weather" aria-labelledby="weather-heading">
-        <header className="journey-weather-heading">
-          <div><span>Before you set out</span><h2 id="weather-heading">Know the day ahead</h2></div>
-          <span className="live-weather-badge"><i /> Live weather</span>
-        </header>
-
-        <div className={`destination-picker ${preciseLocation ? 'using-gps' : ''}`}>
-          <span><Navigation size={16} /></span>
-          <div><small>{preciseLocation ? 'Weather at your position' : 'Your destination'}</small><strong>{weatherTarget.name}</strong></div>
-          <div className="location-actions">
-            <button className="loc-action-btn places-btn" onClick={() => setShowPlacePicker((v) => !v)} aria-expanded={showPlacePicker} aria-haspopup="listbox">
-              <MapPin size={13} /> Choose place
-            </button>
-            <button className="loc-action-btn gps-btn" onClick={usePreciseLocation} disabled={locationState === 'loading'}>
-              {locationState === 'loading' ? <LoaderCircle className="weather-spinner" size={13} /> : <LocateFixed size={13} />}
-              {locationState === 'loading' ? 'Locating…' : 'My location'}
-            </button>
+        {/* ── Header: brand + search icon ── */}
+        <div className="bh-header">
+          <div className="bh-brand-block">
+            <span className="bh-brand">কথাসেতু</span>
+            <AlpanaBar />
           </div>
-          {showPlacePicker && (
-            <div className="place-picker-popup" role="listbox" aria-label="Choose a destination">
-              <div className="place-picker-header">
-                <strong>Choose destination</strong>
-                <button onClick={() => setShowPlacePicker(false)} aria-label="Close"><X size={14} /></button>
-              </div>
-              {destinations.map((place, index) => (
-                <button key={place.name} role="option" aria-selected={!preciseLocation && destinationIndex === index} className={!preciseLocation && destinationIndex === index ? 'selected' : ''} onClick={() => changeDestination(index)}>
-                  <span className="place-name">{place.name}</span>
-                  <span className="place-area">{place.area}</span>
-                </button>
+          <Link to="/discover" className="bh-search-btn" aria-label="Search">
+            <Search size={19} />
+          </Link>
+        </div>
+
+        {/* ── Bioscope glass panel ── */}
+        <div className="bh-bioscope-panel">
+          <div className="bh-bioscope-top">
+            <div className="bh-bioscope-label-group">
+              <span className="bh-bioscope-dot" aria-hidden="true" />
+              <span className="bh-bioscope-title">আজকের বায়োস্কোপ</span>
+              <span className="bh-bioscope-subtitle">Today's bioscope</span>
+            </div>
+            <div className="bh-streak" aria-label={`${STREAK} of ${STREAK_TOTAL} day streak`}>
+              {Array.from({ length: STREAK_TOTAL }, (_, i) => (
+                <Flame key={i} size={12} className={i < STREAK ? 'flame-on' : 'flame-off'} aria-hidden="true" />
               ))}
             </div>
-          )}
+          </div>
+
+          <div className="bh-circles" role="list">
+            {bioCategories.map(({ icon: Icon, label, to, active }) => (
+              <Link key={label} to={to} className={`bh-circle-item ${active ? 'active' : ''}`} role="listitem">
+                <div className="bh-circle-ring">
+                  {active && <div className="bh-circle-inner-ring" aria-hidden="true" />}
+                  <Icon size={20} aria-hidden="true" />
+                </div>
+                <span>{label}</span>
+              </Link>
+            ))}
+          </div>
         </div>
-        <p className="location-privacy-note"><ShieldAlert size={11} /> Coordinates are sent to weather and place-name services, but are not saved by KothaSetu.</p>
-        {locationError && <div className="weather-location-error" role="alert">{locationError} Manual destination weather is still available.</div>}
 
-        {weatherState === 'loading' && (
-          <div className="weather-state" role="status"><LoaderCircle className="weather-spinner" size={24} /><strong>Reading the skies over {weatherTarget.name}</strong><span>Bringing in the latest local forecast...</span></div>
-        )}
+        {/* ── Hero headline ── */}
+        <h1 className="bh-hero">
+          West Bengal, without the <em>language</em> wall.
+        </h1>
 
-        {weatherState === 'error' && (
-          <div className="weather-state error" role="alert"><CloudRain size={25} /><strong>Forecast could not be reached</strong><span>Check your connection and try again.</span><button onClick={retryWeather}><RefreshCw size={14} /> Try again</button></div>
-        )}
+        {/* ── Spot of the day card ── */}
+        <div className="bh-card-stack" aria-label="Spot of the day">
+          <div className="bh-card-back" aria-hidden="true" />
+          <div className="bh-card-front">
+            <div>
+              <span className="bh-card-label">Spot of the day</span>
+              <p className="bh-card-name">{spot.name}</p>
+              <p className="bh-card-tagline">{tagline}</p>
+            </div>
+            <div className="bh-card-actions">
+              <button className="bh-card-btn dismiss" onClick={() => setSpotOffset(o => o + 1)} aria-label="Skip"><X size={16} /></button>
+              <span className="bh-card-hint">tap to explore next</span>
+              <button className="bh-card-btn love" onClick={() => setSpotOffset(o => o + 1)} aria-label="Save"><Heart size={16} /></button>
+            </div>
+          </div>
+        </div>
 
-        {weatherState === 'ready' && weather && (
-          <>
-            <article className="weather-now-card">
-              <div className="weather-now-top">
-                <div className="weather-location"><MapPin size={14} /><span><strong>{weatherTarget.name}</strong><small>{weatherTarget.area}</small></span></div>
-                <small>Updated {new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit' }).format(new Date(weather.current.time))}</small>
-              </div>
-              <div className="weather-now-main">
-                <div className="weather-symbol">{getWeatherIcon(weather.current.weather_code, 38)}</div>
-                <div className="weather-temperature"><strong>{Math.round(weather.current.temperature_2m)}°</strong><span>{weatherLabels[weather.current.weather_code] || 'Changing skies'}<small>Feels like {Math.round(weather.current.apparent_temperature)}°</small></span></div>
-              </div>
-              <div className="weather-facts">
-                <span><Droplets size={14} /><small>Humidity</small><strong>{weather.current.relative_humidity_2m}%</strong></span>
-                <span><Wind size={14} /><small>Wind</small><strong>{Math.round(weather.current.wind_speed_10m)} km/h</strong></span>
-                <span><Umbrella size={14} /><small>Rain</small><strong>{weather.daily.precipitation_probability_max[0]}%</strong></span>
-                <span><Eye size={14} /><small>UV index</small><strong>{Math.round(weather.daily.uv_index_max[0])}</strong></span>
-              </div>
-              <div className="weather-sun-times">
-                <span><Sunrise size={14} /> {weather.daily.sunrise[0].slice(11, 16)}</span>
-                <span><Sunset size={14} /> {weather.daily.sunset[0].slice(11, 16)}</span>
-              </div>
-            </article>
+        {/* ── Weather ── */}
+        <div className="bh-weather">
 
-            <div className="weather-chart-card">
-              <div className="weather-chart-tabs" role="tablist" aria-label="Hourly forecast metric">
-                {[
-                  ['temperature', 'Temperature'],
-                  ['rain', 'Precipitation'],
-                  ['wind', 'Wind'],
-                ].map(([value, label]) => (
-                  <button key={value} role="tab" aria-selected={trendMetric === value} className={trendMetric === value ? 'active' : ''} onClick={() => setTrendMetric(value)}>{label}</button>
+          {/* Two location buttons */}
+          <div className="bh-weather-loc-row">
+            <div className="bh-weather-loc-buttons">
+              <button className="bh-loc-btn places" onClick={() => setShowPlaces(v => !v)}>
+                <MapPin size={12} />
+                <span>{!location.gps ? location.name : destinations[destIndex]?.name ?? 'Choose place'}</span>
+                <ChevronRight size={10} className={`bh-chevron ${showPlaces ? 'open' : ''}`} />
+              </button>
+              <button className="bh-loc-btn gps" onClick={handleGPS} disabled={gpsState === 'loading'}>
+                {gpsState === 'loading' ? <LoaderCircle size={12} className="bh-spin" /> : <LocateFixed size={12} />}
+                <span>{gpsState === 'loading' ? 'Locating…' : location.gps ? location.name : 'My location'}</span>
+              </button>
+            </div>
+            {gpsError && <p className="bh-gps-error">{gpsError}</p>}
+
+            {/* Places dropdown — fixed position to avoid overlap */}
+            {showPlaces && (
+              <div className="bh-places-popup" role="listbox" aria-label="Choose destination">
+                <div className="bh-places-header">
+                  <strong>Choose destination</strong>
+                  <button onClick={() => setShowPlaces(false)} aria-label="Close"><X size={13} /></button>
+                </div>
+                {destinations.map((dest, i) => (
+                  <button key={dest.name} role="option"
+                    aria-selected={!location.gps && destIndex === i}
+                    className={!location.gps && destIndex === i ? 'selected' : ''}
+                    onClick={() => pickDest(dest, i)}>
+                    <span className="bh-place-name">{dest.name}</span>
+                    <span className="bh-place-area">{dest.area}</span>
+                  </button>
                 ))}
               </div>
-              <WeatherTrend weather={weather} metric={trendMetric} />
-            </div>
+            )}
+          </div>
 
-            <div className="forecast-strip" aria-label="Eight day forecast">
-              {weather.daily.time.map((date, index) => (
-                <div key={date} className={index === 0 ? 'today' : ''}>
-                  <strong>{formatDay(date, index)}</strong>
-                  {getWeatherIcon(weather.daily.weather_code[index], 18)}
-                  <span>{Math.round(weather.daily.temperature_2m_max[index])}° <small>{Math.round(weather.daily.temperature_2m_min[index])}°</small></span>
-                  <em><Droplets size={10} /> {weather.daily.precipitation_probability_max[index]}%</em>
+          {/* Weather data */}
+          {weatherState === 'loading' && (
+            <div className="bh-weather-loading"><LoaderCircle size={15} className="bh-spin" /><span>Fetching weather…</span></div>
+          )}
+          {weatherState === 'error' && (
+            <div className="bh-weather-loading"><CloudRain size={14} /><span>Weather unavailable</span></div>
+          )}
+          {weatherState === 'ready' && weather && (
+            <>
+              <div className="bh-weather-now">
+                <span className="bh-weather-icon">{getWeatherIcon(weather.current.weather_code, 26)}</span>
+                <span className="bh-weather-temp">{Math.round(weather.current.temperature_2m)}°</span>
+                <div className="bh-weather-right">
+                  <span className="bh-weather-desc">{weatherLabels[weather.current.weather_code] || 'Changing skies'}</span>
+                  <span className="bh-weather-feels">Feels {Math.round(weather.current.apparent_temperature)}°</span>
                 </div>
-              ))}
-            </div>
-
-            <article className={`weather-alert-card ${weatherAlert.level}`}>
-              <span><TriangleAlert size={19} /></span>
-              <div><small>Forecast-based travel alert</small><h3>{weatherAlert.title}</h3><p>{weatherAlert.detail}</p><em>Guidance generated from live forecast data, not an official government warning.</em></div>
-            </article>
-
-            <article className="travel-readiness">
-              <header><span><Sparkles size={16} /></span><div><small>Weather-wise guidance</small><h3>{advice.headline}</h3></div></header>
-              <div className="advice-columns">
-                <section><h4><Check size={13} /> Do</h4>{advice.dos.map((item) => <p key={item}>{item}</p>)}</section>
-                <section className="avoid"><h4><X size={13} /> Avoid</h4>{advice.donts.map((item) => <p key={item}>{item}</p>)}</section>
               </div>
-              <footer><TriangleAlert size={13} /><span>Conditions can change quickly. Check local advisories before remote or coastal travel.</span></footer>
-            </article>
-          </>
-        )}
-      </section>
 
-      <Link to="/conversation" className="mockup-conversation-cta"><span><MessageSquare size={21} /></span><div><strong>Talking with someone?</strong><small>Open two-person Conversation mode</small></div><ArrowRight size={17} /></Link>
+              <div className="bh-weather-facts">
+                <span><Droplets size={11} /> {weather.current.relative_humidity_2m}%</span>
+                <span><Wind size={11} /> {Math.round(weather.current.wind_speed_10m)} km/h</span>
+                <span><CloudRain size={11} /> {weather.daily.precipitation_probability_max[0]}%</span>
+              </div>
+
+              <button className="bh-weather-summary" onClick={() => setShowPlacard(true)}>
+                <span>{summary}</span>
+                <span className="bh-summary-cta">Do's &amp; Don'ts <ChevronRight size={11} /></span>
+              </button>
+
+              <div className="bh-weather-strip">
+                {weather.daily.time.map((date, i) => (
+                  <div key={date} className="bh-weather-day">
+                    <span>{i === 0 ? 'Today' : new Intl.DateTimeFormat('en', { weekday: 'short' }).format(new Date(`${date}T12:00:00`))}</span>
+                    {getWeatherIcon(weather.daily.weather_code[i], 13)}
+                    <span>{Math.round(weather.daily.temperature_2m_max[i])}°</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* SOS */}
+        <Link to="/emergency" className="bh-sos-row" aria-label="Emergency — Urgent help">
+          <div><span className="bh-sos-tag">SOS</span><span className="bh-sos-label">Urgent help</span></div>
+          <ChevronRight size={15} />
+        </Link>
+
+      </div>
+
+      {/* ── Do's & Don'ts placard ── */}
+      {showPlacard && advice && (
+        <div className="bh-placard-backdrop" onClick={() => setShowPlacard(false)}>
+          <div className="bh-placard" role="dialog" aria-modal="true" aria-label="Travel advice" onClick={e => e.stopPropagation()}>
+            <div className="bh-placard-header">
+              <AlpanaBar />
+              <h2>{advice.headline}</h2>
+              <p className="bh-placard-loc">{location.name} · Live forecast</p>
+              <button className="bh-placard-close" onClick={() => setShowPlacard(false)} aria-label="Close"><X size={16} /></button>
+            </div>
+            <div className="bh-placard-body">
+              <div className="bh-placard-col do">
+                <h3><Check size={13} /> Do</h3>
+                {advice.dos.map(item => <p key={item}>{item}</p>)}
+              </div>
+              <div className="bh-placard-col dont">
+                <h3><X size={13} /> Avoid</h3>
+                {advice.donts.map(item => <p key={item}>{item}</p>)}
+              </div>
+            </div>
+            <p className="bh-placard-note"><TriangleAlert size={11} /> Guidance from live forecast data — not an official government warning.</p>
+          </div>
+        </div>
+      )}
+
     </main>
   )
 }

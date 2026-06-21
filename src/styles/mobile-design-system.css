@@ -328,3 +328,584 @@ img,svg { max-width:100%; }
 @media (max-width:560px) {
   .destination-picker { grid-template-columns:auto 1fr auto; }
 }
+
+/* Hide only the top navbar on home page — bottom nav stays visible */
+.home-page-active .app-navbar { display:none!important; }
+
+/* ── Bioscope Home ─────────────────────────────────────────────────── */
+.bioscope-home {
+  min-height:100dvh;
+  position:relative;
+  color:#F4EDE1;
+}
+
+/* Tea-garden background */
+.bh-bg {
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+}
+.bh-bg img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center top;
+}
+.bh-bg-overlay {
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(10,28,12,.72) 0%,rgba(10,28,12,.55) 40%,rgba(10,28,12,.82) 100%);
+}
+
+/* Scrollable content sits above the fixed bg */
+.bh-content {
+  position:relative;
+  z-index:1;
+  padding:0 20px calc(100px + env(safe-area-inset-bottom,0px));
+}
+
+.bh-header {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  padding:20px 0 0;
+}
+.bh-brand-block {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:6px;
+}
+.bh-brand {
+  font-family:'Baloo Da 2','Hind Siliguri',sans-serif;
+  font-size:26px;
+  font-weight:700;
+  color:#F4EDE1;
+  line-height:1;
+  text-shadow:0 2px 12px rgba(0,0,0,.4);
+}
+.bh-alpana {
+  width:120px;
+  height:18px;
+  color:#D9A441;
+  opacity:.85;
+}
+.bh-search-btn {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.1);
+  color:#F4EDE1;
+  text-decoration:none;
+  flex-shrink:0;
+  margin-top:2px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  transition:background .15s;
+}
+.bh-search-btn:hover { background:rgba(255,255,255,.18); }
+
+.bh-gps-error {
+  font-size:10px;
+  color:#f87171;
+  margin:5px 0 0;
+}
+
+/* Bioscope glass panel */
+.bh-bioscope-panel {
+  margin-top:18px;
+  padding:14px 14px 10px;
+  border-radius:18px;
+  background:rgba(10,28,12,.6);
+  border:1px solid rgba(217,164,65,.25);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  box-shadow:0 0 0 1px rgba(217,164,65,.08) inset,0 8px 24px rgba(0,0,0,.3);
+}
+.bh-bioscope-top {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  margin-bottom:12px;
+}
+.bh-bioscope-label-group {
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.bh-bioscope-dot {
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#D9A441;
+  box-shadow:0 0 6px #D9A441;
+  margin-bottom:2px;
+}
+.bh-bioscope-title {
+  font-family:'Baloo Da 2','Hind Siliguri',sans-serif;
+  font-size:13px;
+  font-weight:600;
+  color:#F4EDE1;
+  letter-spacing:.01em;
+}
+.bh-bioscope-subtitle {
+  font-size:9px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#D9A441;
+  font-weight:700;
+}
+.bh-streak {
+  display:flex;
+  gap:3px;
+  align-items:center;
+  background:rgba(217,164,65,.12);
+  padding:4px 8px;
+  border-radius:20px;
+  border:1px solid rgba(217,164,65,.2);
+}
+.bh-streak .flame-on  { color:#D9A441; filter:drop-shadow(0 0 3px rgba(217,164,65,.6)); }
+.bh-streak .flame-off { color:rgba(255,255,255,.2); }
+
+/* Story circles */
+.bh-circles {
+  display:flex;
+  gap:16px;
+  padding:0 0 4px;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.bh-circles::-webkit-scrollbar { display:none; }
+.bh-circle-item {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:7px;
+  min-width:58px;
+  text-decoration:none;
+  flex-shrink:0;
+}
+.bh-circle-ring {
+  position:relative;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  border:1.5px solid rgba(255,255,255,.2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:rgba(255,255,255,.55);
+  background:rgba(255,255,255,.07);
+  transition:all .2s;
+}
+.bh-circle-inner-ring {
+  position:absolute;
+  inset:3px;
+  border-radius:50%;
+  border:1px dashed rgba(217,164,65,.5);
+  pointer-events:none;
+}
+.bh-circle-item.active .bh-circle-ring {
+  border:2px solid #D9A441;
+  color:#F4EDE1;
+  background:rgba(217,164,65,.15);
+  box-shadow:0 0 0 4px rgba(217,164,65,.1),0 4px 14px rgba(0,0,0,.3);
+}
+.bh-circle-item span {
+  font-size:10px;
+  font-weight:600;
+  color:rgba(255,255,255,.45);
+  letter-spacing:.03em;
+}
+.bh-circle-item.active span { color:#D9A441; }
+
+/* Hero headline */
+.bh-hero {
+  font-family:'Playfair Display',Georgia,serif;
+  font-weight:500;
+  font-size:21px;
+  line-height:1.4;
+  color:#F4EDE1;
+  margin:22px 0 0;
+}
+.bh-hero em {
+  font-style:italic;
+  color:#E0652E;
+}
+
+/* Spot of the day card */
+.bh-card-stack {
+  position:relative;
+  height:232px;
+  margin:20px 0 0;
+}
+.bh-card-back {
+  position:absolute;
+  inset:0;
+  background:rgba(10,28,12,.45);
+  border-radius:16px;
+  transform:rotate(-3deg) translateY(6px);
+  border:.5px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(8px);
+}
+.bh-card-front {
+  position:absolute;
+  inset:0;
+  background:rgba(10,28,12,.6);
+  border-radius:16px;
+  border:.5px solid rgba(255,255,255,.15);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.bh-card-label {
+  font-size:10px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#D9A441;
+}
+.bh-card-name {
+  font-size:17px;
+  font-weight:500;
+  color:#F4EDE1;
+  margin:6px 0 4px;
+}
+.bh-card-tagline {
+  font-family:'Playfair Display',Georgia,serif;
+  font-style:italic;
+  font-size:13px;
+  color:#C7CBE0;
+  margin:0;
+}
+.bh-card-actions {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.bh-card-hint {
+  font-size:11px;
+  color:#7C82A6;
+}
+.bh-card-btn {
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  border:1px solid #4B527A;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  color:#9CA3C4;
+  transition:border-color .15s,color .15s;
+  padding:0;
+}
+.bh-card-btn.love {
+  border-color:#E0652E;
+  color:#E0652E;
+}
+.bh-card-btn:hover { opacity:.8; }
+
+/* Weather widget */
+.bh-weather {
+  margin-top:14px;
+  padding:14px;
+  border-radius:16px;
+  background:rgba(10,28,12,.6);
+  border:1px solid rgba(255,255,255,.12);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+
+/* Location buttons row */
+.bh-weather-loc-row { position:relative; margin-bottom:12px; }
+.bh-weather-loc-buttons { display:flex; gap:8px; }
+.bh-loc-btn {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:6px 11px;
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.08);
+  color:#F4EDE1;
+  font-size:11px;
+  font-weight:600;
+  cursor:pointer;
+  white-space:nowrap;
+  min-height:auto;
+  transition:background .15s;
+}
+.bh-loc-btn:hover { background:rgba(255,255,255,.14); }
+.bh-loc-btn:disabled { opacity:.5; cursor:wait; }
+.bh-loc-btn.gps { border-color:rgba(217,164,65,.35); color:#D9A441; background:rgba(217,164,65,.1); }
+.bh-loc-btn.gps:hover { background:rgba(217,164,65,.18); }
+.bh-chevron { transition:transform .2s; }
+.bh-chevron.open { transform:rotate(90deg); }
+
+/* Places popup */
+.bh-places-popup {
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  z-index:300;
+  min-width:200px;
+  padding:6px;
+  border-radius:14px;
+  background:rgba(10,28,12,.92);
+  border:1px solid rgba(217,164,65,.25);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  box-shadow:0 12px 32px rgba(0,0,0,.4);
+}
+.bh-places-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:4px 8px 8px;
+}
+.bh-places-header strong { font-size:11px; color:#F4EDE1; }
+.bh-places-header button { display:grid; place-items:center; width:22px; height:22px; border:none; border-radius:6px; background:rgba(255,255,255,.08); color:rgba(255,255,255,.5); cursor:pointer; min-height:auto; }
+.bh-places-popup > button[role=option] {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  width:100%;
+  padding:7px 10px;
+  border:none;
+  border-radius:9px;
+  background:transparent;
+  color:#F4EDE1;
+  cursor:pointer;
+  text-align:left;
+  transition:background .12s;
+  min-height:auto;
+}
+.bh-places-popup > button[role=option]:hover { background:rgba(255,255,255,.08); }
+.bh-places-popup > button[role=option].selected { background:rgba(217,164,65,.15); color:#D9A441; }
+.bh-place-name { font-size:12px; font-weight:600; }
+.bh-place-area { font-size:9px; color:rgba(255,255,255,.45); margin-top:1px; }
+
+.bh-weather-loading {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  color:rgba(255,255,255,.5);
+  font-size:11px;
+  padding:4px 0;
+}
+.bh-spin { animation:workflow-spin .8s linear infinite; }
+
+.bh-weather-now {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+.bh-weather-icon { color:#ffd16f; display:flex; flex-shrink:0; }
+.bh-weather-temp { font-size:32px; font-weight:700; line-height:1; color:#fff; }
+.bh-weather-right { display:flex; flex-direction:column; gap:1px; }
+.bh-weather-desc { font-size:12px; color:rgba(255,255,255,.8); font-weight:600; }
+.bh-weather-feels { font-size:10px; color:rgba(255,255,255,.45); }
+
+.bh-weather-facts {
+  display:flex;
+  gap:12px;
+  margin-bottom:10px;
+}
+.bh-weather-facts span {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:10px;
+  color:rgba(255,255,255,.55);
+}
+
+/* Tappable summary line */
+.bh-weather-summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  padding:8px 10px;
+  margin-bottom:10px;
+  border:1px solid rgba(217,164,65,.3);
+  border-radius:10px;
+  background:rgba(217,164,65,.08);
+  color:#F4EDE1;
+  cursor:pointer;
+  font-size:11px;
+  text-align:left;
+  min-height:auto;
+  gap:8px;
+}
+.bh-summary-cta {
+  display:flex;
+  align-items:center;
+  gap:3px;
+  white-space:nowrap;
+  color:#D9A441;
+  font-weight:700;
+  font-size:10px;
+  flex-shrink:0;
+}
+
+.bh-weather-strip {
+  display:flex;
+  gap:6px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.1);
+}
+.bh-weather-day {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+}
+.bh-weather-day span { font-size:9px; color:rgba(255,255,255,.5); }
+.bh-weather-day span:last-child { font-size:11px; font-weight:700; color:#fff; }
+
+/* Do's & Don'ts placard */
+.bh-placard-backdrop {
+  position:fixed;
+  inset:0;
+  z-index:400;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(4px);
+  display:flex;
+  align-items:flex-end;
+  padding:0;
+}
+.bh-placard {
+  width:100%;
+  max-height:88dvh;
+  overflow-y:auto;
+  border-radius:22px 22px 0 0;
+  background:rgba(10,28,12,.97);
+  border:1px solid rgba(217,164,65,.2);
+  border-bottom:none;
+  padding:22px 20px 40px;
+}
+.bh-placard-header {
+  position:relative;
+  text-align:center;
+  margin-bottom:18px;
+}
+.bh-placard-header .bh-alpana { margin:0 auto 12px; display:block; }
+.bh-placard-header h2 { font-size:17px; font-weight:700; color:#F4EDE1; margin:0 0 4px; }
+.bh-placard-loc { font-size:10px; color:rgba(255,255,255,.45); letter-spacing:.06em; text-transform:uppercase; }
+.bh-placard-close {
+  position:absolute;
+  top:0;
+  right:0;
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.07);
+  color:rgba(255,255,255,.6);
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  min-height:auto;
+}
+.bh-placard-body {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-bottom:16px;
+}
+.bh-placard-col {
+  padding:12px;
+  border-radius:14px;
+}
+.bh-placard-col.do { background:rgba(25,164,116,.1); border:1px solid rgba(25,164,116,.2); }
+.bh-placard-col.dont { background:rgba(192,57,43,.08); border:1px solid rgba(192,57,43,.18); }
+.bh-placard-col h3 {
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+.bh-placard-col.do h3 { color:#19a474; }
+.bh-placard-col.dont h3 { color:#e05a4a; }
+.bh-placard-col p { font-size:11px; color:rgba(255,255,255,.75); line-height:1.5; margin:0 0 6px; }
+.bh-placard-note {
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  font-size:9px;
+  color:rgba(255,255,255,.35);
+  line-height:1.4;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.08);
+}
+
+/* Search */
+.bh-search {
+  position:relative;
+  margin-top:22px;
+}
+.bh-search input {
+  width:100%;
+  padding:11px 40px 11px 14px;
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:12px;
+  background:rgba(10,28,12,.55);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  color:rgba(255,255,255,.7);
+  font-size:13px;
+  box-sizing:border-box;
+  min-height:auto;
+}
+.bh-search input::placeholder { color:#7C82A6; opacity:1; }
+.bh-search svg {
+  position:absolute;
+  right:13px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#7C82A6;
+  pointer-events:none;
+}
+
+/* SOS row */
+.bh-sos-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:12px;
+  padding:12px 14px;
+  border-radius:12px;
+  background:rgba(10,28,12,.45);
+  border:1px solid rgba(255,255,255,.1);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  text-decoration:none;
+  color:rgba(255,255,255,.6);
+}
+.bh-sos-tag {
+  font-size:11px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#B23A2E;
+  font-weight:500;
+}
+.bh-sos-label {
+  font-size:12px;
+  color:#9CA3C4;
+  margin-left:8px;
+}
