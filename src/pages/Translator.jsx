@@ -11,7 +11,7 @@ import { translateText } from '../services/translation'
 import { useAppStore } from '../store/appStore'
 import { getLanguage, LANGUAGES } from '../utils/constants'
 import { platformServices } from '../services/platform/platformAdapter'
-import kolkataImg from '../assets/kolkata-heritage.jpg'
+import trainBg from '../assets/train.jpg'
 
 /* Native letter for each language circle */
 const CIRCLE_SCRIPT = { bn: 'ব', hi: 'ह', ne: 'न', en: 'EN' }
@@ -169,8 +169,8 @@ export default function Translator() {
 
       {/* Background */}
       <div className="pb-bg" aria-hidden="true">
-        <img src={kolkataImg} alt="" />
-        <div className="pb-bg-overlay" />
+        <img src={trainBg} alt="" />
+        <div className="pb-bg-overlay pb-bg-overlay--overcast" />
       </div>
 
       <div className="tr-content">

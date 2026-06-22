@@ -11,6 +11,17 @@
   background:linear-gradient(170deg,rgba(18,10,28,.88) 0%,rgba(18,10,28,.78) 40%,rgba(18,10,28,.94) 100%);
 }
 
+/* Overcast overlay for train backgrounds — cool grey-blue mist */
+.pb-bg-overlay--overcast {
+  position:absolute; inset:0;
+  background:
+    linear-gradient(170deg,
+      rgba(10,14,30,.85) 0%,
+      rgba(20,26,48,.72) 35%,
+      rgba(12,16,34,.86) 75%,
+      rgba(6,8,18,.95) 100%);
+}
+
 .pb-content {
   position:relative; z-index:1;
   padding:0 20px calc(104px + env(safe-area-inset-bottom,0px));

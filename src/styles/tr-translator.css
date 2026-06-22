@@ -4,6 +4,7 @@
 
 /* Hide top navbar same as home/phrases */
 .translator-page-active .app-navbar { display:none!important; }
+.history-page-active .app-navbar { display:none!important; }
 
 .tr-page { min-height:100dvh; position:relative; color:#E8EAF6; }
 
