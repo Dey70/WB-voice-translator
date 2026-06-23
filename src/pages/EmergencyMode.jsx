@@ -8,6 +8,7 @@ import { CONTENT_AUDIT_DATE_LABEL, CONTENT_AUDITS } from '../data/contentAudit'
 import { getPhraseById, matchPhrases } from '../data/repositories/phraseRepository'
 import { getEmergencyContacts, getOfficialSites } from '../data/repositories/emergencyRepository'
 import { platformServices } from '../services/platform/platformAdapter'
+import PageHeader from '../components/layout/PageHeader'
 
 const GROUPS = [
   { id: 'urgent', name: 'Urgent help', phraseIds: ['help', 'police', 'ambulance', 'doctor', 'hospital', 'pain', 'lost', 'passport'] },
@@ -54,6 +55,7 @@ export default function EmergencyMode() {
 
   return (
     <main className="emergency-page">
+      <PageHeader />
       <header className="emergency-header">
         <div className="emergency-title">
           <span><ShieldAlert size={17} /> Emergency communication</span>

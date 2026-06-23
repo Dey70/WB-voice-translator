@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, ArrowRight, CalendarRange } from 'lucide-react'
 import PlacesSubnav from '../components/places/PlacesSubnav'
+import PageHeader from '../components/layout/PageHeader'
 import { REGION_NAMES } from '../data/tourismLocale'
 import { REGION_SEASON_CONFIG, SEASON_CONDITIONS, SEASON_KEYS, SEASON_LOCALE } from '../data/seasonalGuide'
 import { CONTENT_AUDIT_DATE_LABEL, LIVE_CONDITION_SOURCES } from '../data/contentAudit'
@@ -23,6 +24,7 @@ export default function SeasonalGuide() {
   const config = REGION_SEASON_CONFIG[region]
   return (
     <main className="season-page">
+      <PageHeader />
       <PlacesSubnav language={language}/>
       <header className="season-hero"><span><CalendarRange size={15}/> {copy.eyebrow}</span><h1>{copy.title}</h1><p>{copy.subtitle}</p></header>
       <section className="season-controls glass">

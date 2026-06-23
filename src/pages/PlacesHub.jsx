@@ -1,34 +1,134 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, CalendarRange, HeartHandshake, MapPinned } from 'lucide-react'
+import { CalendarRange, MapPinned } from 'lucide-react'
+import templeImg from '../assets/temple.jpg'
+import PageHeader from '../components/layout/PageHeader'
 
 const COPY = {
-  en:{ eyebrow:'Plan your regional journey', title:'Explore', subtitle:'Discover places, plan around the seasons, and travel with local cultural context.', explore:'Explore Nearby', exploreText:'Browse 124 curated attractions, surrounding road trips, hidden gems, access filters, and Google Maps directions.', season:'Seasonal Guide', seasonText:'Compare normal weather, road, forest, sea, festival, and high-altitude conditions across all eight regions.', culture:'Cultural Guide', cultureText:'Understand regional customs, etiquette, festivals, and respectful visitor behaviour.', open:'Open guide' },
-  bn:{ eyebrow:'আঞ্চলিক ভ্রমণ পরিকল্পনা করুন', title:'স্থান', subtitle:'কীভাবে পরিকল্পনা করবেন বেছে নিন—এখনই গন্তব্য খুঁজুন বা আগে সেরা ঋতু তুলনা করুন।', explore:'কাছাকাছি ঘুরুন', exploreText:'১২৪টি বাছাই করা আকর্ষণ, কাছের সড়ক ভ্রমণ, অজানা রত্ন, প্রবেশ ফিল্টার ও Google Maps দিকনির্দেশ দেখুন।', season:'ঋতুভিত্তিক গাইড', seasonText:'আটটি অঞ্চলের সাধারণ আবহাওয়া, রাস্তা, বন, সমুদ্র, উৎসব ও উচ্চতার পরিস্থিতি তুলনা করুন।', open:'গাইড খুলুন' },
-  ne:{ eyebrow:'क्षेत्रीय यात्रा योजना बनाउनुहोस्', title:'स्थानहरू', subtitle:'कसरी योजना गर्ने छान्नुहोस्—अहिले गन्तव्य खोज्नुहोस् वा पहिले उत्तम मौसम तुलना गर्नुहोस्।', explore:'नजिकका ठाउँ', exploreText:'१२४ छानिएका आकर्षण, नजिकका सडक यात्रा, लुकेका रत्न, पहुँच फिल्टर र Google Maps दिशा हेर्नुहोस्।', season:'मौसमी गाइड', seasonText:'आठ क्षेत्रका सामान्य मौसम, सडक, वन, समुद्र, चाडपर्व र उचाइ अवस्था तुलना गर्नुहोस्।', open:'गाइड खोल्नुहोस्' },
-  hi:{ eyebrow:'क्षेत्रीय यात्रा की योजना बनाएँ', title:'स्थान', subtitle:'योजना का तरीका चुनें—अभी गंतव्य खोजें या पहले सबसे अच्छे मौसम की तुलना करें।', explore:'आसपास घूमें', exploreText:'124 चुने हुए आकर्षण, पास की सड़क यात्राएँ, छिपे रत्न, पहुँच फ़िल्टर और Google Maps दिशा देखें।', season:'मौसमी गाइड', seasonText:'आठ क्षेत्रों के सामान्य मौसम, सड़क, वन, समुद्र, त्योहार और ऊँचाई की स्थितियों की तुलना करें।', open:'गाइड खोलें' },
-}
-
-const CULTURE_COPY = {
-  en: { title: 'Cultural Guide', text: 'Understand regional customs, etiquette, festivals, and respectful visitor behaviour.' },
-  bn: { title: 'সাংস্কৃতিক গাইড', text: 'আঞ্চলিক রীতিনীতি, শিষ্টাচার, উৎসব এবং সম্মানজনক পর্যটক আচরণ বুঝুন।' },
-  ne: { title: 'सांस्कृतिक गाइड', text: 'क्षेत्रीय चलन, शिष्टाचार, चाडपर्व र सम्मानजनक पर्यटक व्यवहार बुझ्नुहोस्।' },
-  hi: { title: 'सांस्कृतिक गाइड', text: 'क्षेत्रीय रीति-रिवाज, शिष्टाचार, त्योहार और सम्मानजनक पर्यटक व्यवहार समझें।' },
+  en: {
+    eyebrow: 'Plan your regional journey',
+    title: 'Explore',
+    subtitle: '124 curated places across West Bengal',
+    nearby: 'Destination Vault',
+    nearbyBn: 'গন্তব্য ভল্ট',
+    nearbyDesc: 'Curated attractions, hidden gems, road trips, and directions built around where you are.',
+    nearbyCount: '124 attractions',
+    season: 'Seasonal Guide',
+    seasonBn: 'ঋতু গাইড',
+    seasonDesc: 'Compare weather, road, forest, sea, and festival conditions across all eight regions of West Bengal.',
+    seasonCount: '8 regions',
+  },
+  bn: {
+    eyebrow: 'আঞ্চলিক ভ্রমণ পরিকল্পনা করুন',
+    title: 'অন্বেষণ',
+    subtitle: 'পশ্চিমবঙ্গ জুড়ে ১২৪টি বাছাই করা স্থান',
+    nearby: 'গন্তব্য ভল্ট',
+    nearbyBn: 'গন্তব্য ভল্ট',
+    nearbyDesc: '১২৪টি বাছাই করা আকর্ষণ, অজানা রত্ন, সড়ক ভ্রমণ ও দিকনির্দেশ।',
+    nearbyCount: '১২৪টি আকর্ষণ',
+    season: 'ঋতুভিত্তিক গাইড',
+    seasonBn: 'ঋতু গাইড',
+    seasonDesc: 'আটটি অঞ্চলের আবহাওয়া, রাস্তা, বন, সমুদ্র ও উৎসবের পরিস্থিতি তুলনা করুন।',
+    seasonCount: '৮টি অঞ্চল',
+  },
+  ne: {
+    eyebrow: 'क्षेत्रीय यात्रा योजना बनाउनुहोस्',
+    title: 'अन्वेषण',
+    subtitle: 'पश्चिम बंगालभर १२४ छानिएका ठाउँहरू',
+    nearby: 'Destination Vault',
+    nearbyBn: 'गन्तव्य भल्ट',
+    nearbyDesc: '१२४ छानिएका आकर्षण, लुकेका रत्न, सडक यात्रा र दिशानिर्देश।',
+    nearbyCount: '१२४ आकर्षणहरू',
+    season: 'मौसमी गाइड',
+    seasonBn: 'मौसम गाइड',
+    seasonDesc: 'आठ क्षेत्रका मौसम, सडक, वन, समुद्र र चाडपर्वको अवस्था तुलना गर्नुहोस्।',
+    seasonCount: '८ क्षेत्रहरू',
+  },
+  hi: {
+    eyebrow: 'क्षेत्रीय यात्रा की योजना बनाएँ',
+    title: 'अन्वेषण',
+    subtitle: 'पश्चिम बंगाल में 124 क्यूरेटेड स्थान',
+    nearby: 'Destination Vault',
+    nearbyBn: 'गंतव्य वॉल्ट',
+    nearbyDesc: '124 चुने हुए आकर्षण, छिपे रत्न, सड़क यात्राएँ और दिशा-निर्देश।',
+    nearbyCount: '124 आकर्षण',
+    season: 'मौसमी गाइड',
+    seasonBn: 'मौसम गाइड',
+    seasonDesc: 'आठ क्षेत्रों के मौसम, सड़क, वन, समुद्र और त्योहार की स्थितियों की तुलना करें।',
+    seasonCount: '8 क्षेत्र',
+  },
 }
 
 export default function PlacesHub() {
-  const [language,setLanguage] = useState('en')
+  const [language, setLanguage] = useState('en')
   const copy = COPY[language]
-  const cultureCopy = CULTURE_COPY[language]
+
   return (
-    <main className="places-hub">
-      <div className="places-hub-languages">{['en','bn','ne','hi'].map(item=><button key={item} className={language===item?'active':''} onClick={()=>setLanguage(item)}>{item.toUpperCase()}</button>)}</div>
-      <header><span>{copy.eyebrow}</span><h1 className="gradient-text">{copy.title}</h1><p>{copy.subtitle}</p></header>
-      <section className="places-hub-grid">
-        <Link to="/places/explore" className="places-hub-card glass"><div className="places-hub-icon"><MapPinned /></div><h2>{copy.explore}</h2><p>{copy.exploreText}</p><strong>{copy.open} <ArrowRight size={16}/></strong></Link>
-        <Link to="/places/seasons" className="places-hub-card glass"><div className="places-hub-icon season"><CalendarRange /></div><h2>{copy.season}</h2><p>{copy.seasonText}</p><strong>{copy.open} <ArrowRight size={16}/></strong></Link>
-        <Link to="/culture" className="places-hub-card glass"><div className="places-hub-icon culture"><HeartHandshake /></div><h2>{cultureCopy.title}</h2><p>{cultureCopy.text}</p><strong>{copy.open} <ArrowRight size={16}/></strong></Link>
-      </section>
+    <main className="places-hub-v2">
+
+      {/* Full-page temple background with overcast overlay */}
+      <div className="pb-bg" aria-hidden="true">
+        <img src={templeImg} alt="" />
+        <div className="pb-bg-overlay pb-bg-overlay--overcast" />
+      </div>
+
+      {/* Content */}
+      <div className="phv2-content">
+        <PageHeader />
+
+        {/* Hero */}
+        <header className="phv2-hero">
+          <span className="phv2-eyebrow">{copy.eyebrow}</span>
+          <h1 className="phv2-title">{copy.title}</h1>
+          <p className="phv2-subtitle">{copy.subtitle}</p>
+          <div className="phv2-lang-row">
+            {['en', 'bn', 'ne', 'hi'].map(l => (
+              <button key={l} className={language === l ? 'active' : ''} onClick={() => setLanguage(l)}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </header>
+
+        {/* Cards */}
+        <section className="phv2-cards" aria-label="Explore sections">
+
+          <Link to="/places/explore" className="phv2-card">
+            <div className="phv2-card-top">
+              <span className="phv2-badge phv2-badge--orange">
+                <MapPinned size={11} /> Vault
+              </span>
+              <span className="phv2-count">{copy.nearbyCount}</span>
+            </div>
+            <h2>{copy.nearby}</h2>
+            <p className="phv2-card-bn">{copy.nearbyBn}</p>
+            <p className="phv2-card-desc">{copy.nearbyDesc}</p>
+            <div className="phv2-tags">
+              <span>Road trips</span>
+              <span>Hidden gems</span>
+              <span>Filters</span>
+            </div>
+          </Link>
+
+          <Link to="/places/seasons" className="phv2-card">
+            <div className="phv2-card-top">
+              <span className="phv2-badge phv2-badge--gold">
+                <CalendarRange size={11} /> Seasonal
+              </span>
+              <span className="phv2-count">{copy.seasonCount}</span>
+            </div>
+            <h2>{copy.season}</h2>
+            <p className="phv2-card-bn">{copy.seasonBn}</p>
+            <p className="phv2-card-desc">{copy.seasonDesc}</p>
+            <div className="phv2-tags">
+              <span>Weather</span>
+              <span>Festivals</span>
+              <span>Best time</span>
+            </div>
+          </Link>
+
+        </section>
+      </div>
     </main>
   )
 }

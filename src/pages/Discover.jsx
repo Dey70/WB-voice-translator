@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Bookmark, ChevronLeft, Heart, Landmark, MapPin, Mountain, PartyPopper, Sparkles, Trees, UtensilsCrossed, X } from 'lucide-react'
 import { DISCOVERY_CARDS } from '../data/discoveryCards'
 import { useAppStore } from '../store/appStore'
+import PageHeader from '../components/layout/PageHeader'
 
 const interests = [
   { id: 'all', label: 'For you', icon: Sparkles },
@@ -28,6 +29,7 @@ export default function Discover() {
 
   return (
     <main className="discover-page immersive-page">
+      <PageHeader />
       <header className="discover-header">
         <span><Sparkles size={15} /> Bhalo Lage</span>
         <h1>Find your Bengal</h1>

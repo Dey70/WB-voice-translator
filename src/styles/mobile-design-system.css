@@ -204,6 +204,9 @@ img,svg { max-width:100%; }
   .more-menu { top:62px; left:8px; right:8px; bottom:calc(76px + env(safe-area-inset-bottom)); width:auto; overflow-y:auto; border-radius:18px; }
   .more-menu-grid { grid-template-columns:1fr; }.more-menu-grid>a { min-height:58px; }
   .home-page,.translator-page,.conversation-page,.history-page,.phrase-bank-page,.tourism-page,.culture-page,.places-hub,.season-page,.emergency-page,.discover-page,.collections-page { width:100%!important; max-width:100%!important; padding-left:12px!important; padding-right:12px!important; }
+  .phv2-content { width:100%!important; max-width:100%!important; padding-left:12px!important; padding-right:12px!important; box-sizing:border-box; }
+  .dv-page { width:100%!important; max-width:100%!important; padding-left:0!important; padding-right:0!important; }
+  .dv-content { width:100%!important; max-width:100%!important; padding-left:14px!important; padding-right:14px!important; box-sizing:border-box!important; }
   .translator-page,.conversation-page,.history-page,.phrase-bank-page,.tourism-page,.culture-page,.places-hub,.season-page,.emergency-page { padding-top:16px!important; padding-bottom:92px!important; }
   .translation-grid,.phrase-grid,.tourism-grid,.culture-grid,.places-hub-grid,.season-grid,.collection-grid { grid-template-columns:minmax(0,1fr)!important; }
   .lang-selector-row,.culture-selects,.tourism-select-grid,.season-controls { min-width:0!important; }
