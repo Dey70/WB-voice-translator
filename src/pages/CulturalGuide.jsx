@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertCircle, CalendarDays, CheckCircle2, Check, ChevronDown, MapPin, Search, Sparkles, X } from 'lucide-react'
+import PageHeader from '../components/layout/PageHeader'
 import { CULTURAL_GUIDE_ITEMS, CULTURE_CATEGORIES, CULTURE_LOCALE, CULTURE_REGIONS } from '../data/culturalGuide'
 import { CULTURAL_GUIDE_EXPANSION } from '../data/culturalGuideExpansion'
 import { FESTIVAL_TIMINGS, FESTIVAL_TIME_LABELS } from '../data/festivalTimings'
@@ -98,13 +99,7 @@ export default function CulturalGuide() {
 
       <div className="cg-content">
 
-        {/* Brand header */}
-        <div className="bh-header">
-          <Link to="/" className="bh-brand-block" style={{ textDecoration: 'none' }}>
-            <span className="bh-brand">কথাসেতু</span>
-            <AlpanaBar />
-          </Link>
-        </div>
+        <PageHeader />
 
         {/* Hero */}
         <div className="cg-hero">

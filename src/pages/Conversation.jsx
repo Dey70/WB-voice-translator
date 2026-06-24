@@ -177,12 +177,10 @@ export default function Conversation() {
   }
 
   return (
-    <main className="conversation-page immersive-page" style={{ maxWidth: 800, margin: '0 auto', padding: '0 20px 32px', display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)' }}>
+    <main className="conversation-page immersive-page" style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 32px', display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)' }}>
       <PageHeader />
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 6 }}>
-          <span className="gradient-text">Conversation</span> Mode
-        </h1>
+        <h1 className="conv-hero-title">Conversation Mode</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
           Two people, two languages - speak naturally
         </p>

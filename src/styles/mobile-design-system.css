@@ -105,10 +105,10 @@ h1,h2,h3 { text-wrap:balance; }
 .onboarding button { width:100%; min-height:54px; display:flex; align-items:center; justify-content:center; gap:10px; border:0; border-radius:17px; background:linear-gradient(135deg,#d86412,#f0a137); color:#fff; cursor:pointer; font:inherit; font-size:15px; font-weight:800; box-shadow:0 15px 38px rgba(200,86,10,.32); }
 
 /* Discovery and collections */
-.discover-page,.collections-page { max-width:760px; margin:0 auto; padding:30px 18px 120px; }
-.discover-header,.collections-header { margin-bottom:20px; color:#fff; text-align:center; text-shadow:0 3px 20px rgba(0,0,0,.42); }
-.discover-header>span,.collections-header>span { display:inline-flex; align-items:center; gap:6px; color:#ffd18c; font-size:11px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; }
-.discover-header h1,.collections-header h1 { margin:6px 0; color:#fff; font-size:clamp(30px,8vw,48px); }
+.discover-page,.collections-page { max-width:760px; margin:0 auto; padding:30px 16px 120px; }
+.discover-header,.collections-header { margin-bottom:20px; text-align:center; }
+.discover-header>span,.collections-header>span { display:inline-flex; align-items:center; gap:6px; color:rgba(255,255,255,0.45); font-size:10px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase; }
+.discover-header h1,.collections-header h1 { margin:6px 0 8px; font-family:'Baloo Da 2','Hind Siliguri',sans-serif; font-weight:800; font-style:italic; font-size:clamp(28px,8vw,40px); line-height:1.1; background:linear-gradient(135deg,var(--accent-secondary),var(--accent-primary)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 .discover-header p,.collections-header p { max-width:520px; margin:auto; color:rgba(255,255,255,.78); font-size:13px; line-height:1.5; }
 .discovery-card { position:relative; min-height:min(62vh,610px); overflow:hidden; border:1px solid rgba(255,255,255,.3); border-radius:28px; background:#173d38; box-shadow:0 30px 80px rgba(0,0,0,.35); }
 .discovery-photo,.collection-card-photo { position:absolute; inset:0; background:linear-gradient(145deg,#174f42,#2d7a59); transition:transform .6s ease; }
@@ -171,12 +171,12 @@ h1,h2,h3 { text-wrap:balance; }
 .immersive-page::before { background:transparent; }
 .immersive-page .glass { background:var(--bg-card); border-color:var(--border); box-shadow:var(--shadow-card); }
 [data-theme='dark'] .immersive-page .glass { background:var(--bg-card); }
-.translator-page .translator-heading h1,.conversation-page>div:first-child h1,.history-page>div:first-child h1 { color:var(--text-primary); text-shadow:none; }
+.translator-page .translator-heading h1,.history-page>div:first-child h1 { color:var(--text-primary); text-shadow:none; }
 .translator-page .translator-heading p,.conversation-page>div:first-child p,.history-page>div:first-child p { color:var(--text-secondary)!important; }
 .onboarding { background:radial-gradient(circle at 18% 16%,rgba(200,150,12,.22),transparent 30%),radial-gradient(circle at 86% 25%,rgba(13,115,119,.2),transparent 28%),linear-gradient(145deg,#6d2d0b,#c8560a 46%,#e89d32); }
 .onboarding-shade { opacity:.32; background:repeating-radial-gradient(circle at 50% 115%,transparent 0 17px,rgba(255,246,224,.28) 18px 19px,transparent 20px 34px); }
-.discover-header,.collections-header { color:var(--text-primary); text-shadow:none; }
-.discover-header>span,.collections-header>span { color:var(--accent-primary); }.discover-header h1,.collections-header h1 { color:var(--text-primary); }.discover-header p,.collections-header p { color:var(--text-secondary); }
+.discover-header,.collections-header { text-shadow:none; }
+.discover-header>span,.collections-header>span { color:var(--text-muted); }.discover-header p,.collections-header p { color:var(--text-secondary); }
 .discovery-photo,.collection-card-photo { background:linear-gradient(145deg,rgba(13,115,119,.96),rgba(7,54,57,.92)),repeating-radial-gradient(circle at 100% 0,transparent 0 16px,rgba(255,255,255,.12) 17px 18px,transparent 19px 32px); }
 .discovery-terracotta .discovery-photo,.discovery-marigold .discovery-photo { filter:none; background:linear-gradient(145deg,#9c3e14,#e8872a); }.discovery-indigo .discovery-photo { filter:none; background:linear-gradient(145deg,#203a67,#4d64a6); }.discovery-mangrove .discovery-photo,.discovery-pine .discovery-photo,.discovery-tea .discovery-photo,.discovery-sal .discovery-photo { filter:none; background:linear-gradient(145deg,#174f42,#2d7a59); }.discovery-cream .discovery-photo { filter:none; background:linear-gradient(145deg,#8b5b2d,#d3a25d); }
 
@@ -206,7 +206,8 @@ img,svg { max-width:100%; }
   .home-page,.translator-page,.conversation-page,.history-page,.phrase-bank-page,.tourism-page,.culture-page,.places-hub,.season-page,.emergency-page,.discover-page,.collections-page { width:100%!important; max-width:100%!important; padding-left:12px!important; padding-right:12px!important; }
   .phv2-content { width:100%!important; max-width:100%!important; padding-left:12px!important; padding-right:12px!important; box-sizing:border-box; }
   .dv-page { width:100%!important; max-width:100%!important; padding-left:0!important; padding-right:0!important; }
-  .dv-content { width:100%!important; max-width:100%!important; padding-left:14px!important; padding-right:14px!important; box-sizing:border-box!important; }
+  .dv-content { width:100%!important; max-width:100%!important; padding-left:12px!important; padding-right:12px!important; box-sizing:border-box!important; }
+  .sg2-content { width:100%!important; max-width:100%!important; padding-left:12px!important; padding-right:12px!important; box-sizing:border-box!important; }
   .translator-page,.conversation-page,.history-page,.phrase-bank-page,.tourism-page,.culture-page,.places-hub,.season-page,.emergency-page { padding-top:16px!important; padding-bottom:92px!important; }
   .translation-grid,.phrase-grid,.tourism-grid,.culture-grid,.places-hub-grid,.season-grid,.collection-grid { grid-template-columns:minmax(0,1fr)!important; }
   .lang-selector-row,.culture-selects,.tourism-select-grid,.season-controls { min-width:0!important; }
