@@ -11,7 +11,7 @@ const navItems = [
 ]
 
 const mobileNavItems = [
-  { to: '/discover', icon: Compass, label: 'Explore' },
+  { to: '/discover', icon: Compass, label: 'Bookings' },
   { to: '/phrases', icon: BookOpen, label: 'Phrases' },
   { to: '/translate', icon: Mic, label: 'Translate', primary: true },
   { to: '/guide', icon: Landmark, label: 'Guide' },
@@ -35,6 +35,71 @@ export default function Navbar() {
   const location = useLocation()
   const { darkMode, toggleDarkMode } = useAppStore()
   const [moreOpen, setMoreOpen] = useState(false)
+
+  // Discover page: no top nav, show dark-themed bottom nav
+  if (location.pathname === '/discover') return (
+    <>
+      {moreOpen && <button className="more-backdrop" aria-label="Close menu" onClick={() => setMoreOpen(false)} />}
+      <aside id="more-menu" className={`more-menu ${moreOpen ? 'open' : ''}`} aria-hidden={!moreOpen}>
+        <header><div><span>Explore KothaSetu</span><strong>More tools</strong></div><button onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={19} /></button></header>
+        <div className="more-menu-grid">
+          {moreItems.map(({ to, icon: Icon, label, detail, urgent }) => (
+            <Link key={to} to={to} onClick={() => setMoreOpen(false)} className={urgent ? 'urgent' : ''} tabIndex={moreOpen ? 0 : -1}>
+              <span><Icon size={19} /></span><div><strong>{label}</strong><small>{detail}</small></div>
+            </Link>
+          ))}
+        </div>
+      </aside>
+      <nav aria-label="Main navigation" style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        background: 'rgba(17,23,43,0.97)',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        zIndex: 50,
+        paddingBottom: 'env(safe-area-inset-bottom, 8px)',
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', width: '100%' }}>
+          {mobileNavItems.map(({ to, icon: Icon, label, primary }) => {
+            const active = isNavActive(location.pathname, to)
+            return (
+              <Link key={to} to={to} aria-current={active ? 'page' : undefined} style={{
+                textDecoration: 'none', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: 3, padding: '10px 0 8px',
+                color: active ? '#E87630' : 'rgba(255,255,255,0.4)',
+              }}>
+                <div style={{
+                  width: 36, height: 28, borderRadius: 10,
+                  background: active ? 'rgba(232,118,48,0.15)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.2s',
+                }}>
+                  <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+                </div>
+                <span style={{
+                  fontSize: 10, fontWeight: active ? 700 : 400,
+                  textAlign: 'center', whiteSpace: 'nowrap',
+                }}>{label}</span>
+              </Link>
+            )
+          })}
+          <button
+            onClick={() => setMoreOpen(true)} aria-expanded={moreOpen}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 3, padding: '10px 0 8px', color: 'rgba(255,255,255,0.4)',
+            }}
+          >
+            <div style={{ width: 36, height: 28, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Menu size={20} strokeWidth={1.8} />
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 400 }}>More</span>
+          </button>
+        </div>
+      </nav>
+    </>
+  )
 
   if (location.pathname === '/places' || location.pathname === '/places/explore' || location.pathname === '/places/seasons') return (
     <>
