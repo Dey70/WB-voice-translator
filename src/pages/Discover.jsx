@@ -387,10 +387,11 @@ function FlightTab() {
           type="button" onClick={swap} aria-label="Swap airports"
           style={{
             position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
-            width: 36, height: 36, borderRadius: '50%', border: `1.5px solid ${DARK.border}`,
+            width: 36, height: 36, minWidth: 36, minHeight: 36, padding: 0,
+            borderRadius: '50%', border: `1.5px solid ${DARK.border}`,
             background: DARK.cardAlt, color: DARK.muted, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10,
-            transition: 'all 0.2s',
+            transition: 'all 0.2s', flexShrink: 0,
           }}
           onMouseEnter={(e) => { e.currentTarget.style.borderColor = DARK.orange; e.currentTarget.style.color = DARK.orange }}
           onMouseLeave={(e) => { e.currentTarget.style.borderColor = DARK.border; e.currentTarget.style.color = DARK.muted }}
@@ -706,10 +707,21 @@ export default function Discover() {
 
         {/* Logo + search bar — same as every other page */}
         <div className="bh-header" style={{ padding: '20px 20px 0' }}>
-          <div className="bh-brand-block">
+          <Link to="/" className="bh-brand-block" style={{ textDecoration: 'none' }}>
             <span className="bh-brand">কথাসেতু</span>
-          </div>
-          <Link to="/" className="bh-search-btn" aria-label="Search">
+            <svg className="bh-alpana" viewBox="0 0 240 18" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+              <line x1="0" y1="9" x2="88" y2="9" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.5" />
+              <circle cx="96"  cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
+              <circle cx="108" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
+              <circle cx="108" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
+              <polygon points="120,4 123,9 120,14 117,9" fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.8" />
+              <circle cx="132" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
+              <circle cx="132" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
+              <circle cx="144" cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
+              <line x1="152" y1="9" x2="240" y2="9" stroke="currentColor" strokeOpacity="0.5" strokeWidth="0.8" />
+            </svg>
+          </Link>
+          <Link to="/discover" className="bh-search-btn" aria-label="Search">
             <Search size={19} />
           </Link>
         </div>
@@ -729,7 +741,7 @@ export default function Discover() {
 
         {/* Wavy divider */}
         <div style={{ padding: '14px 0 4px', overflow: 'hidden' }}>
-          <svg viewBox="0 0 390 24" fill="none" style={{ width: '100%', display: 'block' }}>
+          <svg viewBox="0 0 390 24" fill="none" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
             <path d="M0 12 Q50 4 100 12 Q150 20 200 12 Q250 4 300 12 Q350 20 390 12" stroke={DARK.orange} strokeWidth="1" strokeOpacity="0.4" fill="none" />
             <circle cx="100" cy="12" r="3" fill={DARK.orange} fillOpacity="0.5" />
             <circle cx="280" cy="10.5" r="2" fill={DARK.orange} fillOpacity="0.4" />
