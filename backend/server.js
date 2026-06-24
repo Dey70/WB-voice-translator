@@ -143,7 +143,10 @@ async function primarySearch({ origin, destination, mode, date, simulateFailure 
   }
 }
 
-async function fallbackSearch({ origin, destination, mode, date }) {
+async function fallbackSearch({ origin, destination, mode, date, simulateFallbackFailure }) {
+  if (simulateFallbackFailure) {
+    throw new Error('fallbackSearch: simulated failure via ?simulateFallbackFailure=true')
+  }
   // Single simplified result — simulates a secondary/cheaper provider
   return [
     {
@@ -170,6 +173,7 @@ async function deeplinkFallback({ origin, destination, mode, date }) {
 app.post('/api/search', async (req, res) => {
   const { origin, destination, mode, date } = req.body
   const simulateFailure = req.query.simulateFailure === 'true'
+  const simulateFallbackFailure = req.query.simulateFallbackFailure === 'true'
 
   // Validate required fields
   const missing = ['origin', 'destination', 'mode'].filter(k => !req.body[k])
@@ -192,6 +196,7 @@ app.post('/api/search', async (req, res) => {
     mode,
     date: date || new Date().toISOString().split('T')[0],
     simulateFailure,
+    simulateFallbackFailure,
   }
 
   // Primary
