@@ -4,10 +4,17 @@ import { createHash } from 'node:crypto'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import translateHandler from './api/translate.js'
+import flightsHandler from './api/flights.js'
 
 const secureTranslationDevPlugin = () => ({
   name: 'secure-translation-dev-api',
   configureServer(server) {
+    server.middlewares.use('/api/flights', (req, res) => {
+      const url = new URL(req.url, 'http://localhost')
+      req.query = Object.fromEntries(url.searchParams)
+      flightsHandler(req, res)
+    })
+
     server.middlewares.use('/api/translate', (req, res, next) => {
       // Allow Capacitor WebView origins (capacitor://localhost, http://localhost)
       // during local development so the Android APK can reach this dev server.
@@ -90,6 +97,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   process.env.AZURE_TRANSLATOR_KEY ||= env.AZURE_TRANSLATOR_KEY
   process.env.AZURE_TRANSLATOR_REGION ||= env.AZURE_TRANSLATOR_REGION
+  process.env.VITE_SERPAPI_KEY ||= env.VITE_SERPAPI_KEY
 
   return {
     plugins: [

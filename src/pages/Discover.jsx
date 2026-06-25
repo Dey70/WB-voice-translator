@@ -5,7 +5,7 @@ import {
   ArrowUpDown, Search, Loader2,
   AlertCircle, Users, LayoutGrid,
 } from 'lucide-react'
-import { buildFlightLink, buildTrainLink, buildBusLink, buildHotelLink } from '../utils/bookingLinks'
+import { buildFlightLink, buildTrainLink, buildBusLink } from '../utils/bookingLinks'
 import { searchFlights } from '../services/flightService'
 import { searchHotels } from '../services/hotelService'
 import bgImage from '../assets/download (18).jpg'
@@ -208,7 +208,7 @@ function DarkSelect({ value, onChange, children, fontSize = 16 }) {
       <select
         value={value} onChange={onChange}
         style={{
-          background: '#0d1228', border: 'none', outline: 'none',
+          background: 'transparent', border: 'none', outline: 'none',
           color: DARK.text, fontSize, fontWeight: 600,
           cursor: 'pointer', width: '100%', padding: '2px 22px 2px 0',
           appearance: 'none', WebkitAppearance: 'none',
@@ -498,6 +498,9 @@ function Skeleton() {
 
 function FlightCard({ flight, bookLink }) {
   const stopsLabel = flight.stops === 0 ? 'Non-stop' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`
+  const statusBadge = flight.status && flight.status !== 'scheduled'
+    ? <span style={{ fontSize: 11, background: '#fef9c3', color: '#854d0e', borderRadius: 4, padding: '1px 6px', marginLeft: 6 }}>{flight.status}</span>
+    : null
   return (
     <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #f3f4f6', padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -505,13 +508,17 @@ function FlightCard({ flight, bookLink }) {
           <div style={{ fontWeight: 600, color: '#1f2937', fontSize: 15 }}>
             {flight.airline}
             {flight.flightNo !== '—' && <span style={{ color: '#6b7280', fontWeight: 400, fontSize: 13 }}> · {flight.flightNo}</span>}
+            {statusBadge}
           </div>
           <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
             {flight.depTime} → {flight.arrTime} &nbsp;·&nbsp; {flight.duration} &nbsp;·&nbsp; {stopsLabel}
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#0F4C5C' }}>₹{flight.price.toLocaleString('en-IN')}</div>
+          {flight.price != null
+            ? <div style={{ fontSize: 20, fontWeight: 700, color: '#0F4C5C' }}>₹{flight.price.toLocaleString('en-IN')}</div>
+            : <div style={{ fontSize: 12, color: '#6b7280' }}>Price on MMT</div>
+          }
         </div>
       </div>
       <div style={{ marginTop: 12 }}>
@@ -520,9 +527,41 @@ function FlightCard({ flight, bookLink }) {
           onClick={() => window.open(bookLink, '_blank', 'noopener,noreferrer')}
           style={{ background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 14, border: 'none', cursor: 'pointer', fontWeight: 600 }}
         >
-          Book Now
+          Check Price →
         </button>
       </div>
+    </div>
+  )
+}
+
+// ─── Flight fallback card (shown when API unavailable) ───────────────────────
+
+function FlightFallbackCard({ from, to, date, searchForm }) {
+  const fromAirport = WB_AIRPORTS.find((a) => a.code === from)
+  const toAirport   = WB_AIRPORTS.find((a) => a.code === to)
+  const fromLabel   = fromAirport ? `${fromAirport.city} (${from})` : from
+  const toLabel     = toAirport   ? `${toAirport.city} (${to})`     : to
+  const mmtLink     = buildFlightLink({ ...searchForm, passengers: searchForm?.passengers ?? 1 })
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #f3f4f6', padding: 16, marginTop: 4 }}>
+      <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 6 }}>Live prices unavailable</div>
+      <div style={{ fontWeight: 700, color: '#1f2937', fontSize: 16, marginBottom: 2 }}>
+        {fromLabel} → {toLabel}
+      </div>
+      {date && (
+        <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 14 }}>{formatDate(date)}</div>
+      )}
+      <button
+        type="button"
+        onClick={() => window.open(mmtLink, '_blank', 'noopener,noreferrer')}
+        style={{ background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}
+      >
+        Search on MakeMyTrip →
+      </button>
+      <p style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', marginTop: 8, marginBottom: 0 }}>
+        Or browse popular routes below
+      </p>
     </div>
   )
 }
@@ -749,7 +788,6 @@ function FlightTab() {
   const [errors, setErrors]     = useState({})
   const [loading, setLoading]   = useState(false)
   const [results, setResults]   = useState(null)
-  const [toast, setToast]       = useState(null)
 
   const set = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }))
@@ -783,12 +821,9 @@ function FlightTab() {
         cabin: searchForm.cabinClass ?? 'Economy',
       })
       if (!flights.length) throw new Error('empty')
-      setResults({ flights, from: searchForm.from, to: searchForm.to, date: searchForm.date })
+      setResults({ flights, from: searchForm.from, to: searchForm.to, date: searchForm.date, live: true })
     } catch {
-      setToast('Showing curated results — live search unavailable')
-      const link = buildFlightLink({ ...searchForm, passengers: searchForm.passengers ?? 1 })
-      window.open(link, '_blank', 'noopener,noreferrer')
-      setResults(null)
+      setResults({ fallback: true, from: searchForm.from, to: searchForm.to, date: searchForm.date, form: searchForm })
     } finally {
       setLoading(false)
     }
@@ -808,14 +843,8 @@ function FlightTab() {
 
   const isRound = form.tripType === 'Round Trip'
 
-  const mmt = results
-    ? buildFlightLink({ ...form, from: results.from, to: results.to, date: results.date })
-    : buildFlightLink(form)
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
-
       {/* Trip type */}
       <div style={{ display: 'inline-flex', background: 'rgba(255,255,255,0.07)', borderRadius: 10, padding: 3, alignSelf: 'flex-start' }}>
         {['One Way', 'Round Trip'].map((t) => (
@@ -868,36 +897,21 @@ function FlightTab() {
       <div style={{ display: 'grid', gridTemplateColumns: isRound ? '1fr 1fr' : '1fr', gap: 10 }}>
         <FieldCard>
           <FieldLabel>Depart</FieldLabel>
-          {form.date
-            ? <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: DARK.text }}>{formatDate(form.date)}</span>
-              </div>
-            : null}
           <input
             type="date" value={form.date} min={TODAY}
             onChange={(e) => set('date', e.target.value)}
-            style={{ opacity: form.date ? 0 : 1, position: form.date ? 'absolute' : 'static', width: form.date ? '100%' : 'auto', top: 0, left: 0, height: '100%', background: 'transparent', border: 'none', outline: 'none', cursor: 'pointer', colorScheme: 'dark', color: DARK.text, fontSize: 14 }}
+            style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%', padding: 0, minHeight: 28 }}
           />
-          {form.date && (
-            <input
-              type="date" value={form.date} min={TODAY}
-              onChange={(e) => set('date', e.target.value)}
-              style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-            />
-          )}
           <FieldErr msg={errors.date} />
         </FieldCard>
 
         {isRound && (
-          <FieldCard style={{ position: 'relative' }}>
+          <FieldCard>
             <FieldLabel>Return</FieldLabel>
-            {form.returnDate
-              ? <span style={{ fontSize: 16, fontWeight: 700, color: DARK.text }}>{formatDate(form.returnDate)}</span>
-              : <span style={{ fontSize: 15, color: DARK.muted }}>Add date</span>}
             <input
               type="date" value={form.returnDate} min={form.date || TODAY}
               onChange={(e) => set('returnDate', e.target.value)}
-              style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+              style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%', padding: 0, minHeight: 28 }}
             />
             <FieldErr msg={errors.returnDate} />
           </FieldCard>
@@ -937,15 +951,20 @@ function FlightTab() {
       {/* Results */}
       {loading && <Skeleton />}
 
-      {!loading && results && results.flights.length > 0 && (
+      {!loading && results?.live && results.flights.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
           <div style={{ fontSize: 13, color: DARK.muted, marginBottom: 2 }}>
-            {results.flights.length} flight{results.flights.length > 1 ? 's' : ''} found
+            {results.flights.length} flight{results.flights.length > 1 ? 's' : ''} found · Prices on MakeMyTrip
           </div>
-          {results.flights.map((f, i) => (
-            <FlightCard key={i} flight={f} bookLink={mmt} />
-          ))}
+          {results.flights.map((f, i) => {
+            const link = buildFlightLink({ from: results.from, to: results.to, date: results.date, passengers: form.passengers ?? 1, cabinClass: form.cabinClass ?? 'Economy' })
+            return <FlightCard key={i} flight={f} bookLink={link} />
+          })}
         </div>
+      )}
+
+      {!loading && results?.fallback && (
+        <FlightFallbackCard from={results.from} to={results.to} date={results.date} searchForm={results.form} />
       )}
 
       <PopularRoutes onRouteSearch={handleRouteSearch} searching={loading} />
@@ -1004,7 +1023,7 @@ function TrainTab() {
         <input
           type="date" value={form.date} min={TODAY}
           onChange={(e) => set('date', e.target.value)}
-          style={{ background: 'transparent', border: 'none', outline: 'none', color: form.date ? DARK.text : DARK.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%', padding: 0, minHeight: 28 }}
         />
         <FieldErr msg={errors.date} />
       </FieldCard>
@@ -1074,7 +1093,7 @@ function BusTab() {
         <input
           type="date" value={form.date} min={TODAY}
           onChange={(e) => set('date', e.target.value)}
-          style={{ background: 'transparent', border: 'none', outline: 'none', color: form.date ? DARK.text : DARK.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%', padding: 0, minHeight: 28 }}
         />
         <FieldErr msg={errors.date} />
       </FieldCard>
@@ -1123,8 +1142,7 @@ function HotelTab() {
       })
       setResults(hotels)
     } catch {
-      setToast('Showing curated results — live search unavailable')
-      window.open(buildHotelLink(form), '_blank', 'noopener,noreferrer')
+      setToast('Live prices unavailable — browse recommended stays below')
       setResults(null)
     } finally {
       setLoading(false)
@@ -1148,7 +1166,7 @@ function HotelTab() {
         <input
           type="date" value={form.checkIn} min={TODAY}
           onChange={(e) => handleCheckIn(e.target.value)}
-          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%', padding: 0, minHeight: 28 }}
         />
         <FieldErr msg={errors.checkIn} />
       </FieldCard>
@@ -1157,7 +1175,7 @@ function HotelTab() {
         <input
           type="date" value={form.checkOut} min={addDay(form.checkIn)}
           onChange={(e) => set('checkOut', e.target.value)}
-          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', width: '100%', padding: 0, minHeight: 28 }}
         />
         <FieldErr msg={errors.checkOut} />
       </FieldCard>
