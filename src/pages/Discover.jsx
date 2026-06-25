@@ -517,7 +517,7 @@ function FlightCard({ flight, bookLink }) {
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           {flight.price != null
             ? <div style={{ fontSize: 20, fontWeight: 700, color: '#0F4C5C' }}>₹{flight.price.toLocaleString('en-IN')}</div>
-            : <div style={{ fontSize: 12, color: '#6b7280' }}>Price on MMT</div>
+            : <div style={{ fontSize: 12, color: '#6b7280' }}>Price on Ixigo</div>
           }
         </div>
       </div>
@@ -557,7 +557,7 @@ function FlightFallbackCard({ from, to, date, searchForm }) {
         onClick={() => window.open(mmtLink, '_blank', 'noopener,noreferrer')}
         style={{ background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}
       >
-        Search on MakeMyTrip →
+        Search on Ixigo →
       </button>
       <p style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', marginTop: 8, marginBottom: 0 }}>
         Or browse popular routes below
@@ -954,7 +954,7 @@ function FlightTab() {
       {!loading && results?.live && results.flights.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
           <div style={{ fontSize: 13, color: DARK.muted, marginBottom: 2 }}>
-            {results.flights.length} flight{results.flights.length > 1 ? 's' : ''} found · Prices on MakeMyTrip
+            {results.flights.length} flight{results.flights.length > 1 ? 's' : ''} found · Prices on Ixigo
           </div>
           {results.flights.map((f, i) => {
             const link = buildFlightLink({ from: results.from, to: results.to, date: results.date, passengers: form.passengers ?? 1, cabinClass: form.cabinClass ?? 'Economy', tripType: form.tripType })
