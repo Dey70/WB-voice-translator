@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import {
   Plane, Train, Bus, BedDouble,
@@ -6,6 +6,8 @@ import {
   AlertCircle, Users, LayoutGrid,
 } from 'lucide-react'
 import { buildFlightLink, buildTrainLink, buildBusLink, buildHotelLink } from '../utils/bookingLinks'
+import { searchFlights } from '../services/flightService'
+import { searchHotels } from '../services/hotelService'
 import bgImage from '../assets/download (18).jpg'
 
 // ─── Static data ──────────────────────────────────────────────────────────────
@@ -49,6 +51,7 @@ const WB_CITIES = [
 ]
 
 const TODAY = new Date().toISOString().split('T')[0]
+const SEVEN_DAYS = new Date(Date.now() + 7 * 86_400_000).toISOString().split('T')[0]
 
 const addDay = (iso) =>
   iso ? new Date(new Date(iso).getTime() + 86_400_000).toISOString().split('T')[0] : TODAY
@@ -64,6 +67,110 @@ const TABS = [
   { id: 'train',  label: 'Trains',  icon: Train },
   { id: 'bus',    label: 'Buses',   icon: Bus },
   { id: 'hotel',  label: 'Hotels',  icon: BedDouble },
+]
+
+// ─── Curated data ─────────────────────────────────────────────────────────────
+
+const POPULAR_ROUTES = [
+  { from: 'DEL', to: 'CCU', label: 'Delhi → Kolkata', iata: 'DEL→CCU', duration: '~2h 10m', price: '₹3,499', airlines: ['IndiGo', 'Air India', 'SpiceJet'] },
+  { from: 'BOM', to: 'CCU', label: 'Mumbai → Kolkata', iata: 'BOM→CCU', duration: '~2h 40m', price: '₹4,299', airlines: ['IndiGo', 'Air India', 'Akasa'] },
+  { from: 'BLR', to: 'CCU', label: 'Bangalore → Kolkata', iata: 'BLR→CCU', duration: '~2h 25m', price: '₹3,899', airlines: ['IndiGo', 'SpiceJet'] },
+  { from: 'DEL', to: 'IXB', label: 'Delhi → Bagdogra', iata: 'DEL→IXB', duration: '~2h 20m', price: '₹3,799', airlines: ['IndiGo', 'Air India'], tag: '🏔️ Gateway to Darjeeling' },
+  { from: 'BOM', to: 'IXB', label: 'Mumbai → Bagdogra', iata: 'BOM→IXB', duration: '~2h 55m', price: '₹4,599', airlines: ['IndiGo', 'SpiceJet'] },
+  { from: 'MAA', to: 'CCU', label: 'Chennai → Kolkata', iata: 'MAA→CCU', duration: '~2h 00m', price: '₹3,299', airlines: ['IndiGo', 'Air India'] },
+]
+
+const POPULAR_TRAINS = [
+  {
+    name: 'Darjeeling Mail', route: 'HWH → NJP',
+    dep: '22:05', arr: '08:10 (+1)', duration: '10h 05m',
+    classes: [{ label: 'SL', price: '₹310' }, { label: '3A', price: '₹820' }, { label: '2A', price: '₹1,150' }],
+    tag: '🏔️ For Darjeeling & Sikkim',
+    link: 'https://www.ixigo.com/train/12343/darjeeling-mail',
+  },
+  {
+    name: 'Padatik Express', route: 'KOAA → NJP',
+    dep: '23:00', arr: '09:15 (+1)', duration: '10h 15m',
+    classes: [{ label: 'SL', price: '₹325' }, { label: '3A', price: '₹850' }],
+    tag: '🏔️ For Siliguri & North Bengal',
+    link: 'https://www.ixigo.com/train/12377/padatik-express',
+  },
+  {
+    name: 'Shantiniketan Express', route: 'HWH → BHP',
+    dep: '10:10', arr: '13:25', duration: '3h 15m',
+    classes: [{ label: 'SL', price: '₹145' }, { label: 'CC', price: '₹520' }],
+    tag: '🎨 For Bolpur & Shantiniketan',
+    link: 'https://www.ixigo.com/train/12337/shantiniketan-express',
+  },
+  {
+    name: 'Hazarduari Express', route: 'HWH → KWAE',
+    dep: '07:15', arr: '11:10', duration: '3h 55m',
+    classes: [{ label: 'SL', price: '₹160' }, { label: '3A', price: '₹455' }],
+    tag: '🕌 For Murshidabad',
+    link: 'https://www.ixigo.com/train/13113/hazarduari-express',
+  },
+  {
+    name: 'Tamralipta Express', route: 'HWH → DGH',
+    dep: '06:25', arr: '09:35', duration: '3h 10m',
+    classes: [{ label: 'SL', price: '₹130' }, { label: '3A', price: '₹390' }],
+    tag: '🏖️ For Digha Beach',
+    link: 'https://www.ixigo.com/train/12833/tamralipta-express',
+  },
+  {
+    name: 'Sundarbans Express', route: 'KOAA → NMZ',
+    dep: '06:10', arr: '10:00', duration: '3h 50m',
+    classes: [{ label: 'SL', price: '₹140' }, { label: '3A', price: '₹430' }],
+    tag: '🐯 For Sundarbans',
+    link: 'https://www.ixigo.com/train/12659/sundarbans-express',
+  },
+]
+
+const POPULAR_BUSES = [
+  {
+    route: 'Kolkata → Siliguri', duration: '~10-12 hrs',
+    operators: 'NBSTC, Shyamoli, Greenline',
+    price: '₹450 – ₹1,200',
+    link: 'https://www.redbus.in/bus-tickets/kolkata-to-siliguri',
+  },
+  {
+    route: 'Kolkata → Digha', duration: '~3-4 hrs',
+    operators: 'SBSTC, Private',
+    price: '₹150 – ₹350',
+    link: 'https://www.redbus.in/bus-tickets/kolkata-to-digha',
+  },
+  {
+    route: 'Kolkata → Mandarmani', duration: '~3.5 hrs',
+    operators: 'Private',
+    price: '₹200 – ₹400',
+    link: 'https://www.redbus.in/bus-tickets/kolkata-to-mandarmani',
+  },
+  {
+    route: 'Kolkata → Murshidabad', duration: '~4-5 hrs',
+    operators: 'NBSTC, Private',
+    price: '₹180 – ₹450',
+    link: 'https://www.redbus.in/bus-tickets/kolkata-to-murshidabad',
+  },
+  {
+    route: 'Siliguri → Darjeeling', duration: '~3 hrs',
+    operators: 'Private, Shared Jeep',
+    price: '₹120 – ₹350',
+    link: 'https://www.redbus.in/bus-tickets/siliguri-to-darjeeling',
+  },
+  {
+    route: 'Kolkata → Bakkhali', duration: '~3 hrs',
+    operators: 'SBSTC',
+    price: '₹120 – ₹280',
+    link: 'https://www.redbus.in/bus-tickets/kolkata-to-bakkhali',
+  },
+]
+
+const POPULAR_HOTELS = [
+  { name: 'The Elgin Darjeeling', city: 'Darjeeling', stars: 5, desc: 'Colonial heritage hotel with Himalayan views', price: '₹8,500', link: 'https://www.booking.com/hotel/in/the-elgin-darjeeling.html' },
+  { name: 'Mayfair Darjeeling', city: 'Darjeeling', stars: 5, desc: 'Luxury colonial property near Mall Road', price: '₹7,200', link: 'https://www.booking.com/hotel/in/mayfair-darjeeling.html' },
+  { name: 'ITC Royal Bengal', city: 'Kolkata', stars: 5, desc: 'Luxury Collection hotel in the heart of Kolkata', price: '₹12,000', link: 'https://www.booking.com/hotel/in/itc-royal-bengal.html' },
+  { name: 'Taj Bengal', city: 'Kolkata', stars: 5, desc: 'Iconic Taj property with city and garden views', price: '₹10,500', link: 'https://www.booking.com/hotel/in/taj-bengal-kolkata.html' },
+  { name: 'Mayfair Gangtok', city: 'Gangtok', stars: 5, desc: 'Mountain resort overlooking Kanchenjunga', price: '₹6,800', link: 'https://www.booking.com/hotel/in/mayfair-gangtok.html' },
+  { name: 'Sea Beach Resort Digha', city: 'Digha', stars: 3, desc: 'Beachfront property steps from the sea', price: '₹2,800', link: 'https://www.booking.com/hotel/in/sea-beach-resort-digha.html' },
 ]
 
 // ─── Dark theme primitives ────────────────────────────────────────────────────
@@ -139,10 +246,8 @@ function AirportCombobox({ value, onChange, placeholder, hasError }) {
   const wrapRef  = useRef(null)
   const inputRef = useRef(null)
 
-  // value is an IATA code (e.g. 'CCU')
   const selected = WB_AIRPORTS.find((a) => a.code === value)
 
-  // Reliable focus on mobile — autoFocus alone doesn't work after conditional render
   useEffect(() => {
     if (open) inputRef.current?.focus()
   }, [open])
@@ -343,6 +448,297 @@ function SearchBtn({ loading, label, onClick }) {
   )
 }
 
+// ─── Toast ────────────────────────────────────────────────────────────────────
+
+function Toast({ message, onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 3000)
+    return () => clearTimeout(t)
+  }, [onDone])
+
+  return (
+    <div style={{
+      background: 'rgba(30,35,60,0.96)', color: '#fff', fontSize: 13, fontWeight: 500,
+      borderRadius: 10, padding: '10px 16px', marginBottom: 12,
+      border: '1px solid rgba(255,255,255,0.12)',
+      display: 'flex', alignItems: 'center', gap: 8,
+    }}>
+      <AlertCircle size={14} color={DARK.orange} />
+      {message}
+    </div>
+  )
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+function Skeleton() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 4 }}>
+      {[1, 2, 3].map((i) => (
+        <div key={i} style={{
+          background: '#fff', borderRadius: 12, padding: 16,
+          border: '1px solid #f3f4f6', overflow: 'hidden', position: 'relative',
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ height: 14, background: '#e5e7eb', borderRadius: 6, width: '55%', animation: 'pulse 1.5s ease-in-out infinite' }} />
+            <div style={{ height: 12, background: '#e5e7eb', borderRadius: 6, width: '75%', animation: 'pulse 1.5s ease-in-out infinite 0.2s' }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ height: 20, background: '#e5e7eb', borderRadius: 6, width: '30%', animation: 'pulse 1.5s ease-in-out infinite 0.4s' }} />
+              <div style={{ height: 32, background: '#e5e7eb', borderRadius: 8, width: '22%', animation: 'pulse 1.5s ease-in-out infinite 0.6s' }} />
+            </div>
+          </div>
+        </div>
+      ))}
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
+    </div>
+  )
+}
+
+// ─── Flight result card ───────────────────────────────────────────────────────
+
+function FlightCard({ flight, bookLink }) {
+  const stopsLabel = flight.stops === 0 ? 'Non-stop' : `${flight.stops} stop${flight.stops > 1 ? 's' : ''}`
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #f3f4f6', padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, color: '#1f2937', fontSize: 15 }}>
+            {flight.airline}
+            {flight.flightNo !== '—' && <span style={{ color: '#6b7280', fontWeight: 400, fontSize: 13 }}> · {flight.flightNo}</span>}
+          </div>
+          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
+            {flight.depTime} → {flight.arrTime} &nbsp;·&nbsp; {flight.duration} &nbsp;·&nbsp; {stopsLabel}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#0F4C5C' }}>₹{flight.price.toLocaleString('en-IN')}</div>
+        </div>
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={() => window.open(bookLink, '_blank', 'noopener,noreferrer')}
+          style={{ background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 14, border: 'none', cursor: 'pointer', fontWeight: 600 }}
+        >
+          Book Now
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Hotel result card ────────────────────────────────────────────────────────
+
+function HotelResultCard({ hotel }) {
+  const bookLink = `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(hotel.name + ' ' + hotel.city)}`
+  const stars = '★'.repeat(Math.min(5, Math.max(1, hotel.stars)))
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #f3f4f6', padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, color: '#1f2937', fontSize: 15 }}>{hotel.name}</div>
+          <div style={{ color: '#f59e0b', fontSize: 13, marginTop: 2 }}>{stars}</div>
+        </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#0F4C5C' }}>₹{hotel.pricePerNight.toLocaleString('en-IN')}</div>
+          <div style={{ fontSize: 11, color: '#6b7280' }}>/night</div>
+        </div>
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <button
+          type="button"
+          onClick={() => window.open(bookLink, '_blank', 'noopener,noreferrer')}
+          style={{ background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 14, border: 'none', cursor: 'pointer', fontWeight: 600 }}
+        >
+          View Hotel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Section header ───────────────────────────────────────────────────────────
+
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <h2 style={{ fontSize: 16, fontWeight: 700, color: DARK.text, margin: 0 }}>{title}</h2>
+      <p style={{ fontSize: 12, color: DARK.muted, margin: '4px 0 0' }}>{subtitle}</p>
+    </div>
+  )
+}
+
+// ─── Popular routes section ───────────────────────────────────────────────────
+
+function PopularRoutes({ onRouteSearch, searching }) {
+  return (
+    <div style={{ marginTop: 24 }}>
+      <SectionHeader
+        title="✈️ Popular Routes to West Bengal"
+        subtitle="Tap any route to see live prices"
+      />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        {POPULAR_ROUTES.map((r) => (
+          <div key={r.iata} style={{
+            background: 'rgba(10,14,30,0.55)', borderRadius: 14, padding: 14,
+            border: '1px solid rgba(255,255,255,0.12)', display: 'flex', flexDirection: 'column', gap: 8,
+          }}>
+            {r.tag && (
+              <span style={{ fontSize: 10, color: '#5eead4', background: 'rgba(20,184,166,0.12)', borderRadius: 20, padding: '2px 8px', alignSelf: 'flex-start' }}>
+                {r.tag}
+              </span>
+            )}
+            <div style={{ fontWeight: 700, color: DARK.text, fontSize: 13, lineHeight: 1.3 }}>{r.label}</div>
+            <div style={{ fontSize: 11, color: DARK.muted }}>{r.iata} · {r.duration}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+              {r.airlines.map((a) => (
+                <span key={a} style={{ fontSize: 10, background: 'rgba(255,255,255,0.08)', color: DARK.muted, borderRadius: 20, padding: '2px 7px' }}>{a}</span>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: DARK.orange, fontWeight: 600 }}>From {r.price}</div>
+            <button
+              type="button"
+              onClick={() => onRouteSearch(r)}
+              disabled={searching}
+              style={{
+                background: searching ? 'rgba(232,118,48,0.4)' : DARK.orange,
+                color: '#fff', borderRadius: 8, padding: '7px 0', fontSize: 12, fontWeight: 600,
+                border: 'none', cursor: searching ? 'not-allowed' : 'pointer', width: '100%', marginTop: 2,
+              }}
+            >
+              {searching ? 'Searching…' : 'Search Flights'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Popular trains section ───────────────────────────────────────────────────
+
+function PopularTrains() {
+  return (
+    <div style={{ marginTop: 24 }}>
+      <SectionHeader
+        title="🚂 Popular Trains to West Bengal"
+        subtitle="Tap to book on Ixigo – authorized IRCTC partner"
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {POPULAR_TRAINS.map((t) => (
+          <div key={t.name} style={{ background: '#fff', borderRadius: 14, padding: 16, border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, color: '#1f2937', fontSize: 15 }}>{t.name}</div>
+                <div style={{ fontSize: 13, color: '#4b5563', marginTop: 3 }}>
+                  {t.route} &nbsp;·&nbsp; {t.dep} → {t.arr} &nbsp;·&nbsp; {t.duration}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8 }}>
+                  {t.classes.map((c) => (
+                    <span key={c.label} style={{ fontSize: 11, background: '#f3f4f6', color: '#374151', borderRadius: 20, padding: '3px 9px' }}>
+                      {c.label}: {c.price}
+                    </span>
+                  ))}
+                  <span style={{ fontSize: 11, background: '#f0fdfa', color: '#0f766e', borderRadius: 20, padding: '3px 9px' }}>
+                    {t.tag}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <button
+                type="button"
+                onClick={() => window.open(t.link, '_blank', 'noopener,noreferrer')}
+                style={{ background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '10px 0', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%' }}
+              >
+                Book on Ixigo
+              </button>
+              <button
+                type="button"
+                onClick={() => window.open('https://www.irctc.co.in', '_blank', 'noopener,noreferrer')}
+                style={{ background: 'none', color: '#0F4C5C', borderRadius: 8, padding: '6px 0', fontSize: 12, fontWeight: 500, border: 'none', cursor: 'pointer', width: '100%', textAlign: 'center' }}
+              >
+                or book on IRCTC →
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Popular buses section ────────────────────────────────────────────────────
+
+function PopularBuses() {
+  return (
+    <div style={{ marginTop: 24 }}>
+      <SectionHeader
+        title="🚌 Popular Bus Routes in West Bengal"
+        subtitle="Tap to see buses on RedBus"
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {POPULAR_BUSES.map((b) => (
+          <div key={b.route} style={{ background: '#fff', borderRadius: 14, padding: 16, border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+            <div style={{ fontWeight: 700, color: '#1f2937', fontSize: 15 }}>{b.route}</div>
+            <div style={{ fontSize: 13, color: '#4b5563', marginTop: 4 }}>
+              {b.duration} &nbsp;·&nbsp; {b.operators}
+            </div>
+            <div style={{ fontSize: 13, color: '#0F4C5C', fontWeight: 600, marginTop: 4 }}>{b.price}</div>
+            <button
+              type="button"
+              onClick={() => window.open(b.link, '_blank', 'noopener,noreferrer')}
+              style={{
+                background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '10px 0', fontSize: 14, fontWeight: 600,
+                border: 'none', cursor: 'pointer', width: '100%', marginTop: 12,
+              }}
+            >
+              View Buses
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Popular hotels section ───────────────────────────────────────────────────
+
+function PopularHotels() {
+  return (
+    <div style={{ marginTop: 24 }}>
+      <SectionHeader
+        title="🏨 Recommended Stays in West Bengal"
+        subtitle=""
+      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {POPULAR_HOTELS.map((h) => (
+          <div key={h.name} style={{ background: '#fff', borderRadius: 14, padding: 16, border: '1px solid #f3f4f6', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, color: '#1f2937', fontSize: 15 }}>{h.name}</div>
+                <div style={{ color: '#f59e0b', fontSize: 13, marginTop: 2 }}>{'★'.repeat(h.stars)}</div>
+                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{h.city} · {h.desc}</div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 17, fontWeight: 700, color: '#0F4C5C' }}>{h.price}</div>
+                <div style={{ fontSize: 11, color: '#6b7280' }}>/night</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => window.open(h.link, '_blank', 'noopener,noreferrer')}
+              style={{ background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '10px 0', fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%', marginTop: 12 }}
+            >
+              View Hotel
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Tab: Flight ──────────────────────────────────────────────────────────────
 
 function FlightTab() {
@@ -350,8 +746,10 @@ function FlightTab() {
     tripType: 'One Way', from: 'CCU', to: 'IXB',
     date: TODAY, returnDate: '', passengers: 1, cabinClass: 'Economy', directOnly: false,
   })
-  const [errors, setErrors]   = useState({})
-  const [loading, setLoading] = useState(false)
+  const [errors, setErrors]     = useState({})
+  const [loading, setLoading]   = useState(false)
+  const [results, setResults]   = useState(null)
+  const [toast, setToast]       = useState(null)
 
   const set = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }))
@@ -360,32 +758,64 @@ function FlightTab() {
 
   const swap = () => setForm((f) => ({ ...f, from: f.to, to: f.from }))
 
-  const validate = () => {
+  const validate = (f = form) => {
     const e = {}
-    if (!form.from) e.from = 'Select departure city'
-    if (!form.to)   e.to   = 'Select destination city'
-    if (!form.date) e.date = 'Select departure date'
-    else if (form.date < TODAY) e.date = 'Date cannot be in the past'
-    if (form.tripType === 'Round Trip') {
-      if (!form.returnDate)                         e.returnDate = 'Select return date'
-      else if (form.returnDate < form.date)         e.returnDate = 'Must be after departure'
+    if (!f.from) e.from = 'Select departure city'
+    if (!f.to)   e.to   = 'Select destination city'
+    if (!f.date) e.date = 'Select departure date'
+    else if (f.date < TODAY) e.date = 'Date cannot be in the past'
+    if (f.tripType === 'Round Trip') {
+      if (!f.returnDate)               e.returnDate = 'Select return date'
+      else if (f.returnDate < f.date)  e.returnDate = 'Must be after departure'
     }
     return e
   }
 
+  const doSearch = useCallback(async (searchForm) => {
+    setLoading(true)
+    setResults(null)
+    try {
+      const flights = await searchFlights({
+        from: searchForm.from,
+        to: searchForm.to,
+        date: searchForm.date,
+        adults: searchForm.passengers ?? 1,
+        cabin: searchForm.cabinClass ?? 'Economy',
+      })
+      if (!flights.length) throw new Error('empty')
+      setResults({ flights, from: searchForm.from, to: searchForm.to, date: searchForm.date })
+    } catch {
+      setToast('Showing curated results — live search unavailable')
+      const link = buildFlightLink({ ...searchForm, passengers: searchForm.passengers ?? 1 })
+      window.open(link, '_blank', 'noopener,noreferrer')
+      setResults(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   const handleSearch = async () => {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); return }
-    setLoading(true)
-    await new Promise((r) => setTimeout(r, 600))
-    setLoading(false)
-    window.open(buildFlightLink(form), '_blank', 'noopener,noreferrer')
+    await doSearch(form)
+  }
+
+  const handleRouteSearch = (route) => {
+    const searchForm = { ...form, from: route.from, to: route.to, date: SEVEN_DAYS }
+    setForm((f) => ({ ...f, from: route.from, to: route.to, date: SEVEN_DAYS }))
+    doSearch(searchForm)
   }
 
   const isRound = form.tripType === 'Round Trip'
 
+  const mmt = results
+    ? buildFlightLink({ ...form, from: results.from, to: results.to, date: results.date })
+    : buildFlightLink(form)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+
       {/* Trip type */}
       <div style={{ display: 'inline-flex', background: 'rgba(255,255,255,0.07)', borderRadius: 10, padding: 3, alignSelf: 'flex-start' }}>
         {['One Way', 'Round Trip'].map((t) => (
@@ -411,7 +841,6 @@ function FlightTab() {
           <FieldErr msg={errors.from} />
         </FieldCard>
 
-        {/* Swap button */}
         <button
           type="button" onClick={swap} aria-label="Swap airports"
           style={{
@@ -504,6 +933,22 @@ function FlightTab() {
       </div>
 
       <SearchBtn loading={loading} label="Search flights" onClick={handleSearch} />
+
+      {/* Results */}
+      {loading && <Skeleton />}
+
+      {!loading && results && results.flights.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+          <div style={{ fontSize: 13, color: DARK.muted, marginBottom: 2 }}>
+            {results.flights.length} flight{results.flights.length > 1 ? 's' : ''} found
+          </div>
+          {results.flights.map((f, i) => (
+            <FlightCard key={i} flight={f} bookLink={mmt} />
+          ))}
+        </div>
+      )}
+
+      <PopularRoutes onRouteSearch={handleRouteSearch} searching={loading} />
     </div>
   )
 }
@@ -579,6 +1024,8 @@ function TrainTab() {
       </div>
       <SearchBtn loading={loading} label="Search trains" onClick={handleSearch} />
       <p style={{ textAlign: 'center', fontSize: 12, color: DARK.muted }}>You'll be redirected to IRCTC to complete your booking.</p>
+
+      <PopularTrains />
     </div>
   )
 }
@@ -632,6 +1079,8 @@ function BusTab() {
         <FieldErr msg={errors.date} />
       </FieldCard>
       <SearchBtn loading={loading} label="Search buses" onClick={handleSearch} />
+
+      <PopularBuses />
     </div>
   )
 }
@@ -642,6 +1091,8 @@ function HotelTab() {
   const [form, setForm] = useState({ city: 'Kolkata', checkIn: TODAY, checkOut: addDay(TODAY), rooms: 1, guests: 2 })
   const [errors, setErrors]   = useState({})
   const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState(null)
+  const [toast, setToast]     = useState(null)
 
   const set = (k, v) => { setForm((f) => ({ ...f, [k]: v })); setErrors((e) => ({ ...e, [k]: null })) }
 
@@ -662,13 +1113,28 @@ function HotelTab() {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); return }
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 600))
-    setLoading(false)
-    window.open(buildHotelLink(form), '_blank', 'noopener,noreferrer')
+    setResults(null)
+    try {
+      const hotels = await searchHotels({
+        city: form.city,
+        checkin: form.checkIn,
+        checkout: form.checkOut,
+        guests: form.guests,
+      })
+      setResults(hotels)
+    } catch {
+      setToast('Showing curated results — live search unavailable')
+      window.open(buildHotelLink(form), '_blank', 'noopener,noreferrer')
+      setResults(null)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
+
       <FieldCard>
         <FieldLabel>City</FieldLabel>
         <DarkSelect value={form.city} onChange={(e) => set('city', e.target.value)}>
@@ -677,7 +1143,6 @@ function HotelTab() {
         <FieldErr msg={errors.city} />
       </FieldCard>
 
-      {/* Check-in / Check-out — stacked vertically so date inputs never overflow on mobile */}
       <FieldCard>
         <FieldLabel>Check-in</FieldLabel>
         <input
@@ -717,6 +1182,21 @@ function HotelTab() {
 
       <SearchBtn loading={loading} label="Search Hotels" onClick={handleSearch} />
       <p style={{ textAlign: 'center', fontSize: 12, color: DARK.muted }}>You'll be redirected to Booking.com to complete your reservation.</p>
+
+      {loading && <Skeleton />}
+
+      {!loading && results && results.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+          <div style={{ fontSize: 13, color: DARK.muted, marginBottom: 2 }}>
+            {results.length} hotel{results.length > 1 ? 's' : ''} found
+          </div>
+          {results.map((h, i) => (
+            <HotelResultCard key={i} hotel={h} />
+          ))}
+        </div>
+      )}
+
+      <PopularHotels />
     </div>
   )
 }
@@ -733,14 +1213,12 @@ export default function Discover() {
 
   return (
     <div style={{ minHeight: '100dvh', paddingBottom: 100, position: 'relative' }}>
-      {/* Background — same pattern as other pages */}
       <div className="pb-bg" aria-hidden="true">
         <img src={bgImage} alt="" />
         <div className="pb-bg-overlay pb-bg-overlay--overcast" />
       </div>
       <div style={{ position: 'relative', zIndex: 1 }}>
 
-        {/* Logo + search bar — same as every other page */}
         <div className="bh-header" style={{ padding: '20px 20px 0' }}>
           <Link to="/" className="bh-brand-block" style={{ textDecoration: 'none' }}>
             <span className="bh-brand">কথাসেতু</span>
@@ -761,7 +1239,6 @@ export default function Discover() {
           </Link>
         </div>
 
-        {/* Section label + title */}
         <div style={{ padding: '22px 20px 0' }}>
           <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', color: DARK.orange, marginBottom: 4 }}>
             Getting here
@@ -774,7 +1251,6 @@ export default function Discover() {
           </h1>
         </div>
 
-        {/* Wavy divider */}
         <div style={{ padding: '14px 0 4px', overflow: 'hidden' }}>
           <svg viewBox="0 0 390 24" fill="none" preserveAspectRatio="xMidYMid meet" style={{ width: '100%', height: 'auto', display: 'block' }}>
             <path d="M0 12 Q50 4 100 12 Q150 20 200 12 Q250 4 300 12 Q350 20 390 12" stroke={DARK.orange} strokeWidth="1" strokeOpacity="0.4" fill="none" />
@@ -784,7 +1260,6 @@ export default function Discover() {
           </svg>
         </div>
 
-        {/* Transport tabs */}
         <div style={{ display: 'flex', gap: 8, padding: '12px 20px', overflowX: 'auto', scrollbarWidth: 'none' }}>
         {TABS.map(({ id, label, icon: Icon }) => {
           const active = activeTab === id
@@ -808,12 +1283,11 @@ export default function Discover() {
         })}
         </div>
 
-        {/* Form card */}
         <div style={{ padding: '4px 16px 0', position: 'relative' }}>
           <TabContent />
         </div>
 
-      </div>{/* end scrollable content */}
+      </div>
     </div>
   )
 }
