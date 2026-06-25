@@ -502,18 +502,27 @@ function FlightCard({ flight, bookLink }) {
     ? <span style={{ fontSize: 11, background: '#fef9c3', color: '#854d0e', borderRadius: 4, padding: '1px 6px', marginLeft: 6 }}>{flight.status}</span>
     : null
   return (
-    <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #f3f4f6', padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 600, color: '#1f2937', fontSize: 15 }}>
+    <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid #f3f4f6', padding: '14px 16px' }}>
+      {/* Top row: airline info + price */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 600, color: '#1f2937', fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {flight.airline}
             {flight.flightNo !== '—' && <span style={{ color: '#6b7280', fontWeight: 400, fontSize: 13 }}> · {flight.flightNo}</span>}
             {statusBadge}
           </div>
-          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>
-            {flight.depTime} → {flight.arrTime} &nbsp;·&nbsp; {flight.duration} &nbsp;·&nbsp; {stopsLabel}
+          {/* Times row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: '#1f2937' }}>{flight.depTime}</span>
+            <span style={{ fontSize: 12, color: '#9ca3af' }}>→</span>
+            <span style={{ fontSize: 18, fontWeight: 700, color: '#1f2937' }}>{flight.arrTime}</span>
+            <span style={{ fontSize: 12, color: '#9ca3af', marginLeft: 4 }}>{flight.duration}</span>
+            <span style={{ fontSize: 11, background: flight.stops === 0 ? '#dcfce7' : '#fef9c3', color: flight.stops === 0 ? '#166534' : '#854d0e', borderRadius: 4, padding: '1px 6px', fontWeight: 600 }}>
+              {stopsLabel}
+            </span>
           </div>
         </div>
+        {/* Price */}
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
           {flight.price != null
             ? <div style={{ fontSize: 20, fontWeight: 700, color: '#0F4C5C' }}>₹{flight.price.toLocaleString('en-IN')}</div>
@@ -521,15 +530,14 @@ function FlightCard({ flight, bookLink }) {
           }
         </div>
       </div>
-      <div style={{ marginTop: 12 }}>
-        <button
-          type="button"
-          onClick={() => window.open(bookLink, '_blank', 'noopener,noreferrer')}
-          style={{ background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '8px 16px', fontSize: 14, border: 'none', cursor: 'pointer', fontWeight: 600 }}
-        >
-          Check Price →
-        </button>
-      </div>
+      {/* Button — full width on mobile */}
+      <button
+        type="button"
+        onClick={() => window.open(bookLink, '_blank', 'noopener,noreferrer')}
+        style={{ marginTop: 12, width: '100%', background: '#0F4C5C', color: '#fff', borderRadius: 8, padding: '10px 16px', fontSize: 14, border: 'none', cursor: 'pointer', fontWeight: 600, letterSpacing: 0.2 }}
+      >
+        Check Price on Ixigo →
+      </button>
     </div>
   )
 }
@@ -919,7 +927,7 @@ function FlightTab() {
       </div>
 
       {/* Travellers + Class */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
         <FieldCard>
           <FieldLabel>Travellers</FieldLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
