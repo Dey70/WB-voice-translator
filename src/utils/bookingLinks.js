@@ -30,8 +30,24 @@ export function buildFlightLink({ from, to, date, returnDate, passengers = 1, ca
   return url
 }
 
-export function buildTrainLink() {
-  return 'https://www.irctc.co.in/nget/train-search'
+const extractStationCode = (station) => {
+  // Parses "New Jalpaiguri (NJP)" → "NJP"
+  const match = station?.match(/\(([^)]+)\)/)
+  return match ? match[1].trim() : station?.trim() || ''
+}
+
+const fmtConfirmTkt = (iso) => {
+  // YYYY-MM-DD → DD-MM-YYYY
+  const [y, m, d] = iso.split('-')
+  return `${d}-${m}-${y}`
+}
+
+export function buildTrainLink({ from, to, date } = {}) {
+  if (!from || !to || !date) return 'https://www.confirmtkt.com'
+  const fromCode = extractStationCode(from)
+  const toCode = extractStationCode(to)
+  const fmtDate = fmtConfirmTkt(date)
+  return `https://www.confirmtkt.com/rbooking/trains/from/${fromCode}/to/${toCode}/${fmtDate}`
 }
 
 export function buildBusLink({ from, to, date }) {

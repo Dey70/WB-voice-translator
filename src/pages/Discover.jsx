@@ -1011,7 +1011,7 @@ function TrainTab() {
     setLoading(true)
     await new Promise((r) => setTimeout(r, 600))
     setLoading(false)
-    window.open(buildTrainLink(), '_blank', 'noopener,noreferrer')
+    window.open(buildTrainLink({ from: form.from, to: form.to, date: form.date }), '_blank', 'noopener,noreferrer')
   }
 
   return (
