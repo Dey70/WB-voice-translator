@@ -957,7 +957,7 @@ function FlightTab() {
             {results.flights.length} flight{results.flights.length > 1 ? 's' : ''} found · Prices on MakeMyTrip
           </div>
           {results.flights.map((f, i) => {
-            const link = buildFlightLink({ from: results.from, to: results.to, date: results.date, passengers: form.passengers ?? 1, cabinClass: form.cabinClass ?? 'Economy' })
+            const link = buildFlightLink({ from: results.from, to: results.to, date: results.date, passengers: form.passengers ?? 1, cabinClass: form.cabinClass ?? 'Economy', tripType: form.tripType })
             return <FlightCard key={i} flight={f} bookLink={link} />
           })}
         </div>

@@ -47,6 +47,7 @@ export async function searchFlights({ from, to, date, adults = 1, cabin = 'Econo
       duration: calcDuration(f.total_duration),
       stops: Math.max(0, legs.length - 1),
       price: f.price ?? null,
+      bookingToken: f.booking_token ?? null,
     }
   })
 }
