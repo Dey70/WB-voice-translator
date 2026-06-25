@@ -10,19 +10,24 @@ const fmtRedBus = (iso) => {
   return `${d}-${m}-${y}`
 }
 
-export function buildFlightLink({ from, to, date, returnDate, passengers = 1, tripType }) {
+const fmtIxigo = (iso) => {
+  // YYYY-MM-DD → DDMMYYYY
+  const [y, m, d] = iso.split('-')
+  return `${d}${m}${y}`
+}
+
+export function buildFlightLink({ from, to, date, returnDate, passengers = 1, cabinClass, tripType }) {
   const depCode = (from || '').trim().toUpperCase()
   const arrCode = (to || '').trim().toUpperCase()
-  // Ixigo uses YYYY-MM-DD format directly
-  const depDate = date || new Date().toISOString().split('T')[0]
-  const retDate = returnDate || ''
+  const depDate = fmtIxigo(date || new Date().toISOString().split('T')[0])
   const pax = Math.max(1, parseInt(passengers) || 1)
-  const isRound = tripType === 'Round Trip' && retDate
+  const cls = cabinClass === 'Business' ? 'b' : 'e'
+  const isRound = tripType === 'Round Trip' && returnDate
 
-  if (isRound) {
-    return `https://www.ixigo.com/search/result/flight/${depCode}/${arrCode}/${depDate}/${retDate}/${pax}/0/0/R/ECONOMY/1`
-  }
-  return `https://www.ixigo.com/search/result/flight/${depCode}/${arrCode}/${depDate}/null/${pax}/0/0/O/ECONOMY/1`
+  let url = `https://www.ixigo.com/search/result/flight?from=${depCode}&to=${arrCode}&date=${depDate}&adults=${pax}&children=0&infants=0&class=${cls}`
+  if (isRound) url += `&tripType=R&returnDate=${fmtIxigo(returnDate)}`
+  url += `&source=Search+Form`
+  return url
 }
 
 export function buildTrainLink() {
