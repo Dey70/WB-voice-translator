@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
-  Plane, Train, Bus, Car,
+  Plane, Train, Bus, BedDouble,
   ArrowUpDown, Search, Loader2,
   AlertCircle, Users, LayoutGrid,
 } from 'lucide-react'
@@ -63,7 +63,7 @@ const TABS = [
   { id: 'flight', label: 'Flights', icon: Plane },
   { id: 'train',  label: 'Trains',  icon: Train },
   { id: 'bus',    label: 'Buses',   icon: Bus },
-  { id: 'cab',    label: 'Cabs',    icon: Car },
+  { id: 'hotel',  label: 'Hotels',  icon: BedDouble },
 ]
 
 // ─── Dark theme primitives ────────────────────────────────────────────────────
@@ -95,6 +95,25 @@ function DarkInput({ value, onChange, placeholder, type = 'text', min, id }) {
   )
 }
 
+function DarkSelect({ value, onChange, children, fontSize = 16 }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <select
+        value={value} onChange={onChange}
+        style={{
+          background: '#0d1228', border: 'none', outline: 'none',
+          color: DARK.text, fontSize, fontWeight: 600,
+          cursor: 'pointer', width: '100%', padding: '2px 22px 2px 0',
+          appearance: 'none', WebkitAppearance: 'none',
+        }}
+      >
+        {children}
+      </select>
+      <span style={{ position: 'absolute', right: 2, top: '50%', transform: 'translateY(-50%)', color: DARK.muted, fontSize: 12, pointerEvents: 'none' }}>▾</span>
+    </div>
+  )
+}
+
 function FieldLabel({ children }) {
   return (
     <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: DARK.label, display: 'block', marginBottom: 4 }}>
@@ -117,12 +136,19 @@ function FieldErr({ msg }) {
 function AirportCombobox({ value, onChange, placeholder, hasError }) {
   const [query, setQuery] = useState('')
   const [open, setOpen]   = useState(false)
-  const ref               = useRef(null)
+  const wrapRef  = useRef(null)
+  const inputRef = useRef(null)
 
-  const selected = WB_AIRPORTS.find((a) => a.city === value)
+  // value is an IATA code (e.g. 'CCU')
+  const selected = WB_AIRPORTS.find((a) => a.code === value)
+
+  // Reliable focus on mobile — autoFocus alone doesn't work after conditional render
+  useEffect(() => {
+    if (open) inputRef.current?.focus()
+  }, [open])
 
   useEffect(() => {
-    const close = (e) => { if (!ref.current?.contains(e.target)) setOpen(false) }
+    const close = (e) => { if (!wrapRef.current?.contains(e.target)) setOpen(false) }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [])
@@ -131,12 +157,12 @@ function AirportCombobox({ value, onChange, placeholder, hasError }) {
     `${a.city} ${a.code} ${a.name}`.toLowerCase().includes(query.toLowerCase())
   ).slice(0, 8)
 
-  const pick = (a) => { onChange(a.city); setQuery(''); setOpen(false) }
+  const pick = (a) => { onChange(a.code); setQuery(''); setOpen(false) }
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={wrapRef} style={{ position: 'relative' }}>
       {selected && !open ? (
-        <div onClick={() => { setOpen(true); setQuery('') }} style={{ cursor: 'text' }}>
+        <div onClick={() => { setQuery(''); setOpen(true) }} style={{ cursor: 'text' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontSize: 22, fontWeight: 800, color: DARK.text }}>{selected.city}</span>
             <span style={{ fontSize: 13, color: DARK.muted, fontWeight: 500 }}>({selected.code})</span>
@@ -145,7 +171,7 @@ function AirportCombobox({ value, onChange, placeholder, hasError }) {
         </div>
       ) : (
         <input
-          autoFocus={open}
+          ref={inputRef}
           type="text" value={query} placeholder={placeholder}
           onChange={(e) => { setQuery(e.target.value); setOpen(true) }}
           onFocus={() => setOpen(true)}
@@ -157,16 +183,18 @@ function AirportCombobox({ value, onChange, placeholder, hasError }) {
       )}
       {open && visible.length > 0 && (
         <ul style={{
-          position: 'absolute', zIndex: 200, top: 'calc(100% + 8px)', left: -16, right: -16,
-          background: '#1C2340', borderRadius: 14, boxShadow: '0 16px 48px rgba(0,0,0,.5)',
+          position: 'absolute', zIndex: 100,
+          top: 'calc(100% + 8px)', left: -16, right: -16,
+          background: '#1C2340', borderRadius: 14, boxShadow: '0 16px 48px rgba(0,0,0,.7)',
           border: `1px solid ${DARK.border}`, padding: '6px 0', listStyle: 'none', margin: 0,
-          maxHeight: 280, overflowY: 'auto',
+          maxHeight: 260, overflowY: 'auto',
         }}>
           {visible.map((a) => (
             <li key={a.code}>
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); pick(a) }}
+                onTouchEnd={(e) => { e.preventDefault(); pick(a) }}
                 style={{
                   width: '100%', textAlign: 'left', background: 'none', border: 'none',
                   padding: '10px 16px', cursor: 'pointer', display: 'flex', gap: 12, alignItems: 'center',
@@ -210,7 +238,6 @@ function GenericCombobox({ value, onChange, options, placeholder, hasError }) {
   }, [])
 
   const visible = options.filter((o) => o.toLowerCase().includes(query.toLowerCase())).slice(0, 8)
-
   const pick = (o) => { onChange(o); setQuery(o); setOpen(false) }
 
   return (
@@ -226,8 +253,9 @@ function GenericCombobox({ value, onChange, options, placeholder, hasError }) {
       />
       {open && visible.length > 0 && (
         <ul style={{
-          position: 'absolute', zIndex: 200, top: 'calc(100% + 8px)', left: -16, right: -16,
-          background: '#1C2340', borderRadius: 14, boxShadow: '0 16px 48px rgba(0,0,0,.5)',
+          position: 'absolute', zIndex: 100,
+          top: 'calc(100% + 8px)', left: -16, right: -16,
+          background: '#1C2340', borderRadius: 14, boxShadow: '0 16px 48px rgba(0,0,0,.7)',
           border: `1px solid ${DARK.border}`, padding: '6px 0', listStyle: 'none', margin: 0,
           maxHeight: 240, overflowY: 'auto',
         }}>
@@ -236,6 +264,7 @@ function GenericCombobox({ value, onChange, options, placeholder, hasError }) {
               <button
                 type="button"
                 onMouseDown={(e) => { e.preventDefault(); pick(o) }}
+                onTouchEnd={(e) => { e.preventDefault(); pick(o) }}
                 style={{
                   width: '100%', textAlign: 'left', background: 'none', border: 'none',
                   padding: '10px 16px', cursor: 'pointer', fontSize: 14, color: DARK.text,
@@ -261,7 +290,7 @@ function FieldCard({ children, style = {} }) {
     <div style={{
       background: DARK.card, borderRadius: 16, padding: '14px 16px',
       border: `1px solid ${DARK.border}`,
-      backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+      position: 'relative',
       ...style,
     }}>
       {children}
@@ -318,7 +347,7 @@ function SearchBtn({ loading, label, onClick }) {
 
 function FlightTab() {
   const [form, setForm] = useState({
-    tripType: 'One Way', from: 'Kolkata', to: 'Bagdogra',
+    tripType: 'One Way', from: 'CCU', to: 'IXB',
     date: TODAY, returnDate: '', passengers: 1, cabinClass: 'Economy', directOnly: false,
   })
   const [errors, setErrors]   = useState({})
@@ -452,24 +481,18 @@ function FlightTab() {
           <FieldLabel>Travellers</FieldLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Users size={16} color={DARK.muted} />
-            <select
-              value={form.passengers} onChange={(e) => set('passengers', +e.target.value)}
-              style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark' }}
-            >
-              {[1,2,3,4,5,6,7,8,9].map((n) => <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>)}
-            </select>
+            <DarkSelect value={form.passengers} onChange={(e) => set('passengers', +e.target.value)}>
+              {[1,2,3,4,5,6,7,8,9].map((n) => <option key={n} value={n} style={{ background: '#0d1228', color: '#fff' }}>{n} Adult{n > 1 ? 's' : ''}</option>)}
+            </DarkSelect>
           </div>
         </FieldCard>
         <FieldCard>
           <FieldLabel>Class</FieldLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <LayoutGrid size={16} color={DARK.muted} />
-            <select
-              value={form.cabinClass} onChange={(e) => set('cabinClass', e.target.value)}
-              style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark' }}
-            >
-              {['Economy', 'Premium Economy', 'Business'].map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
+            <DarkSelect value={form.cabinClass} onChange={(e) => set('cabinClass', e.target.value)}>
+              {['Economy', 'Premium Economy', 'Business'].map((c) => <option key={c} value={c} style={{ background: '#0d1228', color: '#fff' }}>{c}</option>)}
+            </DarkSelect>
           </div>
         </FieldCard>
       </div>
@@ -488,7 +511,14 @@ function FlightTab() {
 // ─── Tab: Train ───────────────────────────────────────────────────────────────
 
 function TrainTab() {
-  const [form, setForm] = useState({ from: '', to: '', date: '', travelClass: 'SL', quota: 'General' })
+  const [searchParams] = useSearchParams()
+  const [form, setForm] = useState({
+    from:        searchParams.get('from')  || '',
+    to:          searchParams.get('to')    || '',
+    date:        searchParams.get('date')  || '',
+    travelClass: searchParams.get('class') || 'SL',
+    quota:       searchParams.get('quota') || 'General',
+  })
   const [errors, setErrors]   = useState({})
   const [loading, setLoading] = useState(false)
 
@@ -524,32 +554,27 @@ function TrainTab() {
         <GenericCombobox value={form.to} onChange={(v) => set('to', v)} options={WB_STATIONS} placeholder="Search station…" hasError={!!errors.to} />
         <FieldErr msg={errors.to} />
       </FieldCard>
-      <FieldCard style={{ position: 'relative' }}>
+      <FieldCard>
         <FieldLabel>Date of journey</FieldLabel>
-        {form.date
-          ? <span style={{ fontSize: 16, fontWeight: 700, color: DARK.text }}>{formatDate(form.date)}</span>
-          : <span style={{ fontSize: 15, color: DARK.muted }}>Select date</span>}
         <input
           type="date" value={form.date} min={TODAY}
           onChange={(e) => set('date', e.target.value)}
-          style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: form.date ? DARK.text : DARK.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
         />
         <FieldErr msg={errors.date} />
       </FieldCard>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <FieldCard>
           <FieldLabel>Class</FieldLabel>
-          <select value={form.travelClass} onChange={(e) => set('travelClass', e.target.value)}
-            style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 15, fontWeight: 600, cursor: 'pointer', colorScheme: 'dark', width: '100%' }}>
-            {['SL', '3A', '2A', '1A', 'CC'].map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <DarkSelect value={form.travelClass} onChange={(e) => set('travelClass', e.target.value)} fontSize={15}>
+            {['SL', '3A', '2A', '1A', 'CC'].map((c) => <option key={c} value={c} style={{ background: '#0d1228', color: '#fff' }}>{c}</option>)}
+          </DarkSelect>
         </FieldCard>
         <FieldCard>
           <FieldLabel>Quota</FieldLabel>
-          <select value={form.quota} onChange={(e) => set('quota', e.target.value)}
-            style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 15, fontWeight: 600, cursor: 'pointer', colorScheme: 'dark', width: '100%' }}>
-            {['General', 'Ladies', 'Senior Citizen'].map((q) => <option key={q} value={q}>{q}</option>)}
-          </select>
+          <DarkSelect value={form.quota} onChange={(e) => set('quota', e.target.value)} fontSize={15}>
+            {['General', 'Ladies', 'Senior Citizen'].map((q) => <option key={q} value={q} style={{ background: '#0d1228', color: '#fff' }}>{q}</option>)}
+          </DarkSelect>
         </FieldCard>
       </div>
       <SearchBtn loading={loading} label="Search trains" onClick={handleSearch} />
@@ -597,15 +622,12 @@ function BusTab() {
         <GenericCombobox value={form.to} onChange={(v) => set('to', v)} options={WB_CITIES} placeholder="Search city…" hasError={!!errors.to} />
         <FieldErr msg={errors.to} />
       </FieldCard>
-      <FieldCard style={{ position: 'relative' }}>
+      <FieldCard>
         <FieldLabel>Date of journey</FieldLabel>
-        {form.date
-          ? <span style={{ fontSize: 16, fontWeight: 700, color: DARK.text }}>{formatDate(form.date)}</span>
-          : <span style={{ fontSize: 15, color: DARK.muted }}>Select date</span>}
         <input
           type="date" value={form.date} min={TODAY}
           onChange={(e) => set('date', e.target.value)}
-          style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: form.date ? DARK.text : DARK.muted, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
         />
         <FieldErr msg={errors.date} />
       </FieldCard>
@@ -614,20 +636,25 @@ function BusTab() {
   )
 }
 
-// ─── Tab: Cab ─────────────────────────────────────────────────────────────────
+// ─── Tab: Hotel ───────────────────────────────────────────────────────────────
 
-function CabTab() {
-  const [form, setForm] = useState({ pickup: '', drop: '', date: '', time: '' })
+function HotelTab() {
+  const [form, setForm] = useState({ city: 'Kolkata', checkIn: TODAY, checkOut: addDay(TODAY), rooms: 1, guests: 2 })
   const [errors, setErrors]   = useState({})
   const [loading, setLoading] = useState(false)
 
   const set = (k, v) => { setForm((f) => ({ ...f, [k]: v })); setErrors((e) => ({ ...e, [k]: null })) }
 
+  const handleCheckIn = (v) => {
+    set('checkIn', v)
+    if (form.checkOut && form.checkOut <= v) set('checkOut', addDay(v))
+  }
+
   const validate = () => {
     const e = {}
-    if (!form.pickup.trim()) e.pickup = 'Enter pickup location'
-    if (!form.drop.trim())   e.drop   = 'Enter drop location'
-    if (!form.date)          e.date   = 'Select date'
+    if (!form.city)    e.city    = 'Select a city'
+    if (!form.checkIn) e.checkIn = 'Select check-in date'
+    if (!form.checkOut || form.checkOut <= form.checkIn) e.checkOut = 'Must be after check-in'
     return e
   }
 
@@ -637,63 +664,71 @@ function CabTab() {
     setLoading(true)
     await new Promise((r) => setTimeout(r, 600))
     setLoading(false)
-    const q = encodeURIComponent(`cab from ${form.pickup} to ${form.drop} West Bengal`)
-    window.open(`https://www.olacabs.com/`, '_blank', 'noopener,noreferrer')
+    window.open(buildHotelLink(form), '_blank', 'noopener,noreferrer')
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <FieldCard>
-        <FieldLabel>Pickup location</FieldLabel>
+        <FieldLabel>City</FieldLabel>
+        <DarkSelect value={form.city} onChange={(e) => set('city', e.target.value)}>
+          {WB_CITIES.map((c) => <option key={c} value={c} style={{ background: '#0d1228', color: '#fff' }}>{c}</option>)}
+        </DarkSelect>
+        <FieldErr msg={errors.city} />
+      </FieldCard>
+
+      {/* Check-in / Check-out — stacked vertically so date inputs never overflow on mobile */}
+      <FieldCard>
+        <FieldLabel>Check-in</FieldLabel>
         <input
-          type="text" value={form.pickup} placeholder="Enter pickup point…"
-          onChange={(e) => set('pickup', e.target.value)}
-          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 600, padding: 0, width: '100%' }}
+          type="date" value={form.checkIn} min={TODAY}
+          onChange={(e) => handleCheckIn(e.target.value)}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
         />
-        <FieldErr msg={errors.pickup} />
+        <FieldErr msg={errors.checkIn} />
       </FieldCard>
       <FieldCard>
-        <FieldLabel>Drop location</FieldLabel>
+        <FieldLabel>Check-out</FieldLabel>
         <input
-          type="text" value={form.drop} placeholder="Enter drop point…"
-          onChange={(e) => set('drop', e.target.value)}
-          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 600, padding: 0, width: '100%' }}
+          type="date" value={form.checkOut} min={addDay(form.checkIn)}
+          onChange={(e) => set('checkOut', e.target.value)}
+          style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 16, fontWeight: 700, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
         />
-        <FieldErr msg={errors.drop} />
+        <FieldErr msg={errors.checkOut} />
       </FieldCard>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        <FieldCard style={{ position: 'relative' }}>
-          <FieldLabel>Date</FieldLabel>
-          {form.date
-            ? <span style={{ fontSize: 16, fontWeight: 700, color: DARK.text }}>{formatDate(form.date)}</span>
-            : <span style={{ fontSize: 15, color: DARK.muted }}>Select date</span>}
-          <input
-            type="date" value={form.date} min={TODAY}
-            onChange={(e) => set('date', e.target.value)}
-            style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }}
-          />
-          <FieldErr msg={errors.date} />
+        <FieldCard>
+          <FieldLabel>Rooms</FieldLabel>
+          <DarkSelect value={form.rooms} onChange={(e) => set('rooms', +e.target.value)}>
+            {[1,2,3,4,5].map((n) => <option key={n} value={n} style={{ background: '#0d1228', color: '#fff' }}>{n} Room{n > 1 ? 's' : ''}</option>)}
+          </DarkSelect>
         </FieldCard>
         <FieldCard>
-          <FieldLabel>Time (optional)</FieldLabel>
-          <input
-            type="time" value={form.time} onChange={(e) => set('time', e.target.value)}
-            style={{ background: 'transparent', border: 'none', outline: 'none', color: DARK.text, fontSize: 15, fontWeight: 600, cursor: 'pointer', colorScheme: 'dark', width: '100%', padding: 0 }}
-          />
+          <FieldLabel>Guests</FieldLabel>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Users size={16} color={DARK.muted} />
+            <DarkSelect value={form.guests} onChange={(e) => set('guests', +e.target.value)}>
+              {[1,2,3,4,5,6,7,8,9].map((n) => <option key={n} value={n} style={{ background: '#0d1228', color: '#fff' }}>{n} Guest{n > 1 ? 's' : ''}</option>)}
+            </DarkSelect>
+          </div>
         </FieldCard>
       </div>
-      <SearchBtn loading={loading} label="Find cabs" onClick={handleSearch} />
-      <p style={{ textAlign: 'center', fontSize: 12, color: DARK.muted }}>You'll be redirected to Ola to complete your booking.</p>
+
+      <SearchBtn loading={loading} label="Search Hotels" onClick={handleSearch} />
+      <p style={{ textAlign: 'center', fontSize: 12, color: DARK.muted }}>You'll be redirected to Booking.com to complete your reservation.</p>
     </div>
   )
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-const TAB_CONTENT = { flight: FlightTab, train: TrainTab, bus: BusTab, cab: CabTab }
+const TAB_CONTENT = { flight: FlightTab, train: TrainTab, bus: BusTab, hotel: HotelTab }
 
 export default function Discover() {
-  const [activeTab, setActiveTab] = useState('flight')
+  const [searchParams] = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(TAB_CONTENT[tabParam] ? tabParam : 'flight')
   const TabContent = TAB_CONTENT[activeTab]
 
   return (
