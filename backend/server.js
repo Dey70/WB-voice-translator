@@ -100,38 +100,53 @@ function mockFlightResults(origin, destination, date) {
   ]
 }
 
-function mockHotelResults(destination, date) {
-  return [
-    {
-      hotelName: 'The Oberoi Grand',
-      rating: 5,
-      location: `${destination} City Centre`,
-      checkIn: date, checkOut: date,
-      pricePerNight: 12500, currency: 'INR',
-      amenities: ['WiFi', 'Pool', 'Spa', 'Restaurant', 'Airport Transfer'],
-    },
-    {
-      hotelName: 'Taj Bengal',
-      rating: 5,
-      location: `${destination} Alipore`,
-      checkIn: date, checkOut: date,
-      pricePerNight: 10800, currency: 'INR',
-      amenities: ['WiFi', 'Pool', 'Multiple Restaurants', 'Concierge'],
-    },
-    {
-      hotelName: 'Ibis Styles',
-      rating: 3,
-      location: `${destination} Airport Area`,
-      checkIn: date, checkOut: date,
-      pricePerNight: 3200, currency: 'INR',
-      amenities: ['WiFi', 'Restaurant', 'Gym'],
-    },
-  ]
+/**
+ * Builds a Booking.com public search deeplink.
+ * Used as the primary hotel result while no live hotel API is available.
+ *
+ * @param {string} destination  - City or property name to search
+ * @param {string} checkin      - Check-in date in YYYY-MM-DD format
+ * @param {object} opts
+ * @param {number} [opts.adults=1]
+ * @param {number} [opts.children=0]
+ * @param {number} [opts.rooms=1]
+ * @param {string} [opts.checkoutDate] - Explicit checkout date; defaults to checkin + 1 day
+ */
+function buildBookingComDeeplink(destination, checkin, {
+  adults = 1,
+  children = 0,
+  rooms = 1,
+  checkoutDate,
+} = {}) {
+  const checkout = checkoutDate ?? (() => {
+    const d = new Date(checkin)
+    d.setUTCDate(d.getUTCDate() + 1)
+    return d.toISOString().split('T')[0]
+  })()
+
+  const params = new URLSearchParams({
+    ss:             destination,
+    checkin,
+    checkout,
+    group_adults:   String(adults),
+    group_children: String(children),
+    no_rooms:       String(rooms),
+  })
+
+  return {
+    type:        'deeplink',
+    source:      'booking.com',
+    destination,
+    checkin,
+    checkout,
+    url:         `https://www.booking.com/searchresults.html?${params.toString()}`,
+    message:     'Continue your hotel search on Booking.com',
+  }
 }
 
 // ── Fallback chain ─────────────────────────────────────────────────────────────
 
-async function primarySearch({ origin, destination, mode, date, simulateFailure }) {
+async function primarySearch({ origin, destination, mode, date, simulateFailure, adults, children, rooms, checkoutDate }) {
   if (simulateFailure) {
     throw new Error('primarySearch: simulated failure via ?simulateFailure=true')
   }
@@ -139,7 +154,7 @@ async function primarySearch({ origin, destination, mode, date, simulateFailure 
     case 'train':  return mockTrainResults(origin, destination, date)
     case 'bus':    return mockBusResults(origin, destination, date)
     case 'flight': return mockFlightResults(origin, destination, date)
-    case 'hotel':  return mockHotelResults(destination, date)
+    case 'hotel':  return [buildBookingComDeeplink(destination, date, { adults, children, rooms, checkoutDate })]
   }
 }
 
@@ -168,7 +183,7 @@ async function deeplinkFallback({ origin, destination, mode, date }) {
 
 // ── POST /api/search ───────────────────────────────────────────────────────────
 app.post('/api/search', async (req, res) => {
-  const { origin, destination, mode, date } = req.body
+  const { origin, destination, mode, date, adults, children, rooms, checkoutDate } = req.body
   const simulateFailure = req.query.simulateFailure === 'true'
 
   // Validate required fields
@@ -192,6 +207,11 @@ app.post('/api/search', async (req, res) => {
     mode,
     date: date || new Date().toISOString().split('T')[0],
     simulateFailure,
+    // Hotel-specific guest options (all optional)
+    adults:       adults       != null ? Number(adults)   : undefined,
+    children:     children     != null ? Number(children) : undefined,
+    rooms:        rooms        != null ? Number(rooms)    : undefined,
+    checkoutDate: checkoutDate ?? undefined,
   }
 
   // Primary

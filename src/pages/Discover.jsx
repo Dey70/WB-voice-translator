@@ -975,7 +975,6 @@ function FlightTab() {
         <FlightFallbackCard from={results.from} to={results.to} date={results.date} searchForm={results.form} />
       )}
 
-      <PopularRoutes onRouteSearch={handleRouteSearch} searching={loading} />
     </div>
   )
 }
@@ -1052,7 +1051,6 @@ function TrainTab() {
       <SearchBtn loading={loading} label="Search trains" onClick={handleSearch} />
       <p style={{ textAlign: 'center', fontSize: 12, color: DARK.muted }}>You'll be redirected to IRCTC to complete your booking.</p>
 
-      <PopularTrains />
     </div>
   )
 }
@@ -1107,7 +1105,6 @@ function BusTab() {
       </FieldCard>
       <SearchBtn loading={loading} label="Search buses" onClick={handleSearch} />
 
-      <PopularBuses />
     </div>
   )
 }
@@ -1116,10 +1113,7 @@ function BusTab() {
 
 function HotelTab() {
   const [form, setForm] = useState({ city: 'Kolkata', checkIn: TODAY, checkOut: addDay(TODAY), rooms: 1, guests: 2 })
-  const [errors, setErrors]   = useState({})
-  const [loading, setLoading] = useState(false)
-  const [results, setResults] = useState(null)
-  const [toast, setToast]     = useState(null)
+  const [errors, setErrors] = useState({})
 
   const set = (k, v) => { setForm((f) => ({ ...f, [k]: v })); setErrors((e) => ({ ...e, [k]: null })) }
 
@@ -1136,31 +1130,22 @@ function HotelTab() {
     return e
   }
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     const e = validate()
     if (Object.keys(e).length) { setErrors(e); return }
-    setLoading(true)
-    setResults(null)
-    try {
-      const hotels = await searchHotels({
-        city: form.city,
-        checkin: form.checkIn,
-        checkout: form.checkOut,
-        guests: form.guests,
-      })
-      setResults(hotels)
-    } catch {
-      setToast('Live prices unavailable — browse recommended stays below')
-      setResults(null)
-    } finally {
-      setLoading(false)
-    }
+    const params = new URLSearchParams({
+      ss:             form.city,
+      checkin:        form.checkIn,
+      checkout:       form.checkOut,
+      group_adults:   String(form.guests),
+      group_children: '0',
+      no_rooms:       String(form.rooms),
+    })
+    window.open(`https://www.booking.com/searchresults.html?${params.toString()}`, '_blank', 'noopener,noreferrer')
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {toast && <Toast message={toast} onDone={() => setToast(null)} />}
-
       <FieldCard>
         <FieldLabel>City</FieldLabel>
         <DarkSelect value={form.city} onChange={(e) => set('city', e.target.value)}>
@@ -1178,6 +1163,7 @@ function HotelTab() {
         />
         <FieldErr msg={errors.checkIn} />
       </FieldCard>
+
       <FieldCard>
         <FieldLabel>Check-out</FieldLabel>
         <input
@@ -1206,23 +1192,8 @@ function HotelTab() {
         </FieldCard>
       </div>
 
-      <SearchBtn loading={loading} label="Search Hotels" onClick={handleSearch} />
+      <SearchBtn loading={false} label="Search on Booking.com" onClick={handleSearch} />
       <p style={{ textAlign: 'center', fontSize: 12, color: DARK.muted }}>You'll be redirected to Booking.com to complete your reservation.</p>
-
-      {loading && <Skeleton />}
-
-      {!loading && results && results.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
-          <div style={{ fontSize: 13, color: DARK.muted, marginBottom: 2 }}>
-            {results.length} hotel{results.length > 1 ? 's' : ''} found
-          </div>
-          {results.map((h, i) => (
-            <HotelResultCard key={i} hotel={h} />
-          ))}
-        </div>
-      )}
-
-      <PopularHotels />
     </div>
   )
 }
