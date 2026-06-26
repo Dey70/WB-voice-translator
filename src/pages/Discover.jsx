@@ -872,7 +872,7 @@ function FlightTab() {
 
       {/* FROM / TO */}
       <div style={{ position: 'relative' }}>
-        <FieldCard style={{ borderRadius: '16px 16px 0 0', borderBottom: `1px solid ${DARK.border}`, paddingBottom: 18 }}>
+        <FieldCard style={{ borderRadius: '16px 16px 0 0', paddingBottom: 18 }}>
           <FieldLabel>From</FieldLabel>
           <AirportCombobox value={form.from} onChange={(v) => set('from', v)} placeholder="Departure city…" hasError={!!errors.from} />
           <FieldErr msg={errors.from} />
