@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPinned, HeartHandshake, Lightbulb } from 'lucide-react'
+import { MapPinned, HeartHandshake, Lightbulb, Train } from 'lucide-react'
 import bolpurBg from '../assets/Bolpur.jpg'
 import PageHeader from '../components/layout/PageHeader'
 
@@ -57,7 +57,42 @@ function CultureIllustration() {
   )
 }
 
+function TravelIllustration() {
+  return (
+    <svg viewBox="0 0 260 110" aria-hidden="true" style={{ width: '100%', height: 110 }}>
+      <rect width="260" height="110" fill="rgba(31,37,71,0.5)" />
+      {/* Train */}
+      <rect x="30" y="55" width="80" height="28" rx="3" fill="rgba(224,101,46,0.35)" />
+      <rect x="32" y="46" width="30" height="14" rx="2" fill="rgba(224,101,46,0.4)" />
+      <rect x="36" y="49" width="8" height="7" rx="1" fill="rgba(217,164,65,0.6)" />
+      <circle cx="48" cy="85" r="6" fill="rgba(224,101,46,0.5)" /><circle cx="48" cy="85" r="2.5" fill="rgba(22,27,48,0.8)" />
+      <circle cx="94" cy="85" r="6" fill="rgba(224,101,46,0.5)" /><circle cx="94" cy="85" r="2.5" fill="rgba(22,27,48,0.8)" />
+      <line x1="0" y1="91" x2="260" y2="91" stroke="rgba(53,60,102,0.8)" strokeWidth="2" />
+      {/* Plane */}
+      <path d="M150 32 L200 18 L208 24 L178 32 L208 40 L200 46 Z" fill="rgba(79,168,160,0.35)" />
+      <line x1="150" y1="32" x2="210" y2="20" stroke="rgba(79,168,160,0.5)" strokeWidth="1.5" strokeLinecap="round" />
+      {/* Stars */}
+      <circle cx="20" cy="16" r="1" fill="rgba(255,255,255,0.4)" />
+      <circle cx="230" cy="10" r="0.9" fill="rgba(217,164,65,0.5)" />
+      <circle cx="245" cy="30" r="0.8" fill="rgba(255,255,255,0.35)" />
+    </svg>
+  )
+}
+
 const guideItems = [
+  {
+    to: '/travel-info',
+    label: 'TRAVEL INFORMATION',
+    labelFull: 'Travel Information',
+    nativeLabel: 'ভ্রমণ তথ্য',
+    description: 'Search trains, buses, flights and hotels in one place — schedule reference and curated estimates, no booking required.',
+    tags: ['Trains', 'Buses', 'Flights', 'Hotels'],
+    accentColor: '#E0652E',
+    badgeBg: 'rgba(224,101,46,0.18)',
+    badgeBorder: 'rgba(224,101,46,0.35)',
+    tagBorder: 'rgba(224,101,46,0.35)',
+    Illustration: TravelIllustration,
+  },
   {
     to: '/places',
     label: 'PLACES & SEASONS',

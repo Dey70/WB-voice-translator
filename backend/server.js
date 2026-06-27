@@ -25,25 +25,64 @@ function logRequest(req, stage, extra = {}) {
 function mockTrainResults(origin, destination, date) {
   return [
     {
-      trainName: 'Howrah Rajdhani Express',
-      trainNumber: '12301',
+      trainName: 'Vande Bharat Express',
+      trainNameNative: 'বন্দে ভারত এক্সপ্রেস',
+      trainNumber: '22301 / 22302',
+      category: 'fastest',
+      isFastest: true,
+      originCode: 'NJP', destinationCode: 'HWH',
+      originFull: 'New Jalpaiguri', destinationFull: 'Howrah Junction',
       origin, destination, date,
-      departure: '16:55', arrival: '10:00+1', duration: '17h 05m',
-      class: '3A', price: 1455, currency: 'INR', availability: 'AVAILABLE',
+      departure: '05:45', arrival: '13:20', duration: '7h 35m',
+      frequency: 'Daily', tripType: 'Direct',
+      classes: ['AC Chair Car', 'Executive Class'],
+      tags: ['Daily'],
+      accentColor: '#E0652E',
     },
     {
-      trainName: 'Duronto Express',
-      trainNumber: '12213',
+      trainName: 'Padatik Express',
+      trainNameNative: 'পাদাতিক এক্সপ্রেস',
+      trainNumber: '12377',
+      category: 'overnight',
+      isFastest: false,
+      originCode: 'NJP', destinationCode: 'KOAA',
+      originFull: 'New Jalpaiguri', destinationFull: 'Kolkata',
       origin, destination, date,
-      departure: '22:05', arrival: '14:20+1', duration: '16h 15m',
-      class: '2A', price: 2185, currency: 'INR', availability: 'WL/4',
+      departure: '23:00', arrival: '09:05+1', duration: '~10h',
+      frequency: 'Daily', tripType: 'Direct',
+      classes: ['Sleeper', '3AC', '2AC'],
+      tags: ['Popular daily', 'Overnight'],
+      accentColor: '#D9A441',
     },
     {
-      trainName: 'Shatabdi Express',
-      trainNumber: '12019',
+      trainName: 'Uttar Banga Express',
+      trainNameNative: 'উত্তর বঙ্গ এক্সপ্রেস',
+      trainNumber: '13147',
+      category: 'weekly',
+      isFastest: false,
+      originCode: 'NJP', destinationCode: 'HWH',
+      originFull: 'New Jalpaiguri', destinationFull: 'Howrah Junction',
       origin, destination, date,
-      departure: '06:00', arrival: '13:30', duration: '7h 30m',
-      class: 'CC', price: 895, currency: 'INR', availability: 'AVAILABLE',
+      departure: '12:15', arrival: '22:50', duration: '~10h 35m',
+      frequency: 'Weekly', tripType: 'HWH',
+      classes: ['Sleeper'],
+      tags: ['Weekly'],
+      accentColor: '#6C7BC4',
+    },
+    {
+      trainName: 'Kanchanjunga Express',
+      trainNameNative: 'কাঞ্চনজঙ্ঘা এক্সপ্রেস',
+      trainNumber: '13173 / 13175',
+      category: 'overnight',
+      isFastest: false,
+      originCode: 'NJP', destinationCode: 'SDAH',
+      originFull: 'New Jalpaiguri', destinationFull: 'Sealdah',
+      origin, destination, date,
+      departure: '06:00', arrival: '17:15', duration: '~11h',
+      frequency: 'Daily', tripType: 'SDAH',
+      classes: ['Sleeper'],
+      tags: ['Sealdah terminus'],
+      accentColor: '#4FA8A0',
     },
   ]
 }
@@ -51,25 +90,60 @@ function mockTrainResults(origin, destination, date) {
 function mockBusResults(origin, destination, date) {
   return [
     {
-      busOperator: 'Greenline Travels',
+      busOperator: 'Shyamoli Paribahan',
+      busOperatorNative: 'শ্যামলী পরিবহন',
       busType: 'Volvo AC Sleeper',
+      category: 'ac-sleeper',
       origin, destination, date,
-      departure: '21:00', arrival: '06:30+1', duration: '9h 30m',
-      price: 850, currency: 'INR', seatsAvailable: 12,
+      boardingPoint: 'Hill Cart Rd',
+      droppingPoint: 'Esplanade',
+      departure: '20:00', arrival: '08:40+1', duration: '~12h 40m',
+      fareRange: { low: 1300, high: 6050 }, currency: 'INR',
+      amenities: ['Pushback seats', 'Charging port'],
+      tripType: 'Overnight',
+      accentColor: '#D9A441',
     },
     {
-      busOperator: 'SBSTC',
-      busType: 'Non-AC Seater',
+      busOperator: 'Greenline',
+      busOperatorNative: 'গ্রীনলাইন',
+      busType: 'Volvo AC Sleeper',
+      category: 'ac-sleeper',
       origin, destination, date,
-      departure: '06:00', arrival: '14:45', duration: '8h 45m',
-      price: 280, currency: 'INR', seatsAvailable: 34,
+      boardingPoint: 'Hill Cart Rd',
+      droppingPoint: 'Esplanade',
+      departure: '21:00', arrival: '08:30+1', duration: '~11h 30m',
+      fareRange: { low: 850, high: 2185 }, currency: 'INR',
+      amenities: ['Semi-sleeper', 'Fastest'],
+      tripType: 'Overnight',
+      accentColor: '#4FA8A0',
+    },
+    {
+      busOperator: 'NBSTC',
+      busOperatorNative: 'উত্তরবঙ্গ রাজ্য পরিবহন',
+      busType: 'Non-AC Seater',
+      category: 'non-ac',
+      origin, destination, date,
+      boardingPoint: 'Siliguri Junction',
+      droppingPoint: 'Esplanade',
+      departure: '06:00', arrival: '19:00', duration: '~13h',
+      fareRange: { low: 454, high: 900 }, currency: 'INR',
+      amenities: ['Most affordable'],
+      tripType: 'Multiple stops',
+      accentColor: '#6C7BC4',
     },
     {
       busOperator: 'NueGo',
+      busOperatorNative: 'NueGo',
       busType: 'Electric AC Seater',
+      category: 'budget',
       origin, destination, date,
-      departure: '08:30', arrival: '17:00', duration: '8h 30m',
-      price: 620, currency: 'INR', seatsAvailable: 6,
+      boardingPoint: 'Hill Cart Rd',
+      droppingPoint: 'Kolkata depot',
+      departure: '08:30', arrival: '17:00', duration: '~8h 30m',
+      fareRange: { low: 620, high: 1200 }, currency: 'INR',
+      amenities: ['Electric', 'Wi-Fi'],
+      tripType: 'Day journey',
+      accentColor: '#4FA8A0',
     },
   ]
 }
@@ -236,6 +310,170 @@ app.post('/api/search', async (req, res) => {
   const deeplink = await deeplinkFallback(params)
   logRequest(req, 'deeplink', {})
   return res.json({ stage: 'deeplink', ...deeplink })
+})
+
+// ── Information Booklet helpers ────────────────────────────────────────────────
+
+function withConfidence(data, confidence, lastVerified) {
+  const allowed = ['live', 'scheduled-reference', 'curated-estimate']
+  if (!allowed.includes(confidence)) {
+    throw new Error(`withConfidence: invalid confidence "${confidence}"`)
+  }
+  return { confidence, lastVerified, data }
+}
+
+function trainOverview(origin, destination, date) {
+  const trains = mockTrainResults(origin, destination, date)
+  const fastest = trains.find(t => t.isFastest) || trains[0]
+  const summary = {
+    serviceCount: trains.length,
+    fastestServiceName: fastest.trainName,
+    trains,
+    note: 'Schedule reference only — not live seat availability. Verify class and availability directly on IRCTC before travel.',
+  }
+  return withConfidence(summary, 'scheduled-reference', null)
+}
+
+function busOverview(origin, destination, date) {
+  const buses = mockBusResults(origin, destination, date)
+  const allLow  = buses.map(b => b.fareRange.low)
+  const allHigh = buses.map(b => b.fareRange.high)
+  const summary = {
+    operatorCount: buses.length,
+    typicalDuration: '8–13 hours',
+    fareRange: { low: Math.min(...allLow), high: Math.max(...allHigh) },
+    buses,
+    note: 'Schedule reference only — not a live seat map. Confirm with the operator directly before travel.',
+  }
+  return withConfidence(summary, 'scheduled-reference', null)
+}
+
+function hotelOverview(destination, date) {
+  const summary = {
+    hotels: [
+      {
+        name: 'The Oberoi Grand',
+        tier: 'Luxury',
+        category: 'luxury',
+        stars: 5,
+        area: 'Chowringhee',
+        description: 'Kolkata landmark',
+        typicalPricePerNight: 12000,
+        accentColor: '#D9A441',
+      },
+      {
+        name: 'ITC Royal Bengal',
+        tier: 'Luxury',
+        category: 'luxury',
+        stars: 5,
+        area: 'New Town',
+        description: 'Business & leisure',
+        typicalPricePerNight: 10500,
+        accentColor: '#D9A441',
+      },
+      {
+        name: 'Swissotel Kolkata',
+        tier: 'Luxury',
+        category: 'luxury',
+        stars: 5,
+        area: 'New Town',
+        description: 'Contemporary luxury',
+        typicalPricePerNight: 9500,
+        accentColor: '#D9A441',
+      },
+      {
+        name: 'Lemon Tree Premier',
+        tier: 'Mid-range',
+        category: 'mid-range',
+        stars: 4,
+        area: 'Park Circus',
+        description: 'Well-connected, modern rooms',
+        typicalPricePerNight: 4500,
+        accentColor: '#4FA8A0',
+      },
+      {
+        name: 'Mint Hotel',
+        tier: 'Mid-range',
+        category: 'mid-range',
+        stars: 3,
+        area: 'Park Street',
+        description: 'Budget-friendly, great location',
+        typicalPricePerNight: 2800,
+        accentColor: '#4FA8A0',
+      },
+      {
+        name: 'Hotel Galaxy',
+        tier: 'Budget',
+        category: 'budget',
+        stars: 2,
+        area: 'Esplanade',
+        description: 'Clean, central, no-frills',
+        typicalPricePerNight: 1200,
+        accentColor: '#9CA3C4',
+      },
+    ],
+    note: 'Curated estimate from public listings — prices are indicative and fluctuate. Confirm directly with the property before booking.',
+  }
+  return withConfidence(summary, 'curated-estimate', null)
+}
+
+// ── POST /api/overview ─────────────────────────────────────────────────────────
+app.post('/api/overview', (req, res) => {
+  const { origin, destination, date } = req.body
+
+  if (!origin || !destination) {
+    const missing = ['origin', 'destination'].filter(k => !req.body[k])
+    return res.status(400).json({
+      error: `Missing required field(s): ${missing.join(', ')}`,
+    })
+  }
+
+  const resolvedDate = date || new Date().toISOString().split('T')[0]
+  logRequest(req, 'overview', { origin, destination, date: resolvedDate })
+
+  const trains = trainOverview(origin, destination, resolvedDate)
+  const buses  = busOverview(origin, destination, resolvedDate)
+  const hotels = hotelOverview(destination, resolvedDate)
+
+  return res.json({
+    origin,
+    destination,
+    date: resolvedDate,
+    trains,
+    buses,
+    hotels,
+    flights: {
+      confidence: 'live',
+      lastVerified: null,
+      data: null,
+      note: 'Not yet loaded — call GET /api/flights-info',
+    },
+  })
+})
+
+// ── GET /api/flights-info ──────────────────────────────────────────────────────
+app.get('/api/flights-info', (req, res) => {
+  const { origin, destination, date } = req.query
+
+  if (!origin || !destination) {
+    const missing = ['origin', 'destination'].filter(k => !req.query[k])
+    return res.status(400).json({
+      error: `Missing required query parameter(s): ${missing.join(', ')}`,
+    })
+  }
+
+  const resolvedDate = date || new Date().toISOString().split('T')[0]
+  logRequest(req, 'flights-info', { origin, destination, date: resolvedDate })
+
+  // ── SWAP POINT ──────────────────────────────────────────────────────────────
+  // To connect the real FlightAPI used elsewhere in the project, replace the
+  // two lines below (mockFlightResults call + withConfidence wrap) with your
+  // live call, e.g.:
+  //   const flights = await searchFlights({ origin, destination, date: resolvedDate })
+  //   return res.json(withConfidence(flights, 'live', new Date().toISOString()))
+  // ── END SWAP POINT ──────────────────────────────────────────────────────────
+  const flights = mockFlightResults(origin, destination, resolvedDate)
+  return res.json(withConfidence(flights, 'live', new Date().toISOString()))
 })
 
 // ── Health check ───────────────────────────────────────────────────────────────

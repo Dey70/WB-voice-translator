@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Mic, Compass, Bookmark, Home, Sun, Moon, Menu, X, MessageSquare, BookOpen, MapPinned, ShieldAlert, History, HeartHandshake, Landmark } from 'lucide-react'
+import { Mic, Compass, Bookmark, Home, Sun, Moon, Menu, X, MessageSquare, BookOpen, MapPinned, ShieldAlert, History, HeartHandshake, Landmark, Train } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
@@ -20,6 +20,7 @@ const mobileNavItems = [
 const moreItems = [
   { to: '/conversation', icon: MessageSquare, label: 'Conversation', detail: 'Two-person voice translation' },
   { to: '/phrases', icon: BookOpen, label: 'Phrasebook', detail: 'Useful phrases available offline' },
+  { to: '/travel-info', icon: Train, label: 'Travel information', detail: 'Trains, buses, flights & hotels' },
   { to: '/places', icon: MapPinned, label: 'Places & seasons', detail: 'Sightseeing and trip planning' },
   { to: '/culture', icon: HeartHandshake, label: 'Cultural guide', detail: 'Customs, etiquette and festivals' },
   { to: '/history', icon: History, label: 'Translation history', detail: 'Saved activity on this device' },

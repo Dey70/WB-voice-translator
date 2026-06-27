@@ -18,6 +18,7 @@ const CulturalGuide = lazy(() => import('./pages/CulturalGuide'))
 const Discover      = lazy(() => import('./pages/Discover'))
 const Collections   = lazy(() => import('./pages/Collections'))
 const Guide         = lazy(() => import('./pages/Guide'))
+const TravelInfo    = lazy(() => import('./pages/TravelInfo'))
 
 // Howrah Bridge silhouette — iconic cantilever bridge of Kolkata
 function HowrahBridge({ color }) {
@@ -159,6 +160,7 @@ export default function App() {
             <Route path="/discover"      element={<Discover />} />
             <Route path="/collections"   element={<Collections />} />
             <Route path="/guide"         element={<Guide />} />
+            <Route path="/travel-info"   element={<TravelInfo />} />
           </Routes>
         </Suspense>
         </div>
