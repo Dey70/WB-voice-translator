@@ -37,7 +37,12 @@ export default function Navbar() {
   const { darkMode, toggleDarkMode } = useAppStore()
   const [moreOpen, setMoreOpen] = useState(false)
 
-  if (location.pathname === '/places' || location.pathname === '/places/explore' || location.pathname === '/places/seasons') return (
+  if (
+    location.pathname === '/places' ||
+    location.pathname === '/places/explore' ||
+    location.pathname === '/places/seasons' ||
+    location.pathname === '/travel-info'
+  ) return (
     <>
       {moreOpen && <button className="more-backdrop" aria-label="Close menu" onClick={() => setMoreOpen(false)} />}
       <aside id="more-menu" className={`more-menu ${moreOpen ? 'open' : ''}`} aria-hidden={!moreOpen}>

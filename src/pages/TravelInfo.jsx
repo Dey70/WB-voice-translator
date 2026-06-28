@@ -1,84 +1,157 @@
 import { useState, useRef } from 'react'
-import { ArrowLeft, ArrowUpDown, Calendar, ChevronRight, Loader2, Plane, Train, Bus, Building2 } from 'lucide-react'
+import { useAppStore } from '../store/appStore'
+import PageHeader from '../components/layout/PageHeader'
+import trainBg from '../assets/train.jpg'
+import {
+  ArrowLeft, ArrowUpDown, Calendar, Loader2,
+  Plane, Train, Bus, Building2,
+} from 'lucide-react'
 
 const API_BASE = 'http://localhost:3001'
+const TODAY    = new Date().toISOString().split('T')[0]
 
-const TODAY = new Date().toISOString().split('T')[0]
+// ── Light-on-dark palette (photo bg is always dark-navy) ───────────────────
+const C = {
+  text:        '#F4EDE1',
+  sub:         'rgba(255,255,255,.62)',
+  muted:       'rgba(255,255,255,.38)',
+  card:        'rgba(12,18,38,.58)',
+  border:      'rgba(255,255,255,.12)',
+  borderFaint: 'rgba(255,255,255,.07)',
+  borderStrg:  'rgba(255,255,255,.22)',
+  bg2:         'rgba(255,255,255,.05)',
+  shadow:      '0 2px 14px rgba(0,0,0,.35)',
+  shadowRaised:'0 4px 22px rgba(0,0,0,.48)',
+}
 
 function formatDisplayDate(iso) {
   if (!iso) return ''
-  const d = new Date(iso + 'T00:00:00')
-  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(iso + 'T00:00:00').toLocaleDateString('en-IN', {
+    weekday:'short', day:'numeric', month:'short', year:'numeric',
+  })
 }
 
-// ── Confidence band ────────────────────────────────────────────────────────────
-function ConfidenceBand({ confidence, note }) {
-  const cfg = {
-    live:                { dot: '#4FA8A0', bg: 'rgba(15,50,46,0.8)', border: '#1B4D45', label: 'Live' },
-    'scheduled-reference':{ dot: '#E0652E', bg: 'rgba(40,13,13,0.8)', border: '#5C2018', label: 'Scheduled reference' },
-    'curated-estimate':  { dot: '#D9A441', bg: 'rgba(36,28,0,0.8)',  border: '#5C4A00', label: 'Curated estimate' },
-  }[confidence] || { dot: '#9CA3C4', bg: 'rgba(30,30,50,0.8)', border: '#353C66', label: confidence }
-
+// ── Alpona wave ────────────────────────────────────────────────────────────
+function Alpona({ accent }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'flex-start', gap: 10,
-      background: cfg.bg, border: `1px solid ${cfg.border}`,
-      borderRadius: 10, padding: '10px 13px', marginBottom: 14,
-    }}>
-      <span style={{
-        width: 8, height: 8, borderRadius: '50%', background: cfg.dot,
-        display: 'inline-block', marginTop: 3, flexShrink: 0,
-      }} />
+    <svg
+      viewBox="0 0 380 14" width="100%" height="14" aria-hidden="true"
+      style={{ display:'block', margin:'14px 0', color: accent || 'var(--accent-gold)' }}
+    >
+      <path
+        d="M0 7 Q19 1,38 7 T76 7 T114 7 T152 7 T190 7 T228 7 T266 7 T304 7 T342 7 T380 7"
+        fill="none" stroke="currentColor" strokeWidth=".8" opacity=".35"
+      />
+      <circle cx="76"  cy="7" r="1.2" fill="currentColor" opacity=".45" />
+      <circle cx="190" cy="7" r="1.2" fill="currentColor" opacity=".45" />
+      <circle cx="304" cy="7" r="1.2" fill="currentColor" opacity=".45" />
+    </svg>
+  )
+}
+
+// ── Confidence band ────────────────────────────────────────────────────────
+const BANDS = {
+  live:                  { dot:'var(--accent-teal)',    bg:'rgba(13,115,119,.14)', border:'rgba(13,115,119,.32)',  label:'Live data'           },
+  'scheduled-reference': { dot:'var(--accent-primary)', bg:'rgba(200,86,10,.12)',  border:'rgba(200,86,10,.28)',   label:'Scheduled reference' },
+  'curated-estimate':    { dot:'var(--accent-gold)',    bg:'rgba(200,150,12,.11)', border:'rgba(200,150,12,.28)', label:'Curated estimate'    },
+}
+
+function ConfidenceBand({ confidence, note }) {
+  const c = BANDS[confidence] || { dot:C.muted, bg:C.bg2, border:C.border, label:confidence }
+  return (
+    <div style={{ display:'flex', alignItems:'flex-start', gap:10, background:c.bg, border:`1px solid ${c.border}`, borderRadius:10, padding:'10px 13px', marginBottom:14 }}>
+      <span style={{ width:8, height:8, borderRadius:'50%', background:c.dot, display:'inline-block', marginTop:4, flexShrink:0 }} />
       <div>
-        <strong style={{
-          display: 'block', fontSize: 10, letterSpacing: '.06em',
-          textTransform: 'uppercase', color: cfg.dot, marginBottom: 3,
-        }}>{cfg.label}</strong>
-        <span style={{ fontSize: 12, color: 'rgba(200,205,230,0.85)', lineHeight: 1.55 }}>{note}</span>
+        <strong style={{ display:'block', fontSize:10, letterSpacing:'.07em', textTransform:'uppercase', color:c.dot, marginBottom:3 }}>{c.label}</strong>
+        <span style={{ fontSize:12, color:C.sub, lineHeight:1.55 }}>{note}</span>
       </div>
     </div>
   )
 }
 
-// ── Alpona SVG divider ─────────────────────────────────────────────────────────
-function Alpona({ color = '#D9A441' }) {
+// ── Filter pills ───────────────────────────────────────────────────────────
+function FilterPills({ filters, active, onSelect }) {
   return (
-    <svg viewBox="0 0 380 14" width="100%" height="14" style={{ display: 'block', margin: '14px 0' }} aria-hidden="true">
-      <path d="M0 7 Q19 1,38 7 T76 7 T114 7 T152 7 T190 7 T228 7 T266 7 T304 7 T342 7 T380 7"
-        fill="none" stroke={color} strokeWidth=".8" opacity=".28" />
-      <circle cx="76" cy="7" r="1.2" fill={color} opacity=".38" />
-      <circle cx="190" cy="7" r="1.2" fill={color} opacity=".38" />
-      <circle cx="304" cy="7" r="1.2" fill={color} opacity=".38" />
-    </svg>
+    <div style={{ display:'flex', gap:7, marginBottom:14, overflowX:'auto', scrollbarWidth:'none', paddingBottom:2 }}>
+      {filters.map(f => {
+        const on = active === f.key
+        return (
+          <button key={f.key} onClick={() => onSelect(f.key)} style={{
+            fontSize:11, borderRadius:999, padding:'5px 14px', whiteSpace:'nowrap',
+            cursor:'pointer', fontFamily:'inherit', transition:'all .15s', minHeight:'auto',
+            background: on ? 'var(--accent-primary)' : C.bg2,
+            color:       on ? '#fff' : C.sub,
+            border:      on ? '1px solid transparent' : `1px solid ${C.border}`,
+            fontWeight:  on ? 600 : 400,
+          }}>{f.label}</button>
+        )
+      })}
+    </div>
   )
 }
 
-// ── SCREEN 1: Search form ──────────────────────────────────────────────────────
-function SearchScreen({ onSearch }) {
-  const [origin, setOrigin] = useState('')
+// ── Chip ───────────────────────────────────────────────────────────────────
+function Chip({ label, color, bg, border }) {
+  return (
+    <span style={{
+      fontSize:9, borderRadius:999, padding:'2px 9px',
+      color:      color  || C.sub,
+      background: bg     || C.bg2,
+      border: `1px solid ${border || C.border}`,
+    }}>{label}</span>
+  )
+}
+
+// ── Route timeline ─────────────────────────────────────────────────────────
+function RouteTimeline({ from, fromSub, to, toSub, duration, subLabel, accent, Icon }) {
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', borderTop:`1px dashed ${C.borderFaint}`, borderBottom:`1px dashed ${C.borderFaint}`, marginBottom:10 }}>
+      <div style={{ minWidth:0, flex:'0 0 auto', maxWidth:'30%' }}>
+        <p style={{ fontSize:14, fontWeight:700, color:C.text, margin:0 }}>{from}</p>
+        <p style={{ fontSize:9, color:C.muted, margin:'2px 0 0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{fromSub}</p>
+      </div>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, minWidth:0 }}>
+        <span style={{ fontSize:10, color:accent, fontWeight:600, whiteSpace:'nowrap' }}>{duration}</span>
+        <div style={{ width:'100%', display:'flex', alignItems:'center' }}>
+          <div style={{ width:5, height:5, borderRadius:'50%', border:`1.5px solid ${accent}`, flexShrink:0 }} />
+          <div style={{ flex:1, height:1, borderTop:`1.5px dashed ${accent}`, opacity:.4 }} />
+          <Icon size={12} color={accent} style={{ flexShrink:0 }} />
+          <div style={{ flex:1, height:1, borderTop:`1.5px dashed ${accent}`, opacity:.4 }} />
+          <div style={{ width:5, height:5, borderRadius:'50%', border:`1.5px solid ${accent}`, flexShrink:0 }} />
+        </div>
+        {subLabel && <span style={{ fontSize:9, color:C.muted, whiteSpace:'nowrap' }}>{subLabel}</span>}
+      </div>
+      <div style={{ textAlign:'right', minWidth:0, flex:'0 0 auto', maxWidth:'30%' }}>
+        <p style={{ fontSize:14, fontWeight:700, color:C.text, margin:0 }}>{to}</p>
+        <p style={{ fontSize:9, color:C.muted, margin:'2px 0 0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{toSub}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── Shared field styles ────────────────────────────────────────────────────
+const FIELD = { background:C.card, border:`1px solid ${C.border}`, backdropFilter:'blur(14px)' }
+const LABEL = { fontSize:9, letterSpacing:'.07em', textTransform:'uppercase', color:C.muted, margin:'0 0 4px', fontWeight:700, display:'block' }
+const INPUT = { background:'transparent', border:'none', outline:'none', fontSize:15, fontWeight:500, color:C.text, width:'100%', fontFamily:'inherit' }
+
+// ── SCREEN 1: Search ───────────────────────────────────────────────────────
+function SearchScreen({ onSearch, darkMode }) {
+  const [origin,      setOrigin]      = useState('')
   const [destination, setDestination] = useState('')
-  const [date, setDate] = useState(TODAY)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [date,        setDate]        = useState(TODAY)
+  const [loading,     setLoading]     = useState(false)
+  const [error,       setError]       = useState(null)
 
-  function swap() {
-    setOrigin(destination)
-    setDestination(origin)
-  }
+  const swap = () => { setOrigin(destination); setDestination(origin) }
 
-  async function handleSubmit(e) {
+  async function submit(e) {
     e.preventDefault()
-    if (!origin.trim() || !destination.trim()) {
-      setError('Please enter both origin and destination.')
-      return
-    }
-    setError(null)
-    setLoading(true)
+    if (!origin.trim() || !destination.trim()) { setError('Please enter both origin and destination.'); return }
+    setError(null); setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/api/overview`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ origin: origin.trim(), destination: destination.trim(), date }),
+      const res  = await fetch(`${API_BASE}/api/overview`, {
+        method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ origin:origin.trim(), destination:destination.trim(), date }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Request failed')
@@ -91,344 +164,193 @@ function SearchScreen({ onSearch }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ padding: '20px 20px 28px' }}>
-      {/* Header */}
-      <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', color: '#D9A441', margin: '0 0 4px', fontWeight: 500 }}>
+    <form onSubmit={submit} style={{ padding:'8px 16px 28px' }}>
+
+      {/* Title */}
+      <div style={{ marginBottom:20 }}>
+        <p style={{ fontSize:10, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--accent-primary)', margin:'0 0 5px', fontWeight:700 }}>
           Information booklet
         </p>
         <h1 style={{
-          fontFamily: 'var(--font-serif, Georgia, serif)',
-          fontSize: 26, fontWeight: 500, color: '#F4EDE1', margin: 0,
+          fontFamily:"'Baloo Da 2','Hind Siliguri',sans-serif",
+          fontSize:'clamp(24px,6vw,30px)', fontWeight:800, lineHeight:1.1,
+          color:C.text, margin:'0 0 7px', letterSpacing:'-.3px',
         }}>
-          <em style={{ fontStyle: 'italic', color: '#E0652E' }}>Travel</em> information
+          <span style={{ color:'var(--accent-primary)', fontStyle:'italic', fontFamily:"'Playfair Display',Georgia,serif" }}>Travel</span>
+          {' '}information
         </h1>
-        <p style={{ fontSize: 12, color: '#7C82A6', margin: '6px 0 0', lineHeight: 1.6 }}>
-          One search, every option laid out — no booking, just real information.
+        <p style={{ fontSize:13, color:C.sub, margin:0, lineHeight:1.6 }}>
+          One search — flights, trains, buses &amp; hotels laid out clearly.
         </p>
       </div>
 
       <Alpona />
 
       {/* From / To */}
-      <div style={{ position: 'relative', marginBottom: 10 }}>
-        <div style={{
-          background: '#1F2547', border: '0.5px solid #353C66',
-          borderRadius: '12px 12px 0 0', padding: '12px 14px',
-        }}>
-          <p style={{ fontSize: 9, letterSpacing: '.07em', textTransform: 'uppercase', color: '#7C82A6', margin: '0 0 4px', fontWeight: 500 }}>From</p>
-          <input
-            value={origin}
-            onChange={e => setOrigin(e.target.value)}
-            placeholder="City, station or airport"
-            style={{
-              background: 'transparent', border: 'none', outline: 'none',
-              fontSize: 15, fontWeight: 500, color: '#F4EDE1', width: '100%',
-              fontFamily: 'inherit',
-            }}
-          />
+      <div style={{ position:'relative', marginBottom:10 }}>
+        <div style={{ ...FIELD, borderRadius:'12px 12px 0 0', padding:'12px 48px 12px 14px' }}>
+          <span style={LABEL}>From</span>
+          <input value={origin} onChange={e => setOrigin(e.target.value)} placeholder="City, station or airport" style={INPUT} autoComplete="off" />
         </div>
-        <div style={{ height: '0.5px', background: '#2B3158' }} />
-        <div style={{
-          background: '#1F2547', border: '0.5px solid #353C66',
-          borderTop: 'none', borderRadius: '0 0 12px 12px', padding: '12px 14px',
-        }}>
-          <p style={{ fontSize: 9, letterSpacing: '.07em', textTransform: 'uppercase', color: '#7C82A6', margin: '0 0 4px', fontWeight: 500 }}>To</p>
-          <input
-            value={destination}
-            onChange={e => setDestination(e.target.value)}
-            placeholder="City, station or airport"
-            style={{
-              background: 'transparent', border: 'none', outline: 'none',
-              fontSize: 15, fontWeight: 500, color: '#F4EDE1', width: '100%',
-              fontFamily: 'inherit',
-            }}
-          />
+        <div style={{ height:1, background:C.borderFaint }} />
+        <div style={{ ...FIELD, borderTop:'none', borderRadius:'0 0 12px 12px', padding:'12px 48px 12px 14px' }}>
+          <span style={LABEL}>To</span>
+          <input value={destination} onChange={e => setDestination(e.target.value)} placeholder="City, station or airport" style={INPUT} autoComplete="off" />
         </div>
-        {/* Swap button */}
-        <button
-          type="button"
-          onClick={swap}
-          aria-label="Swap origin and destination"
-          style={{
-            position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
-            width: 30, height: 30, borderRadius: '50%',
-            background: '#161B30', border: '1px solid #4B527A',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', zIndex: 2,
-          }}
-        >
-          <ArrowUpDown size={14} color="#D9A441" />
+        <button type="button" onClick={swap} aria-label="Swap" style={{
+          position:'absolute', right:14, top:'50%', transform:'translateY(-50%)',
+          width:32, height:32, borderRadius:'50%', minHeight:'auto',
+          background:C.bg2, border:`1px solid ${C.borderStrg}`,
+          display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', zIndex:2,
+        }}>
+          <ArrowUpDown size={14} color="var(--accent-gold)" />
         </button>
       </div>
 
       {/* Date */}
-      <div style={{
-        background: '#1F2547', border: '0.5px solid #353C66',
-        borderRadius: 12, padding: '12px 14px', marginBottom: 16,
-        display: 'flex', alignItems: 'center', gap: 10,
-      }}>
-        <Calendar size={15} color="#D9A441" />
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: 9, letterSpacing: '.07em', textTransform: 'uppercase', color: '#7C82A6', margin: '0 0 3px', fontWeight: 500 }}>Date</p>
-          <input
-            type="date"
-            value={date}
-            min={TODAY}
-            onChange={e => setDate(e.target.value)}
-            style={{
-              background: 'transparent', border: 'none', outline: 'none',
-              fontSize: 14, fontWeight: 500, color: '#F4EDE1',
-              fontFamily: 'inherit', width: '100%', cursor: 'pointer',
-              colorScheme: 'dark',
-            }}
-          />
+      <div style={{ ...FIELD, borderRadius:12, padding:'12px 14px', marginBottom:18, display:'flex', alignItems:'center', gap:10 }}>
+        <Calendar size={15} color="var(--accent-gold)" style={{ flexShrink:0 }} />
+        <div style={{ flex:1, minWidth:0 }}>
+          <span style={LABEL}>Date of travel</span>
+          <input type="date" value={date} min={TODAY} onChange={e => setDate(e.target.value)}
+            style={{ ...INPUT, cursor:'pointer', colorScheme: darkMode ? 'dark' : 'light' }} />
         </div>
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 14, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div style={{ display:'flex', gap:14, marginBottom:18, flexWrap:'wrap' }}>
         {[
-          { color: '#4FA8A0', label: 'Live' },
-          { color: '#E0652E', label: 'Scheduled reference' },
-          { color: '#D9A441', label: 'Curated estimate' },
+          { color:'var(--accent-teal)',    label:'Live' },
+          { color:'var(--accent-primary)', label:'Scheduled reference' },
+          { color:'var(--accent-gold)',    label:'Curated estimate' },
         ].map(({ color, label }) => (
-          <span key={label} style={{ fontSize: 10, color: '#9CA3C4', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, display: 'inline-block' }} />
+          <span key={label} style={{ fontSize:10, color:C.muted, display:'flex', alignItems:'center', gap:5 }}>
+            <span style={{ width:7, height:7, borderRadius:'50%', background:color, display:'inline-block', flexShrink:0 }} />
             {label}
           </span>
         ))}
       </div>
 
-      {error && (
-        <p style={{ fontSize: 12, color: '#E0652E', margin: '0 0 12px', lineHeight: 1.5 }}>{error}</p>
-      )}
+      {error && <p style={{ fontSize:12, color:'var(--accent-primary)', margin:'0 0 14px', lineHeight:1.5 }}>{error}</p>}
 
-      {/* CTA */}
-      <button
-        type="submit"
-        disabled={loading}
-        style={{
-          width: '100%', background: loading ? '#8B3C1F' : '#E0652E',
-          borderRadius: 12, padding: 14, border: 'none',
-          fontSize: 14, fontWeight: 500, color: '#F4EDE1',
-          cursor: loading ? 'not-allowed' : 'pointer',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          transition: 'background .2s',
-        }}
-      >
-        {loading ? <><Loader2 size={16} style={{ animation: 'ks-spin 1s linear infinite' }} /> Loading…</> : 'Show me everything'}
+      <button type="submit" disabled={loading} style={{
+        width:'100%', borderRadius:12, padding:'14px 16px', border:'none',
+        fontSize:14, fontWeight:700, color:'#fff', cursor:loading ? 'not-allowed' : 'pointer',
+        background: loading ? 'rgba(200,86,10,.5)' : 'var(--accent-primary)',
+        display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+        transition:'background .2s', fontFamily:'var(--font-interface)',
+        boxShadow:'0 6px 22px rgba(200,86,10,.3)',
+      }}>
+        {loading ? <><Loader2 size={16} className="ti-spin" /> Searching…</> : 'Show me everything →'}
       </button>
     </form>
   )
 }
 
-// ── SCREEN 2: Results grid ─────────────────────────────────────────────────────
+// ── SCREEN 2: Results ──────────────────────────────────────────────────────
 const PLACARDS = [
-  {
-    key: 'flights',
-    label: 'Flights',
-    icon: Plane,
-    confidence: 'live',
-    lazy: true,
-    summaryFn: () => 'Tap to load live prices',
-  },
-  {
-    key: 'trains',
-    label: 'Trains',
-    icon: Train,
-    confidence: 'scheduled-reference',
-    lazy: false,
-    summaryFn: (d) => d ? `${d.data.serviceCount} services · fastest ${d.data.services?.[0] ? d.data.services.reduce((a, b) => a, d.data.services[0]).typicalDuration : ''}` : '',
-  },
-  {
-    key: 'buses',
-    label: 'Buses',
-    icon: Bus,
-    confidence: 'scheduled-reference',
-    lazy: false,
-    summaryFn: (d) => d ? `${d.data.operatorCount} operators · ₹${d.data.fareRange?.low}–${d.data.fareRange?.high}` : '',
-  },
-  {
-    key: 'hotels',
-    label: 'Hotels',
-    icon: Building2,
-    confidence: 'curated-estimate',
-    lazy: false,
-    summaryFn: (d) => d ? `Budget to luxury, ${d.data.priceBrackets?.length || 3} tiers` : '',
-  },
+  { key:'flights', label:'Flights', icon:Plane,     confidence:'live',                lazy:true,  summaryFn:()  => 'Tap to load live prices' },
+  { key:'trains',  label:'Trains',  icon:Train,     confidence:'scheduled-reference', lazy:false, summaryFn:(d) => d ? `${d.data.serviceCount} services` : '' },
+  { key:'buses',   label:'Buses',   icon:Bus,       confidence:'scheduled-reference', lazy:false, summaryFn:(d) => d ? `${d.data.operatorCount} operators` : '' },
+  { key:'hotels',  label:'Hotels',  icon:Building2, confidence:'curated-estimate',    lazy:false, summaryFn:(d) => d ? 'Budget to luxury' : '' },
 ]
-
-const CONF_COLORS = {
-  live: '#4FA8A0',
-  'scheduled-reference': '#E0652E',
-  'curated-estimate': '#D9A441',
-}
-const CONF_LABELS = {
-  live: 'Live',
-  'scheduled-reference': 'Scheduled',
-  'curated-estimate': 'Estimate',
-}
+const CONF_ACCENT = { live:'var(--accent-teal)', 'scheduled-reference':'var(--accent-primary)', 'curated-estimate':'var(--accent-gold)' }
+const CONF_LABEL  = { live:'Live', 'scheduled-reference':'Scheduled', 'curated-estimate':'Estimate' }
 
 function ResultsScreen({ overview, onSelect, onBack }) {
   const { origin, destination, date } = overview
-
   return (
-    <div style={{ paddingBottom: 20 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 20px 0' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <ArrowLeft size={18} color="#9CA3C4" />
+    <div>
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 16px 0' }}>
+        <button onClick={onBack} style={{
+          background:C.bg2, border:`1px solid ${C.border}`, cursor:'pointer',
+          padding:'6px 8px', borderRadius:8, color:C.sub, display:'flex', minHeight:'auto',
+        }}>
+          <ArrowLeft size={18} />
         </button>
-        <div>
+        <div style={{ minWidth:0 }}>
           <p style={{
-            fontFamily: 'var(--font-serif, Georgia, serif)',
-            fontSize: 17, fontWeight: 500, color: '#F4EDE1', margin: 0,
+            fontFamily:"'Baloo Da 2','Hind Siliguri',sans-serif",
+            fontSize:17, fontWeight:800, color:C.text, margin:0,
+            overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
           }}>
-            <em style={{ fontStyle: 'italic', color: '#E0652E' }}>{origin}</em> → {destination}
+            <span style={{ color:'var(--accent-primary)' }}>{origin}</span>
+            <span style={{ color:C.muted, margin:'0 4px' }}>→</span>
+            {destination}
           </p>
-          <p style={{ fontSize: 11, color: '#7C82A6', margin: '2px 0 0' }}>{formatDisplayDate(date)}</p>
+          <p style={{ fontSize:11, color:C.muted, margin:'2px 0 0' }}>{formatDisplayDate(date)}</p>
         </div>
       </div>
 
-      <Alpona />
-
-      {/* 2×2 grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 20px' }}>
-        {PLACARDS.map(({ key, label, icon: Icon, confidence, lazy, summaryFn }) => {
-          const dotColor = CONF_COLORS[confidence]
-          const confLabel = CONF_LABELS[confidence]
-          const isLazy = lazy
-          const summary = summaryFn(overview[key])
-
-          return (
-            <button
-              key={key}
-              onClick={() => onSelect(key)}
-              style={{
-                background: '#1F2547',
-                border: isLazy ? '1px dashed #4B527A' : '0.5px solid #353C66',
-                borderRadius: 14, padding: '13px 14px',
-                cursor: 'pointer', textAlign: 'left',
-                transition: 'border-color .2s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.borderColor = '#D9A441'}
-              onMouseLeave={e => e.currentTarget.style.borderColor = isLazy ? '#4B527A' : '#353C66'}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 9, letterSpacing: '.07em', textTransform: 'uppercase', color: dotColor, fontWeight: 500 }}>
-                  {confLabel}
-                </span>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: dotColor, display: 'inline-block' }} />
-              </div>
-              <Icon size={22} color={isLazy ? '#4FA8A0' : dotColor} strokeWidth={1.5} style={{ marginBottom: 6, opacity: isLazy ? 0.5 : 0.8 }} />
-              <p style={{ fontSize: 13, fontWeight: 500, color: isLazy ? '#9CA3C4' : '#F4EDE1', margin: '0 0 3px' }}>{label}</p>
-              <p style={{ fontSize: 10, color: isLazy ? '#555E8C' : '#7C82A6', lineHeight: 1.4, margin: 0 }}>{summary}</p>
-            </button>
-          )
-        })}
+      <div style={{ padding:'0 16px 20px' }}>
+        <Alpona />
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          {PLACARDS.map(({ key, label, icon:Icon, confidence, lazy, summaryFn }) => {
+            const accent    = CONF_ACCENT[confidence]
+            const confLabel = CONF_LABEL[confidence]
+            const summary   = summaryFn(overview[key])
+            return (
+              <button
+                key={key} onClick={() => onSelect(key)}
+                style={{
+                  background: lazy ? 'rgba(12,18,38,.38)' : C.card,
+                  borderRadius:16, padding:14, cursor:'pointer', textAlign:'left',
+                  transition:'box-shadow .2s, border-color .2s, background .2s',
+                  backdropFilter:'blur(14px)',
+                  border: lazy ? `1px dashed ${C.borderStrg}` : `1px solid ${C.border}`,
+                  boxShadow: C.shadow,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.boxShadow = C.shadowRaised; e.currentTarget.style.borderColor='var(--accent-primary)' }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = C.shadow; e.currentTarget.style.borderColor = lazy ? C.borderStrg : C.border }}
+              >
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                  <span style={{ fontSize:9, letterSpacing:'.07em', textTransform:'uppercase', color:accent, fontWeight:700 }}>{confLabel}</span>
+                  <span style={{ width:7, height:7, borderRadius:'50%', background:accent, display:'inline-block' }} />
+                </div>
+                <Icon size={22} color={accent} strokeWidth={1.6} style={{ marginBottom:8, opacity: lazy ? 0.45 : 0.9 }} />
+                <p style={{ fontSize:13, fontWeight:700, color: lazy ? C.muted : C.text, margin:'0 0 3px', fontFamily:'var(--font-interface)' }}>{label}</p>
+                <p style={{ fontSize:10, color:C.muted, lineHeight:1.4, margin:0 }}>{summary}</p>
+              </button>
+            )
+          })}
+        </div>
+        <p style={{ fontSize:10, color:C.muted, lineHeight:1.55, margin:'12px 0 0', fontStyle:'italic' }}>
+          Trains, buses and hotels load instantly. Flights call a live metered API — tap when ready.
+        </p>
       </div>
-
-      <p style={{ fontSize: 10, color: '#555E8C', lineHeight: 1.55, margin: '14px 20px 0', fontStyle: 'italic' }}>
-        Trains, Buses and Hotels loaded instantly. Flights loads only when tapped — it calls a live metered source.
-      </p>
     </div>
   )
 }
 
-// ── SCREEN 3: Detail panels ────────────────────────────────────────────────────
-
+// ── Train cards ────────────────────────────────────────────────────────────
 const TRAIN_FILTERS = [
-  { key: 'all',      label: 'All' },
-  { key: 'fastest',  label: 'Fastest' },
-  { key: 'overnight',label: 'Overnight' },
-  { key: 'weekly',   label: 'Weekly' },
+  { key:'all', label:'All' }, { key:'fastest', label:'Fastest' },
+  { key:'overnight', label:'Overnight' }, { key:'weekly', label:'Weekly' },
 ]
 
 function TrainCard({ train }) {
-  const {
-    trainName, trainNameNative, trainNumber, isFastest,
-    accentColor, originCode, destinationCode,
-    originFull, destinationFull, duration,
-    frequency, tripType, classes, tags,
-  } = train
-
+  const { trainName, trainNameNative, trainNumber, isFastest, accentColor,
+    originCode, destinationCode, originFull, destinationFull,
+    duration, frequency, tripType, classes, tags } = train
   return (
     <div style={{
-      background: '#1F2547', borderRadius: 14, overflow: 'hidden',
-      marginBottom: 10,
-      border: isFastest ? `1px solid #4A2A18` : '0.5px solid #353C66',
+      background:C.card, backdropFilter:'blur(14px)', borderRadius:14, overflow:'hidden', marginBottom:10,
+      border: isFastest ? '1px solid var(--accent-gold)' : `1px solid ${C.border}`, boxShadow:C.shadow,
     }}>
-      <div style={{ borderLeft: `3px solid ${accentColor}`, padding: '13px 13px 13px 13px' }}>
-
-        {/* Top row: badges + number */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            {isFastest && (
-              <span style={{
-                fontSize: 9, fontWeight: 600, color: '#161B30',
-                background: '#D9A441', borderRadius: 999, padding: '2px 9px',
-              }}>⚡ Fastest</span>
-            )}
-            {tags.filter(t => t !== 'Fastest').map(tag => (
-              <span key={tag} style={{
-                fontSize: 9, color: accentColor,
-                background: `${accentColor}1A`, border: `1px solid ${accentColor}55`,
-                borderRadius: 999, padding: '2px 9px',
-              }}>{tag}</span>
-            ))}
+      <div style={{ borderLeft:`3px solid ${accentColor}`, padding:13 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6, flexWrap:'wrap', gap:4 }}>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+            {isFastest && <span style={{ fontSize:9, fontWeight:700, color:'#1C0F05', background:'var(--accent-gold)', borderRadius:999, padding:'2px 9px' }}>⚡ Fastest</span>}
+            {tags.filter(t => t !== 'Fastest').map(t => <Chip key={t} label={t} color={accentColor} bg={`${accentColor}1a`} border={`${accentColor}55`} />)}
           </div>
-          <span style={{ fontSize: 9, color: '#7C82A6' }}>{trainNumber}</span>
+          <span style={{ fontSize:9, color:C.muted }}>{trainNumber}</span>
         </div>
-
-        {/* Train name */}
-        <p style={{ fontSize: 15, fontWeight: 500, color: '#F4EDE1', margin: '0 0 2px' }}>{trainName}</p>
-        <p style={{
-          fontFamily: 'var(--font-serif, Georgia, serif)',
-          fontStyle: 'italic', fontSize: 11, color: '#7C82A6', margin: '0 0 10px',
-        }}>{trainNameNative}</p>
-
-        {/* Route timeline */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '8px 0', borderTop: '1px dashed #353C66', borderBottom: '1px dashed #353C66',
-          marginBottom: 10,
-        }}>
-          <div style={{ textAlign: 'left' }}>
-            <p style={{ fontSize: 14, fontWeight: 500, color: '#F4EDE1', margin: 0 }}>{originCode}</p>
-            <p style={{ fontSize: 10, color: '#7C82A6', margin: '2px 0 0' }}>{originFull}</p>
-          </div>
-
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 10, color: accentColor, fontWeight: 500 }}>{duration}</span>
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center' }}>
-              <div style={{ width: 5, height: 5, borderRadius: '50%', border: `1.5px solid ${accentColor}`, flexShrink: 0 }} />
-              <div style={{ flex: 1, height: 1, borderTop: `1.5px dashed ${accentColor}`, opacity: .5 }} />
-              <Train size={12} color={accentColor} style={{ flexShrink: 0 }} />
-              <div style={{ flex: 1, height: 1, borderTop: `1.5px dashed ${accentColor}`, opacity: .5 }} />
-              <div style={{ width: 5, height: 5, borderRadius: '50%', border: `1.5px solid ${accentColor}`, flexShrink: 0 }} />
-            </div>
-            <span style={{ fontSize: 9, color: '#7C82A6' }}>{tripType}</span>
-          </div>
-
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 14, fontWeight: 500, color: '#F4EDE1', margin: 0 }}>{destinationCode}</p>
-            <p style={{ fontSize: 10, color: '#7C82A6', margin: '2px 0 0' }}>{destinationFull}</p>
-          </div>
-        </div>
-
-        {/* Class tags */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {classes.map(cls => (
-            <span key={cls} style={{
-              fontSize: 9, color: '#9CA3C4',
-              border: '1px solid #353C66', borderRadius: 999, padding: '2px 9px',
-            }}>{cls}</span>
-          ))}
-          <span style={{
-            fontSize: 9, color: accentColor,
-            border: `1px solid ${accentColor}55`, borderRadius: 999, padding: '2px 9px',
-          }}>{frequency}</span>
+        <p style={{ fontSize:15, fontWeight:700, color:C.text, margin:'0 0 2px', fontFamily:'var(--font-interface)' }}>{trainName}</p>
+        {trainNameNative && <p style={{ fontFamily:"'Playfair Display',Georgia,serif", fontStyle:'italic', fontSize:11, color:C.muted, margin:'0 0 10px' }}>{trainNameNative}</p>}
+        <RouteTimeline from={originCode} fromSub={originFull} to={destinationCode} toSub={destinationFull} duration={duration} subLabel={tripType} accent={accentColor} Icon={Train} />
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+          {classes.map(c => <Chip key={c} label={c} />)}
+          <Chip label={frequency} color={accentColor} border={`${accentColor}55`} />
         </div>
       </div>
     </div>
@@ -436,129 +358,46 @@ function TrainCard({ train }) {
 }
 
 function TrainsDetail({ data }) {
-  const [activeFilter, setActiveFilter] = useState('all')
+  const [filter, setFilter] = useState('all')
   const { serviceCount, trains, note } = data.data
-
-  const filtered = activeFilter === 'all'
-    ? trains
-    : trains.filter(t => t.category === activeFilter)
-
+  const shown = filter === 'all' ? trains : trains.filter(t => t.category === filter)
   return (
     <>
       <ConfidenceBand confidence={data.confidence} note={note} />
-
-      {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 7, marginBottom: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
-        {TRAIN_FILTERS.map(f => {
-          const active = activeFilter === f.key
-          return (
-            <button
-              key={f.key}
-              onClick={() => setActiveFilter(f.key)}
-              style={{
-                fontSize: 11, borderRadius: 999, padding: '5px 13px',
-                whiteSpace: 'nowrap', cursor: 'pointer', border: 'none',
-                background: active ? '#E0652E' : 'transparent',
-                color: active ? '#F4EDE1' : '#9CA3C4',
-                outline: active ? 'none' : '1px solid #353C66',
-                fontWeight: active ? 500 : 400, fontFamily: 'inherit',
-              }}
-            >{f.label}</button>
-          )
-        })}
-      </div>
-
-      {/* Train cards */}
-      {filtered.length > 0
-        ? filtered.map(t => <TrainCard key={t.trainNumber} train={t} />)
-        : <p style={{ fontSize: 12, color: '#7C82A6', margin: '8px 0' }}>No trains in this category.</p>
-      }
-
-      <p style={{ fontSize: 10, color: '#555E8C', lineHeight: 1.6, margin: '4px 0 0', fontStyle: 'italic' }}>
-        {serviceCount} total services connect this corridor weekly. Class availability varies — verify directly on IRCTC.
+      <FilterPills filters={TRAIN_FILTERS} active={filter} onSelect={setFilter} />
+      {shown.length > 0
+        ? shown.map(t => <TrainCard key={t.trainNumber} train={t} />)
+        : <p style={{ fontSize:12, color:C.muted, margin:'8px 0' }}>No trains in this category.</p>}
+      <p style={{ fontSize:10, color:C.muted, lineHeight:1.6, margin:'4px 0 0', fontStyle:'italic' }}>
+        {serviceCount} total services connect this corridor weekly. Verify class availability on IRCTC.
       </p>
     </>
   )
 }
 
+// ── Bus cards ──────────────────────────────────────────────────────────────
 const BUS_FILTERS = [
-  { key: 'all',        label: 'All' },
-  { key: 'ac-sleeper', label: 'AC Sleeper' },
-  { key: 'non-ac',     label: 'Non-AC' },
-  { key: 'budget',     label: 'Budget' },
+  { key:'all', label:'All' }, { key:'ac-sleeper', label:'AC Sleeper' },
+  { key:'non-ac', label:'Non-AC' }, { key:'budget', label:'Budget' },
 ]
 
 function BusCard({ bus }) {
   const { busOperator, busOperatorNative, busType, accentColor, duration,
-          boardingPoint, droppingPoint, origin, destination, fareRange,
-          amenities, tripType } = bus
-
+    boardingPoint, droppingPoint, origin, destination, fareRange, amenities, tripType } = bus
   return (
-    <div style={{
-      background: '#1F2547', borderRadius: 14, overflow: 'hidden',
-      marginBottom: 10, border: '0.5px solid #353C66',
-    }}>
-      <div style={{ borderLeft: `3px solid ${accentColor}`, padding: '13px 13px 13px 13px' }}>
-
-        {/* Top row: type badge + duration */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{
-            fontSize: 9, fontWeight: 500, color: accentColor,
-            background: `${accentColor}1A`, border: `1px solid ${accentColor}66`,
-            borderRadius: 999, padding: '2px 9px',
-          }}>{busType}</span>
-          <span style={{ fontSize: 10, fontWeight: 500, color: '#F4EDE1' }}>{duration}</span>
+    <div style={{ background:C.card, backdropFilter:'blur(14px)', borderRadius:14, overflow:'hidden', marginBottom:10, border:`1px solid ${C.border}`, boxShadow:C.shadow }}>
+      <div style={{ borderLeft:`3px solid ${accentColor}`, padding:13 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+          <Chip label={busType} color={accentColor} bg={`${accentColor}1a`} border={`${accentColor}55`} />
+          <span style={{ fontSize:10, fontWeight:700, color:C.text }}>{duration}</span>
         </div>
-
-        {/* Operator name */}
-        <p style={{ fontSize: 15, fontWeight: 500, color: '#F4EDE1', margin: '0 0 2px' }}>{busOperator}</p>
-        {busOperatorNative && busOperatorNative !== busOperator && (
-          <p style={{
-            fontFamily: 'var(--font-serif, Georgia, serif)',
-            fontStyle: 'italic', fontSize: 11, color: '#7C82A6', margin: '0 0 10px',
-          }}>{busOperatorNative}</p>
-        )}
-
-        {/* Route row */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '8px 0', borderTop: '1px dashed #353C66', borderBottom: '1px dashed #353C66',
-          marginBottom: 10,
-        }}>
-          <div>
-            <p style={{ fontSize: 13, fontWeight: 500, color: '#F4EDE1', margin: 0 }}>{origin}</p>
-            <p style={{ fontSize: 9, color: '#7C82A6', margin: '2px 0 0' }}>{boardingPoint}</p>
-          </div>
-
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 10, color: accentColor, fontWeight: 500 }}>{duration}</span>
-            <div style={{ width: '100%', display: 'flex', alignItems: 'center' }}>
-              <div style={{ width: 5, height: 5, borderRadius: '50%', border: `1.5px solid ${accentColor}`, flexShrink: 0 }} />
-              <div style={{ flex: 1, height: 1, borderTop: `1.5px dashed ${accentColor}`, opacity: .5 }} />
-              <Bus size={12} color={accentColor} style={{ flexShrink: 0 }} />
-              <div style={{ flex: 1, height: 1, borderTop: `1.5px dashed ${accentColor}`, opacity: .5 }} />
-              <div style={{ width: 5, height: 5, borderRadius: '50%', border: `1.5px solid ${accentColor}`, flexShrink: 0 }} />
-            </div>
-            <span style={{ fontSize: 9, color: '#7C82A6' }}>{tripType}</span>
-          </div>
-
-          <div style={{ textAlign: 'right' }}>
-            <p style={{ fontSize: 13, fontWeight: 500, color: '#F4EDE1', margin: 0 }}>{destination}</p>
-            <p style={{ fontSize: 9, color: '#7C82A6', margin: '2px 0 0' }}>{droppingPoint}</p>
-          </div>
-        </div>
-
-        {/* Bottom row: amenities + fare */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {amenities.map(a => (
-              <span key={a} style={{
-                fontSize: 9, color: '#9CA3C4',
-                border: '1px solid #353C66', borderRadius: 999, padding: '2px 9px',
-              }}>{a}</span>
-            ))}
-          </div>
-          <p style={{ fontSize: 14, fontWeight: 500, color: '#F4EDE1', margin: 0, flexShrink: 0 }}>
+        <p style={{ fontSize:15, fontWeight:700, color:C.text, margin:'0 0 2px', fontFamily:'var(--font-interface)' }}>{busOperator}</p>
+        {busOperatorNative && busOperatorNative !== busOperator &&
+          <p style={{ fontFamily:"'Playfair Display',Georgia,serif", fontStyle:'italic', fontSize:11, color:C.muted, margin:'0 0 10px' }}>{busOperatorNative}</p>}
+        <RouteTimeline from={origin} fromSub={boardingPoint} to={destination} toSub={droppingPoint} duration={duration} subLabel={tripType} accent={accentColor} Icon={Bus} />
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:8, flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>{amenities.map(a => <Chip key={a} label={a} />)}</div>
+          <p style={{ fontSize:14, fontWeight:700, color:C.text, margin:0, flexShrink:0 }}>
             ₹{fareRange.low.toLocaleString('en-IN')}–{fareRange.high.toLocaleString('en-IN')}
           </p>
         </div>
@@ -568,308 +407,186 @@ function BusCard({ bus }) {
 }
 
 function BusesDetail({ data }) {
-  const [activeFilter, setActiveFilter] = useState('all')
+  const [filter, setFilter] = useState('all')
   const { buses, note } = data.data
-
-  const filtered = activeFilter === 'all'
-    ? buses
-    : buses.filter(b => b.category === activeFilter)
-
+  const shown = filter === 'all' ? buses : buses.filter(b => b.category === filter)
   return (
     <>
       <ConfidenceBand confidence={data.confidence} note={note} />
-
-      {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 7, marginBottom: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
-        {BUS_FILTERS.map(f => {
-          const active = activeFilter === f.key
-          return (
-            <button
-              key={f.key}
-              onClick={() => setActiveFilter(f.key)}
-              style={{
-                fontSize: 11, borderRadius: 999, padding: '5px 13px',
-                whiteSpace: 'nowrap', cursor: 'pointer', border: 'none',
-                background: active ? '#E0652E' : 'transparent',
-                color: active ? '#F4EDE1' : '#9CA3C4',
-                outline: active ? 'none' : '1px solid #353C66',
-                fontWeight: active ? 500 : 400, fontFamily: 'inherit',
-              }}
-            >{f.label}</button>
-          )
-        })}
-      </div>
-
-      {/* Bus cards */}
-      {filtered.length > 0
-        ? filtered.map(b => <BusCard key={b.busOperator} bus={b} />)
-        : <p style={{ fontSize: 12, color: '#7C82A6', margin: '8px 0' }}>No buses in this category.</p>
-      }
-
-      {/* Boarding callout */}
-      <div style={{
-        background: '#1A1F3A', border: '1px dashed #4FA8A0',
-        borderRadius: 12, padding: '11px 14px', marginTop: 4,
-        display: 'flex', alignItems: 'center', gap: 10,
-      }}>
-        <span style={{ fontSize: 16, flexShrink: 0 }}>📍</span>
+      <FilterPills filters={BUS_FILTERS} active={filter} onSelect={setFilter} />
+      {shown.length > 0
+        ? shown.map(b => <BusCard key={b.busOperator} bus={b} />)
+        : <p style={{ fontSize:12, color:C.muted, margin:'8px 0' }}>No buses in this category.</p>}
+      <div style={{ background:'rgba(13,115,119,.12)', border:'1px dashed rgba(13,115,119,.38)', borderRadius:12, padding:'11px 14px', marginTop:8, display:'flex', gap:10, alignItems:'center' }}>
+        <span style={{ fontSize:16, flexShrink:0 }}>📍</span>
         <div>
-          <p style={{ fontSize: 10, letterSpacing: '.07em', textTransform: 'uppercase', color: '#4FA8A0', margin: '0 0 2px', fontWeight: 500 }}>Boarding point</p>
-          <p style={{ fontSize: 12, color: '#C7CBE0', margin: 0 }}>Hill Cart Road & Siliguri Junction · 75+ daily departures</p>
+          <p style={{ fontSize:10, letterSpacing:'.07em', textTransform:'uppercase', color:'var(--accent-teal)', margin:'0 0 2px', fontWeight:700 }}>Boarding point</p>
+          <p style={{ fontSize:12, color:C.sub, margin:0 }}>Hill Cart Road & Siliguri Junction · 75+ daily departures</p>
         </div>
       </div>
-
-      <p style={{ fontSize: 10, color: '#555E8C', lineHeight: 1.6, margin: '8px 0 0', fontStyle: 'italic' }}>
-        Fare ranges are indicative — prices vary by platform and seat type. Confirm directly with the operator.
-      </p>
+      <p style={{ fontSize:10, color:C.muted, lineHeight:1.6, margin:'8px 0 0', fontStyle:'italic' }}>Fare ranges are indicative. Confirm directly with the operator.</p>
     </>
   )
 }
 
+// ── Hotel cards ────────────────────────────────────────────────────────────
 const HOTEL_FILTERS = [
-  { key: 'all',       label: 'All' },
-  { key: 'budget',    label: 'Budget' },
-  { key: 'mid-range', label: 'Mid-range' },
-  { key: 'luxury',    label: 'Luxury' },
+  { key:'all', label:'All' }, { key:'budget', label:'Budget' },
+  { key:'mid-range', label:'Mid-range' }, { key:'luxury', label:'Luxury' },
 ]
 
-const TIER_COLOR = {
-  Luxury:      '#D9A441',
-  'Mid-range': '#4FA8A0',
-  Budget:      '#9CA3C4',
-}
-
 function StarRating({ count }) {
-  return (
-    <span style={{ fontSize: 9, color: '#D9A441', letterSpacing: 1 }}>
-      {'★'.repeat(count)}{'☆'.repeat(5 - count)}
-    </span>
-  )
+  return <span style={{ fontSize:9, color:'var(--accent-gold)', letterSpacing:1 }}>{'★'.repeat(count)}{'☆'.repeat(5 - count)}</span>
 }
 
 function HotelCard({ hotel }) {
   const { name, tier, stars, area, description, typicalPricePerNight } = hotel
-  const tierColor = TIER_COLOR[tier] || '#9CA3C4'
-
+  const tierAccent = tier === 'Luxury' ? 'var(--accent-gold)' : tier === 'Mid-range' ? 'var(--accent-teal)' : C.sub
   return (
-    <div style={{
-      background: '#1F2547', border: '0.5px solid #353C66',
-      borderRadius: 14, padding: '13px 14px', marginBottom: 10,
-    }}>
-      {/* Top row: name + tier badge */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
-        <div style={{ flex: 1, marginRight: 10 }}>
-          <p style={{ fontSize: 13, fontWeight: 500, color: '#F4EDE1', margin: '0 0 4px' }}>{name}</p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+    <div style={{ background:C.card, backdropFilter:'blur(14px)', border:`1px solid ${C.border}`, borderRadius:14, padding:'13px 14px', marginBottom:10, boxShadow:C.shadow }}>
+      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
+        <div style={{ flex:1, marginRight:10, minWidth:0 }}>
+          <p style={{ fontSize:13, fontWeight:700, color:C.text, margin:'0 0 4px', fontFamily:'var(--font-interface)' }}>{name}</p>
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
             <StarRating count={stars} />
-            <span style={{ fontSize: 9, color: '#7C82A6' }}>{area}</span>
+            <span style={{ fontSize:9, color:C.muted }}>{area}</span>
           </div>
         </div>
-        <span style={{
-          fontSize: 9, fontWeight: 500, flexShrink: 0,
-          color: tierColor,
-          background: `${tierColor}1A`,
-          border: `1px solid ${tierColor}`,
-          borderRadius: 999, padding: '2px 9px',
-        }}>{tier}</span>
+        <Chip label={tier} color={tierAccent} border={C.border} />
       </div>
-
-      {/* Divider row: description + price */}
-      <div style={{
-        borderTop: '1px dashed #2B3158', paddingTop: 8,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <span style={{ fontSize: 11, color: '#9CA3C4' }}>{description}</span>
-        <span style={{ fontSize: 13, fontWeight: 500, color: '#F4EDE1', flexShrink: 0 }}>
+      <div style={{ borderTop:`1px dashed ${C.borderFaint}`, paddingTop:8, display:'flex', alignItems:'center', justifyContent:'space-between', gap:8, flexWrap:'wrap' }}>
+        <span style={{ fontSize:11, color:C.sub, flex:1 }}>{description}</span>
+        <span style={{ fontSize:13, fontWeight:700, color:C.text, flexShrink:0 }}>
           ~₹{typicalPricePerNight.toLocaleString('en-IN')}
-          <span style={{ fontSize: 10, fontWeight: 400, color: '#7C82A6' }}>/night</span>
+          <span style={{ fontSize:10, fontWeight:400, color:C.muted }}>/night</span>
         </span>
       </div>
     </div>
   )
 }
 
-function HotelsDetail({ data, destination }) {
-  const [activeFilter, setActiveFilter] = useState('all')
+function HotelsDetail({ data }) {
+  const [filter, setFilter] = useState('all')
   const { hotels, note } = data.data
-
-  const filtered = activeFilter === 'all'
-    ? hotels
-    : hotels.filter(h => h.category === activeFilter)
-
+  const shown = filter === 'all' ? hotels : hotels.filter(h => h.category === filter)
   return (
     <>
       <ConfidenceBand confidence={data.confidence} note={note} />
-
-      {/* Filter pills */}
-      <div style={{ display: 'flex', gap: 7, marginBottom: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
-        {HOTEL_FILTERS.map(f => {
-          const active = activeFilter === f.key
-          const pillColor = f.key === 'luxury' ? '#D9A441' : f.key === 'mid-range' ? '#4FA8A0' : f.key === 'budget' ? '#9CA3C4' : '#D9A441'
-          return (
-            <button
-              key={f.key}
-              onClick={() => setActiveFilter(f.key)}
-              style={{
-                fontSize: 11, borderRadius: 999, padding: '5px 13px',
-                whiteSpace: 'nowrap', cursor: 'pointer', border: 'none',
-                background: active ? pillColor : 'transparent',
-                color: active ? (f.key === 'all' || f.key === 'luxury' ? '#161B30' : '#161B30') : '#9CA3C4',
-                outline: active ? 'none' : '1px solid #353C66',
-                fontWeight: active ? 600 : 400, fontFamily: 'inherit',
-                transition: 'all .15s',
-              }}
-            >{f.label}</button>
-          )
-        })}
-      </div>
-
-      {/* Hotel cards */}
-      {filtered.length > 0
-        ? filtered.map(h => <HotelCard key={h.name} hotel={h} />)
-        : <p style={{ fontSize: 12, color: '#7C82A6', margin: '8px 0' }}>No hotels in this category.</p>
-      }
-
-      <p style={{ fontSize: 10, color: '#555E8C', lineHeight: 1.6, margin: '6px 0 0', fontStyle: 'italic' }}>
-        Prices fluctuate — always confirm directly with the property. KothaSetu does not handle bookings.
+      <FilterPills filters={HOTEL_FILTERS} active={filter} onSelect={setFilter} />
+      {shown.length > 0
+        ? shown.map(h => <HotelCard key={h.name} hotel={h} />)
+        : <p style={{ fontSize:12, color:C.muted, margin:'8px 0' }}>No hotels in this category.</p>}
+      <p style={{ fontSize:10, color:C.muted, lineHeight:1.6, margin:'6px 0 0', fontStyle:'italic' }}>
+        Prices fluctuate — confirm directly with the property. KothaSetu does not handle bookings.
       </p>
     </>
   )
 }
 
-function FlightsDetail({ data, origin, destination, date }) {
+// ── Flights ────────────────────────────────────────────────────────────────
+function FlightsDetail({ data }) {
   if (!data) return null
-  const flights = data.data
   return (
     <>
       <ConfidenceBand
         confidence={data.confidence}
         note={data.lastVerified
-          ? `Real-time prices fetched at ${new Date(data.lastVerified).toLocaleTimeString()}.`
+          ? `Live prices fetched at ${new Date(data.lastVerified).toLocaleTimeString()}.`
           : 'Real-time prices and schedules, fetched just now.'}
       />
-      {flights.map(f => (
-        <div key={f.flightNumber} style={{
-          background: '#1F2547', border: '0.5px solid #353C66',
-          borderRadius: 12, padding: '13px 14px', marginBottom: 8,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <p style={{ fontSize: 13, fontWeight: 500, color: '#F4EDE1', margin: 0 }}>{f.airline}</p>
-            <span style={{ fontSize: 10, color: '#7C82A6' }}>{f.flightNumber}</span>
+      {data.data.map(f => (
+        <div key={f.flightNumber} style={{ background:C.card, backdropFilter:'blur(14px)', border:`1px solid ${C.border}`, borderRadius:12, padding:'13px 14px', marginBottom:8, boxShadow:C.shadow }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+            <p style={{ fontSize:13, fontWeight:700, color:C.text, margin:0, fontFamily:'var(--font-interface)' }}>{f.airline}</p>
+            <span style={{ fontSize:10, color:C.muted }}>{f.flightNumber}</span>
           </div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '8px 0', borderTop: '1px dashed #2B3158', borderBottom: '1px dashed #2B3158',
-            marginBottom: 8,
-          }}>
-            <p style={{ fontSize: 15, fontWeight: 500, color: '#F4EDE1', margin: 0 }}>{f.departure}</p>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-              <span style={{ fontSize: 9, color: '#7C82A6' }}>{f.duration} · {f.stops === 0 ? 'Direct' : `${f.stops} stop`}</span>
-              <div style={{ width: '100%', display: 'flex', alignItems: 'center' }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', border: '1.5px solid #4FA8A0', flexShrink: 0 }} />
-                <div style={{ flex: 1, height: 1, borderTop: '1.5px dashed #4FA8A0', opacity: .5 }} />
-                <Plane size={11} color="#4FA8A0" style={{ flexShrink: 0, transform: 'rotate(90deg)' }} />
-                <div style={{ flex: 1, height: 1, borderTop: '1.5px dashed #4FA8A0', opacity: .5 }} />
-                <div style={{ width: 5, height: 5, borderRadius: '50%', border: '1.5px solid #4FA8A0', flexShrink: 0 }} />
-              </div>
-            </div>
-            <p style={{ fontSize: 15, fontWeight: 500, color: '#F4EDE1', margin: 0 }}>{f.arrival}</p>
-          </div>
-          <p style={{ fontSize: 14, fontWeight: 500, color: '#F4EDE1', margin: 0 }}>
-            From ₹{f.price.toLocaleString('en-IN')} <span style={{ fontSize: 10, fontWeight: 400, color: '#7C82A6' }}>per person</span>
+          <RouteTimeline from={f.departure} fromSub="" to={f.arrival} toSub="" duration={f.duration}
+            subLabel={f.stops === 0 ? 'Direct' : `${f.stops} stop`} accent="var(--accent-teal)" Icon={Plane} />
+          <p style={{ fontSize:14, fontWeight:700, color:C.text, margin:0 }}>
+            From ₹{f.price.toLocaleString('en-IN')}
+            <span style={{ fontSize:10, fontWeight:400, color:C.muted }}> per person</span>
           </p>
         </div>
       ))}
-      <p style={{ fontSize: 10, color: '#555E8C', lineHeight: 1.55, margin: '6px 0 0', fontStyle: 'italic' }}>
+      <p style={{ fontSize:10, color:C.muted, lineHeight:1.55, margin:'6px 0 0', fontStyle:'italic' }}>
         Fetched live on tap — KothaSetu calls a metered API for flights, so it loads only when you ask.
       </p>
     </>
   )
 }
 
+// ── SCREEN 3: Detail ───────────────────────────────────────────────────────
+const DETAIL_META = {
+  flights:{ title:'✈ Flights', accent:'var(--accent-teal)'    },
+  trains: { title:'🚂 Trains',  accent:'var(--accent-primary)' },
+  buses:  { title:'🚌 Buses',   accent:'var(--accent-primary)' },
+  hotels: { title:'🏨 Hotels',  accent:'var(--accent-gold)'    },
+}
+
 function DetailScreen({ mode, overview, flightData, flightLoading, flightError, onBack }) {
   const { origin, destination, date } = overview
-
-  const titles = { flights: '✈ Flights', trains: '🚂 Trains', buses: '🚌 Buses', hotels: '🏨 Hotels' }
-  const accentColors = {
-    flights: '#4FA8A0', trains: '#E0652E', buses: '#E0652E', hotels: '#D9A441',
-  }
-  const accent = accentColors[mode]
-
+  const meta = DETAIL_META[mode] || { title:mode, accent:'var(--accent-primary)' }
   return (
-    <div style={{ paddingBottom: 24 }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '18px 20px 0' }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
-          <ArrowLeft size={18} color="#9CA3C4" />
+    <div>
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 16px 0' }}>
+        <button onClick={onBack} style={{
+          background:C.bg2, border:`1px solid ${C.border}`, cursor:'pointer',
+          padding:'6px 8px', borderRadius:8, color:C.sub, display:'flex', minHeight:'auto',
+        }}>
+          <ArrowLeft size={18} />
         </button>
-        <div>
-          <p style={{
-            fontFamily: 'var(--font-serif, Georgia, serif)',
-            fontSize: 18, fontWeight: 500, color: '#F4EDE1', margin: 0,
-          }}>
-            <em style={{ fontStyle: 'italic', color: accent }}>{titles[mode]}</em>
+        <div style={{ minWidth:0 }}>
+          <p style={{ fontFamily:"'Baloo Da 2','Hind Siliguri',sans-serif", fontSize:18, fontWeight:800, color:C.text, margin:0 }}>
+            <span style={{ color:meta.accent }}>{meta.title}</span>
           </p>
-          <p style={{ fontSize: 11, color: '#7C82A6', margin: '2px 0 0' }}>
+          <p style={{ fontSize:11, color:C.muted, margin:'2px 0 0', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
             {origin} → {destination} · {formatDisplayDate(date)}
           </p>
         </div>
       </div>
-
-      <Alpona color={accent} />
-
-      <div style={{ padding: '0 20px' }}>
-        {mode === 'trains' && <TrainsDetail data={overview.trains} />}
-        {mode === 'buses'  && <BusesDetail data={overview.buses} />}
-        {mode === 'hotels' && <HotelsDetail data={overview.hotels} destination={destination} />}
+      <div style={{ padding:'0 16px 24px' }}>
+        <Alpona accent={meta.accent} />
+        {mode === 'trains'  && <TrainsDetail data={overview.trains} />}
+        {mode === 'buses'   && <BusesDetail  data={overview.buses}  />}
+        {mode === 'hotels'  && <HotelsDetail data={overview.hotels} />}
         {mode === 'flights' && (
           flightLoading
-            ? <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '20px 0', color: '#7C82A6' }}>
-                <Loader2 size={18} style={{ animation: 'ks-spin 1s linear infinite' }} />
-                <span style={{ fontSize: 13 }}>Loading live flight data…</span>
+            ? <div style={{ display:'flex', alignItems:'center', gap:10, padding:'20px 0', color:C.muted }}>
+                <Loader2 size={18} className="ti-spin" />
+                <span style={{ fontSize:13 }}>Loading live flight data…</span>
               </div>
             : flightError
-              ? <p style={{ fontSize: 13, color: '#E0652E', margin: '12px 0' }}>{flightError}</p>
-              : <FlightsDetail data={flightData} origin={origin} destination={destination} date={date} />
+              ? <p style={{ fontSize:13, color:'var(--accent-primary)', margin:'12px 0', lineHeight:1.5 }}>{flightError}</p>
+              : <FlightsDetail data={flightData} />
         )}
       </div>
     </div>
   )
 }
 
-// ── Root page component ────────────────────────────────────────────────────────
+// ── Root ───────────────────────────────────────────────────────────────────
 export default function TravelInfo() {
-  const [screen, setScreen] = useState('search') // 'search' | 'results' | 'detail'
-  const [overview, setOverview] = useState(null)
-  const [activeMode, setActiveMode] = useState(null)
-  const [flightData, setFlightData] = useState(null)
+  const { darkMode } = useAppStore()
+  const [screen,        setScreen]        = useState('search')
+  const [overview,      setOverview]      = useState(null)
+  const [activeMode,    setActiveMode]    = useState(null)
+  const [flightData,    setFlightData]    = useState(null)
   const [flightLoading, setFlightLoading] = useState(false)
-  const [flightError, setFlightError] = useState(null)
-  const flightFetched = useRef(false)
+  const [flightError,   setFlightError]   = useState(null)
+  const flightFetched                     = useRef(false)
 
   function handleSearch(data) {
-    setOverview(data)
-    setFlightData(null)
-    flightFetched.current = false
-    setScreen('results')
+    setOverview(data); setFlightData(null); flightFetched.current = false; setScreen('results')
   }
 
   async function handleSelectMode(mode) {
-    setActiveMode(mode)
-    setScreen('detail')
-
+    setActiveMode(mode); setScreen('detail')
     if (mode === 'flights' && !flightFetched.current) {
-      flightFetched.current = true
-      setFlightLoading(true)
-      setFlightError(null)
+      flightFetched.current = true; setFlightLoading(true); setFlightError(null)
       try {
-        const params = new URLSearchParams({
-          origin: overview.origin,
-          destination: overview.destination,
-          date: overview.date,
-        })
-        const res = await fetch(`${API_BASE}/api/flights-info?${params}`)
-        const data = await res.json()
+        const params = new URLSearchParams({ origin:overview.origin, destination:overview.destination, date:overview.date })
+        const res    = await fetch(`${API_BASE}/api/flights-info?${params}`)
+        const data   = await res.json()
         if (!res.ok) throw new Error(data.error || 'Failed to load flights')
         setFlightData(data)
       } catch (err) {
@@ -881,42 +598,38 @@ export default function TravelInfo() {
   }
 
   return (
-    <div style={{
-      minHeight: '100dvh',
-      background: '#161B30',
-      color: '#F4EDE1',
-      fontFamily: 'var(--font-sans, "Hind Siliguri", sans-serif)',
-      maxWidth: 480,
-      margin: '0 auto',
-      position: 'relative',
-    }}>
+    <>
       <style>{`
-        @keyframes ks-spin { to { transform: rotate(360deg); } }
-        .ks-tcard-hover:hover { border-color: #D9A441 !important; }
+        .ti-spin { animation: ti-kf .9s linear infinite; display:inline-block; }
+        @keyframes ti-kf { to { transform:rotate(360deg); } }
+        .ti-content input::placeholder { color: rgba(255,255,255,.28); }
       `}</style>
 
-      {screen === 'search' && (
-        <SearchScreen onSearch={handleSearch} />
-      )}
+      {/* Fixed photo background — same pattern as Guide, SeasonalGuide, PhraseBank */}
+      <div className="pb-bg" aria-hidden="true">
+        <img src={trainBg} alt="" style={{ objectPosition:'center 60%' }} />
+        <div className="pb-bg-overlay pb-bg-overlay--overcast" />
+      </div>
 
-      {screen === 'results' && overview && (
-        <ResultsScreen
-          overview={overview}
-          onSelect={handleSelectMode}
-          onBack={() => setScreen('search')}
-        />
-      )}
+      {/* Scrollable content layer */}
+      <div className="ti-content" style={{
+        position:'relative', zIndex:1,
+        maxWidth:640, margin:'0 auto',
+        fontFamily:'var(--font-interface)',
+        paddingBottom:'calc(88px + env(safe-area-inset-bottom,0px))',
+      }}>
+        <PageHeader />
 
-      {screen === 'detail' && overview && (
-        <DetailScreen
-          mode={activeMode}
-          overview={overview}
-          flightData={flightData}
-          flightLoading={flightLoading}
-          flightError={flightError}
-          onBack={() => setScreen('results')}
-        />
-      )}
-    </div>
+        {screen === 'search'  && <SearchScreen onSearch={handleSearch} darkMode={darkMode} />}
+        {screen === 'results' && overview && <ResultsScreen overview={overview} onSelect={handleSelectMode} onBack={() => setScreen('search')} />}
+        {screen === 'detail'  && overview && (
+          <DetailScreen
+            mode={activeMode} overview={overview}
+            flightData={flightData} flightLoading={flightLoading} flightError={flightError}
+            onBack={() => setScreen('results')}
+          />
+        )}
+      </div>
+    </>
   )
 }

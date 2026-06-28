@@ -24,7 +24,7 @@ export default function PageHeader() {
         <span className="bh-brand">কথাসেতু</span>
         <AlpanaBar />
       </Link>
-      <Link to="/discover" className="bh-search-btn" aria-label="Search">
+      <Link to="/places/explore" className="bh-search-btn" aria-label="Explore places">
         <Search size={19} />
       </Link>
     </div>
