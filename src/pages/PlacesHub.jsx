@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarRange, MapPinned } from 'lucide-react'
+import { CalendarRange, MapPinned, UtensilsCrossed } from 'lucide-react'
 import templeImg from '../assets/temple.jpg'
 import PageHeader from '../components/layout/PageHeader'
 
@@ -17,6 +17,7 @@ const COPY = {
     seasonBn: 'ঋতু গাইড',
     seasonDesc: 'Compare weather, road, forest, sea, and festival conditions across all eight regions of West Bengal.',
     seasonCount: '8 regions',
+    food: 'Local Food', foodBn: 'স্থানীয় খাবার', foodDesc: 'Everyday plates, must-try specialties, and rare traditions—guided by where and how they are respectfully found.', foodCount: '15 food stories',
   },
   bn: {
     eyebrow: 'আঞ্চলিক ভ্রমণ পরিকল্পনা করুন',
@@ -30,6 +31,7 @@ const COPY = {
     seasonBn: 'ঋতু গাইড',
     seasonDesc: 'আটটি অঞ্চলের আবহাওয়া, রাস্তা, বন, সমুদ্র ও উৎসবের পরিস্থিতি তুলনা করুন।',
     seasonCount: '৮টি অঞ্চল',
+    food: 'স্থানীয় খাবার', foodBn: 'খাবারের গল্প', foodDesc: 'রোজকার খাবার থেকে বিশেষ ঐতিহ্য—কোথায় এবং কীভাবে সম্মানের সঙ্গে খুঁজে পাবেন।', foodCount: '১৫টি খাবারের গল্প',
   },
   ne: {
     eyebrow: 'क्षेत्रीय यात्रा योजना बनाउनुहोस्',
@@ -43,6 +45,7 @@ const COPY = {
     seasonBn: 'मौसम गाइड',
     seasonDesc: 'आठ क्षेत्रका मौसम, सडक, वन, समुद्र र चाडपर्वको अवस्था तुलना गर्नुहोस्।',
     seasonCount: '८ क्षेत्रहरू',
+    food: 'स्थानीय खाना', foodBn: 'खानाका कथा', foodDesc: 'दैनिक थालीदेखि विशेष परम्परासम्म—कहाँ र कसरी सम्मानपूर्वक पाउने।', foodCount: '१५ खाद्य कथाहरू',
   },
   hi: {
     eyebrow: 'क्षेत्रीय यात्रा की योजना बनाएँ',
@@ -56,6 +59,7 @@ const COPY = {
     seasonBn: 'मौसम गाइड',
     seasonDesc: 'आठ क्षेत्रों के मौसम, सड़क, वन, समुद्र और त्योहार की स्थितियों की तुलना करें।',
     seasonCount: '8 क्षेत्र',
+    food: 'स्थानीय भोजन', foodBn: 'खाने की कहानियाँ', foodDesc: 'रोज़मर्रा की थाली से दुर्लभ परंपराओं तक—उन्हें सम्मान से कहाँ और कैसे पाएँ।', foodCount: '15 भोजन कथाएँ',
   },
 }
 
@@ -125,6 +129,12 @@ export default function PlacesHub() {
               <span>Festivals</span>
               <span>Best time</span>
             </div>
+          </Link>
+
+          <Link to="/places/food" className="phv2-card phv2-card--food">
+            <div className="phv2-card-top"><span className="phv2-badge phv2-badge--teal"><UtensilsCrossed size={11}/> Food trail</span><span className="phv2-count">{copy.foodCount}</span></div>
+            <h2>{copy.food}</h2><p className="phv2-card-bn">{copy.foodBn}</p><p className="phv2-card-desc">{copy.foodDesc}</p>
+            <div className="phv2-tags"><span>Everyday</span><span>Must-try</span><span>Rare finds</span></div>
           </Link>
 
         </section>

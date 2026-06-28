@@ -41,6 +41,7 @@ export default function Navbar() {
     location.pathname === '/places' ||
     location.pathname === '/places/explore' ||
     location.pathname === '/places/seasons' ||
+    location.pathname === '/places/food' ||
     location.pathname === '/travel-info'
   ) return (
     <>
