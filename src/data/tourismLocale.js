@@ -73,6 +73,7 @@ export const REGION_NAMES = {
 }
 
 export const CATEGORY_NAMES = {
+  hidden: { en: 'Hidden gems', bn: 'অজানা রত্ন', ne: 'लुकेका रत्न', hi: 'छिपे रत्न' },
   heritage: { en: 'Heritage', bn: 'ঐতিহ্য', ne: 'सम्पदा', hi: 'विरासत' },
   nature: { en: 'Nature', bn: 'প্রকৃতি', ne: 'प्रकृति', hi: 'प्रकृति' },
   spiritual: { en: 'Spiritual', bn: 'ধর্মীয়', ne: 'धार्मिक', hi: 'धार्मिक' },

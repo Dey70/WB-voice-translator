@@ -5,6 +5,7 @@ import { REGIONAL_EXPANSION_SPOTS } from '../regionalExpansionSpots'
 import { getPlaceCategory, REGION_NAMES } from '../tourismLocale'
 import { getTourismPlaceName } from '../tourismPlaceNames'
 import { TOURISM_OFFICIAL_SOURCES } from '../contentAudit'
+import { buildRouteProfile } from '../routeAccess'
 
 const DEFAULT_DETAILS = {
   timing: 'Confirm current access and opening conditions before travel',
@@ -18,6 +19,7 @@ const normalizeSpot = (spot) => Object.freeze({
   access: spot.access || 'local',
   isHidden: Boolean(spot.isHidden),
   category: getPlaceCategory(spot.type),
+  route: buildRouteProfile(spot),
   detailKey: spot.detailKey || spot.id,
 })
 

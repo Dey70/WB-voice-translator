@@ -14,6 +14,35 @@ Pages consume repository functions, not raw content arrays. Raw files remain aut
 - Normalizes regions, access, category, hidden status, and detail keys.
 - Resolves names, descriptions, timing, fees, official sources, and map links.
 - Exposes region options, category options, ID lookup, and filtered queries.
+- Adds a normalized `route` profile to every destination: access type, validated destination/trailhead points, readiness, and validation errors.
+
+### Route access (Phase 1)
+
+`src/data/routeAccess.js`
+
+- Classifies every destination as `road_accessible`, `trek_only`, or `road_then_trek`.
+- Validates coordinates against the supported West Bengal and Sikkim coverage box.
+- Refuses to mark a destination live-route-ready until its required destination or trailhead coordinates exist.
+- Keeps explicit access exceptions in one auditable override table; Buxa currently uses `road_then_trek`.
+
+Author a road destination like this:
+
+```js
+route: {
+  accessType: 'road_accessible',
+  destination: { lat: 26.7271, lng: 88.3953 },
+}
+```
+
+For a mixed road and walking destination, also supply the point where road routing must stop:
+
+```js
+route: {
+  accessType: 'road_then_trek',
+  destination: { lat: 26.75, lng: 89.58 },
+  trailhead: { lat: 26.72, lng: 89.56 },
+}
+```
 
 ### Phrases
 

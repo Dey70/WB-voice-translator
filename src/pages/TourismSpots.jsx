@@ -22,6 +22,7 @@ const AUDIT_COPY = {
 }
 
 const CATEGORY_COLORS = {
+  hidden:    { bg: 'rgba(45,212,191,.18)', color: '#5eead4' },
   nature:    { bg: 'rgba(45,212,191,.18)', color: '#2dd4bf' },
   wildlife:  { bg: 'rgba(251,146,60,.18)', color: '#fb923c' },
   heritage:  { bg: 'rgba(167,139,250,.18)', color: '#a78bfa' },
@@ -72,8 +73,15 @@ export default function TourismSpots() {
   const catStyle = CATEGORY_COLORS[category] || CATEGORY_COLORS.default
 
   const regionOptions = useMemo(() => getTourismRegionOptions(language), [language])
-  const availableCategories = useMemo(() => getAvailableTourismCategories(region), [region])
-  const spots = useMemo(() => queryTourismSpots({ region, language, query, discovery: 'all', access: 'all', category }), [region, language, query, category])
+  const availableCategories = useMemo(() => ['hidden', ...getAvailableTourismCategories(region)], [region])
+  const spots = useMemo(() => queryTourismSpots({
+    region,
+    language,
+    query,
+    discovery: category === 'hidden' ? 'hidden' : 'all',
+    access: 'all',
+    category: category === 'hidden' ? 'all' : category,
+  }), [region, language, query, category])
 
   return (
     <main className="dv-page">
@@ -136,9 +144,12 @@ export default function TourismSpots() {
             return (
               <article key={spot.id} className="dv-card">
                 <div className="dv-card-top">
-                  <span className="dv-cat-badge" style={{ background: cs.bg, color: cs.color, borderColor: cs.color + '55' }}>
-                    {CATEGORY_NAMES[spot.category][language]}
-                  </span>
+                  <div className="dv-card-badges">
+                    <span className="dv-cat-badge" style={{ background: cs.bg, color: cs.color, borderColor: cs.color + '55' }}>
+                      {CATEGORY_NAMES[spot.category][language]}
+                    </span>
+                    {spot.isHidden && <span className="dv-cat-badge dv-hidden-badge">{copy.hiddenBadge}</span>}
+                  </div>
                   <span className="dv-access">{accessName}</span>
                 </div>
                 <h2 className="dv-card-title">{spot.name}</h2>

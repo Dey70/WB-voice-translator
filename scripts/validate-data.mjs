@@ -6,6 +6,7 @@ import { PHRASE_CATEGORIES, TOURIST_PHRASES } from '../src/data/touristPhrases.j
 import { LOCATION_CONTEXTS } from '../src/data/locationContexts.js'
 import { EMERGENCY_CONTACTS, OFFICIAL_SITES } from '../src/data/emergencyResources.js'
 import { EMERGENCY_CONTACT_SOURCES } from '../src/data/contentAudit.js'
+import { buildRouteProfile, ROUTE_ACCESS_TYPE_VALUES } from '../src/data/routeAccess.js'
 
 const LANGUAGES = ['en', 'bn', 'ne', 'hi']
 const issues = []
@@ -41,6 +42,10 @@ for (const spot of tourism) {
   const hasTranslatedDetails = Boolean(TOURISM_DETAIL_TRANSLATIONS[detailKey])
   if (!hasEnglishDetails) issues.push(`tourism: ${spot.id} lacks English timing/fee fallback`)
   if (!hasTranslatedDetails) issues.push(`tourism: ${spot.id} lacks translated timing/fee fallback for "${detailKey}"`)
+  const route = buildRouteProfile(spot)
+  if (!ROUTE_ACCESS_TYPE_VALUES.includes(route.accessType)) issues.push(`tourism: ${spot.id} has invalid route access type "${route.accessType}"`)
+  if (route.errors.includes('destination_outside_coverage')) issues.push(`tourism: ${spot.id} has destination coordinates outside route coverage`)
+  if (route.errors.includes('trailhead_outside_coverage')) issues.push(`tourism: ${spot.id} has trailhead coordinates outside route coverage`)
 }
 
 for (const phrase of TOURIST_PHRASES) {
@@ -69,4 +74,5 @@ if (issues.length) {
   process.exit(1)
 }
 
-console.log(`Data validation passed: ${tourism.length} places, ${TOURIST_PHRASES.length} phrases, ${LOCATION_CONTEXTS.length} location contexts, ${EMERGENCY_CONTACTS.length} emergency contacts.`)
+const routeReady = tourism.filter((spot) => buildRouteProfile(spot).canRequestLiveRoute).length
+console.log(`Data validation passed: ${tourism.length} places, ${TOURIST_PHRASES.length} phrases, ${LOCATION_CONTEXTS.length} location contexts, ${EMERGENCY_CONTACTS.length} emergency contacts. Route-ready: ${routeReady}/${tourism.length}.`)
