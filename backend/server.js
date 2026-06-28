@@ -1,4 +1,5 @@
 require('dotenv').config()
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env.local'), override: false })
 const express = require('express')
 const cors = require('cors')
 
@@ -151,25 +152,22 @@ function mockBusResults(origin, destination, date) {
 function mockFlightResults(origin, destination, date) {
   return [
     {
-      airline: 'IndiGo',
-      flightNumber: '6E 501',
+      airline: 'IndiGo', flightNumber: '6E 501',
       origin, destination, date,
       departure: '07:20', arrival: '09:15', duration: '1h 55m',
-      class: 'Economy', stops: 0, price: 4250, currency: 'INR',
+      stops: 0, price: 4250, currency: 'INR',
     },
     {
-      airline: 'Air India',
-      flightNumber: 'AI 764',
+      airline: 'Air India', flightNumber: 'AI 764',
       origin, destination, date,
       departure: '13:50', arrival: '16:10', duration: '2h 20m',
-      class: 'Economy', stops: 1, price: 5100, currency: 'INR',
+      stops: 1, price: 5100, currency: 'INR',
     },
     {
-      airline: 'SpiceJet',
-      flightNumber: 'SG 116',
+      airline: 'SpiceJet', flightNumber: 'SG 116',
       origin, destination, date,
       departure: '19:45', arrival: '21:30', duration: '1h 45m',
-      class: 'Economy', stops: 0, price: 3890, currency: 'INR',
+      stops: 0, price: 3890, currency: 'INR',
     },
   ]
 }
@@ -314,12 +312,12 @@ app.post('/api/search', async (req, res) => {
 
 // ── Information Booklet helpers ────────────────────────────────────────────────
 
-function withConfidence(data, confidence, lastVerified) {
+function withConfidence(data, confidence, lastVerified, extra = {}) {
   const allowed = ['live', 'scheduled-reference', 'curated-estimate']
   if (!allowed.includes(confidence)) {
     throw new Error(`withConfidence: invalid confidence "${confidence}"`)
   }
-  return { confidence, lastVerified, data }
+  return { confidence, lastVerified, data, ...extra }
 }
 
 function trainOverview(origin, destination, date) {
@@ -451,29 +449,170 @@ app.post('/api/overview', (req, res) => {
   })
 })
 
+// ── City / station → IATA lookup ──────────────────────────────────────────────
+const IATA_MAP = {
+  bagdogra: 'IXB', 'bagdogra airport': 'IXB', ixb: 'IXB',
+  kolkata: 'CCU', calcutta: 'CCU', ccu: 'CCU',
+  'netaji subhas': 'CCU', 'dum dum': 'CCU',
+  delhi: 'DEL', 'new delhi': 'DEL', del: 'DEL',
+  mumbai: 'BOM', bombay: 'BOM', bom: 'BOM',
+  chennai: 'MAA', madras: 'MAA', maa: 'MAA',
+  bengaluru: 'BLR', bangalore: 'BLR', blr: 'BLR',
+  hyderabad: 'HYD', hyd: 'HYD',
+  guwahati: 'GAU', gau: 'GAU',
+  'cooch behar': 'COH', coh: 'COH',
+  pune: 'PNQ', pnq: 'PNQ',
+  ahmedabad: 'AMD', amd: 'AMD',
+  'coimbatore': 'CJB', cjb: 'CJB',
+}
+
+function toIATA(city) {
+  return IATA_MAP[city.toLowerCase().trim()] || city.toUpperCase().trim()
+}
+
+function calcDuration(minutes) {
+  if (!minutes || minutes < 0) return '—'
+  return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`
+}
+
+function parseTime(str) {
+  if (!str) return '—'
+  const t = str.slice(-5)
+  return /^\d{2}:\d{2}$/.test(t) ? t : '—'
+}
+
 // ── GET /api/flights-info ──────────────────────────────────────────────────────
-app.get('/api/flights-info', (req, res) => {
+app.get('/api/flights-info', async (req, res) => {
   const { origin, destination, date } = req.query
 
   if (!origin || !destination) {
     const missing = ['origin', 'destination'].filter(k => !req.query[k])
-    return res.status(400).json({
-      error: `Missing required query parameter(s): ${missing.join(', ')}`,
-    })
+    return res.status(400).json({ error: `Missing required query parameter(s): ${missing.join(', ')}` })
   }
 
+  // ── Date validation ────────────────────────────────────────────────────────
   const resolvedDate = date || new Date().toISOString().split('T')[0]
-  logRequest(req, 'flights-info', { origin, destination, date: resolvedDate })
+  const parsedDate = new Date(resolvedDate + 'T00:00:00')
+  if (isNaN(parsedDate.getTime())) {
+    return res.json(withConfidence([], 'live', new Date().toISOString(), {
+      reason: `"${resolvedDate}" is not a valid date. Please check the date and try again.`,
+    }))
+  }
+  // Reject calendar dates that don't actually exist (e.g. June 31)
+  const [yr, mo, dy] = resolvedDate.split('-').map(Number)
+  if (parsedDate.getFullYear() !== yr || parsedDate.getMonth() + 1 !== mo || parsedDate.getDate() !== dy) {
+    return res.json(withConfidence([], 'live', new Date().toISOString(), {
+      reason: `${resolvedDate} doesn't exist on the calendar — for example, June only has 30 days. Please pick a valid date.`,
+    }))
+  }
 
-  // ── SWAP POINT ──────────────────────────────────────────────────────────────
-  // To connect the real FlightAPI used elsewhere in the project, replace the
-  // two lines below (mockFlightResults call + withConfidence wrap) with your
-  // live call, e.g.:
-  //   const flights = await searchFlights({ origin, destination, date: resolvedDate })
-  //   return res.json(withConfidence(flights, 'live', new Date().toISOString()))
-  // ── END SWAP POINT ──────────────────────────────────────────────────────────
-  const flights = mockFlightResults(origin, destination, resolvedDate)
-  return res.json(withConfidence(flights, 'live', new Date().toISOString()))
+  // ── Location validation ────────────────────────────────────────────────────
+  const depIATA = toIATA(origin)
+  const arrIATA = toIATA(destination)
+
+  // A location is unknown if it's not in our map AND doesn't look like a real
+  // IATA code (exactly 3 letters) or a meaningful city name (4+ chars)
+  const VALID_IATA = /^[A-Z]{3}$/
+  const isUnknown = loc => {
+    const key = loc.toLowerCase().trim()
+    if (IATA_MAP[key]) return false              // known city or code in our map
+    if (VALID_IATA.test(loc.toUpperCase().trim()) && loc.trim().length === 3) return false // looks like a real IATA code — let SerpAPI decide
+    return loc.trim().length < 4               // too short to be a real city name
+  }
+
+  // Catch anything that's clearly not a real place before hitting SerpAPI
+  const notRecognised = [origin, destination].filter(loc => {
+    const key = loc.toLowerCase().trim()
+    // Not in our map at all and either too short OR clearly gibberish (no vowels, repeated chars, etc.)
+    if (IATA_MAP[key]) return false
+    const clean = loc.trim()
+    if (clean.length < 3) return true
+    // If it's exactly 3 chars treat as IATA and let SerpAPI validate
+    if (clean.length === 3 && VALID_IATA.test(clean.toUpperCase())) return false
+    // For longer strings — require at least one vowel (real place names have them)
+    return !/[aeiouAEIOU]/.test(clean)
+  })
+
+  if (notRecognised.length) {
+    return res.json(withConfidence([], 'live', new Date().toISOString(), {
+      reason: `We don't recognise "${notRecognised.join('", "')}" as a city or airport. Try a full city name like "Kolkata" or "Bagdogra", or a 3-letter airport code like "CCU".`,
+    }))
+  }
+
+  logRequest(req, 'flights-info', { origin, destination, depIATA, arrIATA, date: resolvedDate })
+
+  const serpKey = process.env.VITE_SERPAPI_KEY || process.env.SERPAPI_KEY
+
+  // ── Live SerpAPI call ──────────────────────────────────────────────────────
+  if (serpKey) {
+    try {
+      const params = new URLSearchParams({
+        engine: 'google_flights',
+        departure_id: depIATA,
+        arrival_id: arrIATA,
+        outbound_date: resolvedDate,
+        currency: 'INR',
+        adults: '1',
+        travel_class: '1',
+        type: '2',
+        api_key: serpKey,
+      })
+      const upstream = await fetch(`https://serpapi.com/search?${params}`)
+      const data = await upstream.json()
+
+      if (!upstream.ok) {
+        const raw = (data.error || '').toLowerCase()
+        let reason = 'We couldn\'t load flights right now. Please try again in a moment.'
+        if (raw.includes('departure_id') || raw.includes('arrival_id') || raw.includes('not valid') || raw.includes('invalid')) {
+          reason = `We couldn't find an airport for "${raw.includes('departure') ? origin : destination}". Please use a full city name like "Kolkata" or a 3-letter airport code like "CCU".`
+        } else if (raw.includes('api_key') || raw.includes('key')) {
+          reason = 'Flight search is temporarily unavailable. Please try again later.'
+        } else if (raw.includes('quota') || raw.includes('limit')) {
+          reason = 'Flight search has reached its daily limit. Please try again tomorrow.'
+        }
+        return res.json(withConfidence([], 'live', new Date().toISOString(), { reason }))
+      }
+
+      const allFlights = [...(data.best_flights ?? []), ...(data.other_flights ?? [])]
+
+      if (!allFlights.length) {
+        return res.json(withConfidence([], 'live', new Date().toISOString(), {
+          reason: `No flights found from "${origin}" to "${destination}" on ${resolvedDate}. This route may not have direct or connecting service on that date.`,
+        }))
+      }
+
+      const flights = allFlights.slice(0, 6).map(f => {
+        const legs  = f.flights ?? []
+        const first = legs[0] ?? {}
+        const last  = legs[legs.length - 1] ?? first
+        return {
+          airline:      first.airline ?? 'Airline',
+          flightNumber: first.flight_number ?? '—',
+          departure:    parseTime(first.departure_airport?.time),
+          arrival:      parseTime(last.arrival_airport?.time),
+          duration:     calcDuration(f.total_duration),
+          stops:        Math.max(0, legs.length - 1),
+          price:        f.price ?? null,
+          currency:     'INR',
+        }
+      })
+
+      return res.json(withConfidence(flights, 'live', new Date().toISOString()))
+    } catch (err) {
+      console.error(`[flights-info] SerpAPI error: ${err.message}`)
+      const raw = err.message.toLowerCase()
+      let reason = 'Could not load flights right now. Please try again in a moment.'
+      if (raw.includes('not valid') || raw.includes('invalid') || raw.includes('departure_id') || raw.includes('arrival_id')) {
+        reason = `We couldn't find an airport matching your search. Try using a full city name like "Kolkata" or a 3-letter code like "CCU".`
+      }
+      return res.json(withConfidence([], 'live', new Date().toISOString(), { reason }))
+    }
+  }
+
+  // ── No API key configured ──────────────────────────────────────────────────
+  return res.json(withConfidence([], 'live', new Date().toISOString(), {
+    reason: 'Flight search is not configured on this server.',
+  }))
 })
 
 // ── Health check ───────────────────────────────────────────────────────────────

@@ -10,6 +10,56 @@ import {
 const API_BASE = 'http://localhost:3001'
 const TODAY    = new Date().toISOString().split('T')[0]
 
+// ── City → IATA lookup (mirrors backend IATA_MAP) ─────────────────────────
+const CITY_IATA = {
+  'bagdogra': 'IXB', 'bagdogra airport': 'IXB',
+  'kolkata': 'CCU', 'calcutta': 'CCU',
+  'delhi': 'DEL', 'new delhi': 'DEL',
+  'mumbai': 'BOM', 'bombay': 'BOM',
+  'chennai': 'MAA', 'madras': 'MAA',
+  'bengaluru': 'BLR', 'bangalore': 'BLR',
+  'hyderabad': 'HYD',
+  'guwahati': 'GAU',
+  'cooch behar': 'COH',
+  'pune': 'PNQ',
+  'ahmedabad': 'AMD',
+  'coimbatore': 'CJB',
+  'imphal': 'IMF',
+  'bhubaneswar': 'BBI',
+  'patna': 'PAT',
+  'varanasi': 'VNS',
+  'lucknow': 'LKO',
+  'jaipur': 'JAI',
+  'goa': 'GOI', 'panaji': 'GOI',
+  'kochi': 'COK', 'cochin': 'COK',
+  'thiruvananthapuram': 'TRV', 'trivandrum': 'TRV',
+  'amritsar': 'ATQ',
+  'srinagar': 'SXR',
+  'chandigarh': 'IXC',
+  'indore': 'IDR',
+  'nagpur': 'NAG',
+  'raipur': 'RPR',
+  'bhopal': 'BHO',
+  'visakhapatnam': 'VTZ', 'vizag': 'VTZ',
+}
+
+// Returns the IATA code if the input matches a known city, else null
+function resolveIATA(input) {
+  if (!input) return null
+  const key = input.toLowerCase().trim()
+  if (CITY_IATA[key]) return CITY_IATA[key]
+  // Check if it already IS a valid IATA code
+  if (/^[A-Z]{3}$/.test(input.toUpperCase().trim()) && input.trim().length === 3) {
+    return input.toUpperCase().trim()
+  }
+  return null
+}
+
+// For sending to the backend — prefer IATA code if resolvable
+function toBackendValue(input) {
+  return resolveIATA(input) || input.trim()
+}
+
 // ── Light-on-dark palette (photo bg is always dark-navy) ───────────────────
 const C = {
   text:        '#F4EDE1',
@@ -134,6 +184,22 @@ const FIELD = { background:C.card, border:`1px solid ${C.border}`, backdropFilte
 const LABEL = { fontSize:9, letterSpacing:'.07em', textTransform:'uppercase', color:C.muted, margin:'0 0 4px', fontWeight:700, display:'block' }
 const INPUT = { background:'transparent', border:'none', outline:'none', fontSize:15, fontWeight:500, color:C.text, width:'100%', fontFamily:'inherit' }
 
+// ── IATA badge shown inline inside the input ───────────────────────────────
+function IATABadge({ code }) {
+  if (!code) return null
+  return (
+    <span style={{
+      display:'inline-flex', alignItems:'center', gap:3,
+      padding:'2px 7px', borderRadius:6,
+      background:'rgba(13,115,119,0.14)', border:'1px solid rgba(13,115,119,0.3)',
+      color:'var(--accent-teal)', fontSize:11, fontWeight:700,
+      letterSpacing:'.05em', flexShrink:0, marginLeft:6,
+    }}>
+      {code}
+    </span>
+  )
+}
+
 // ── SCREEN 1: Search ───────────────────────────────────────────────────────
 function SearchScreen({ onSearch, darkMode }) {
   const [origin,      setOrigin]      = useState('')
@@ -141,8 +207,23 @@ function SearchScreen({ onSearch, darkMode }) {
   const [date,        setDate]        = useState(TODAY)
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState(null)
+  const [originIATA,  setOriginIATA]  = useState(null)
+  const [destIATA,    setDestIATA]    = useState(null)
 
-  const swap = () => { setOrigin(destination); setDestination(origin) }
+  // Resolve IATA on every keystroke so the badge appears as the user types
+  const handleOriginChange = (val) => {
+    setOrigin(val)
+    setOriginIATA(resolveIATA(val))
+  }
+  const handleDestChange = (val) => {
+    setDestination(val)
+    setDestIATA(resolveIATA(val))
+  }
+
+  const swap = () => {
+    setOrigin(destination);      setDestination(origin)
+    setOriginIATA(destIATA);    setDestIATA(originIATA)
+  }
 
   async function submit(e) {
     e.preventDefault()
@@ -151,7 +232,11 @@ function SearchScreen({ onSearch, darkMode }) {
     try {
       const res  = await fetch(`${API_BASE}/api/overview`, {
         method:'POST', headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ origin:origin.trim(), destination:destination.trim(), date }),
+        body: JSON.stringify({
+          origin: toBackendValue(origin),
+          destination: toBackendValue(destination),
+          date,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Request failed')
@@ -186,16 +271,47 @@ function SearchScreen({ onSearch, darkMode }) {
 
       <Alpona />
 
+      {/* Flight IATA disclaimer */}
+      <div style={{
+        display:'flex', alignItems:'flex-start', gap:10,
+        padding:'11px 14px', borderRadius:10, marginBottom:14,
+        background:'rgba(13,115,119,0.09)', border:'1px solid rgba(13,115,119,0.22)',
+      }}>
+        <Plane size={14} color="var(--accent-teal)" style={{ flexShrink:0, marginTop:2 }} />
+        <p style={{ margin:0, fontSize:12, color:'var(--accent-teal)', lineHeight:1.6 }}>
+          <strong>Flight search requires cities with airports.</strong>{' '}
+          Type a city name (e.g. <em>Kolkata</em>) and its IATA code (e.g. <strong>CCU</strong>) will appear automatically. Trains, buses &amp; hotels work for any location.
+        </p>
+      </div>
+
       {/* From / To */}
       <div style={{ position:'relative', marginBottom:10 }}>
         <div style={{ ...FIELD, borderRadius:'12px 12px 0 0', padding:'12px 48px 12px 14px' }}>
           <span style={LABEL}>From</span>
-          <input value={origin} onChange={e => setOrigin(e.target.value)} placeholder="City, station or airport" style={INPUT} autoComplete="off" />
+          <div style={{ display:'flex', alignItems:'center', gap:0, width:'100%' }}>
+            <input
+              value={origin}
+              onChange={e => handleOriginChange(e.target.value)}
+              placeholder="City, station or airport"
+              style={{ ...INPUT, flex:1 }}
+              autoComplete="off"
+            />
+            <IATABadge code={originIATA} />
+          </div>
         </div>
         <div style={{ height:1, background:C.borderFaint }} />
         <div style={{ ...FIELD, borderTop:'none', borderRadius:'0 0 12px 12px', padding:'12px 48px 12px 14px' }}>
           <span style={LABEL}>To</span>
-          <input value={destination} onChange={e => setDestination(e.target.value)} placeholder="City, station or airport" style={INPUT} autoComplete="off" />
+          <div style={{ display:'flex', alignItems:'center', gap:0, width:'100%' }}>
+            <input
+              value={destination}
+              onChange={e => handleDestChange(e.target.value)}
+              placeholder="City, station or airport"
+              style={{ ...INPUT, flex:1 }}
+              autoComplete="off"
+            />
+            <IATABadge code={destIATA} />
+          </div>
         </div>
         <button type="button" onClick={swap} aria-label="Swap" style={{
           position:'absolute', right:14, top:'50%', transform:'translateY(-50%)',
@@ -486,6 +602,11 @@ function HotelsDetail({ data }) {
 // ── Flights ────────────────────────────────────────────────────────────────
 function FlightsDetail({ data }) {
   if (!data) return null
+
+  const flights  = data.data   ?? []
+  const reason   = data.reason ?? null
+  const hasFlights = flights.length > 0
+
   return (
     <>
       <ConfidenceBand
@@ -494,23 +615,61 @@ function FlightsDetail({ data }) {
           ? `Live prices fetched at ${new Date(data.lastVerified).toLocaleTimeString()}.`
           : 'Real-time prices and schedules, fetched just now.'}
       />
-      {data.data.map(f => (
+
+      {/* ── Empty / error state ─────────────────────────────────────────── */}
+      {!hasFlights && (
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          textAlign: 'center', padding: '32px 16px', gap: 14,
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: '50%',
+            background: 'rgba(224,101,46,0.12)', border: '1px solid rgba(224,101,46,0.28)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Plane size={24} color="#E0652E" strokeWidth={1.5} />
+          </div>
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 600, color: '#F4EDE1', margin: '0 0 8px' }}>
+              No flights found
+            </p>
+            <p style={{ fontSize: 13, color: 'rgba(200,205,230,0.75)', lineHeight: 1.65, margin: 0, maxWidth: 300 }}>
+              {reason || 'No flights were found for this route and date. Try a different city or date.'}
+            </p>
+          </div>
+          <div style={{
+            background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)',
+            borderRadius: 10, padding: '10px 14px', fontSize: 11,
+            color: 'rgba(200,205,230,0.55)', lineHeight: 1.6,
+          }}>
+            Tip: use city names like <em>Kolkata</em>, <em>Delhi</em>, <em>Mumbai</em> or IATA codes like <em>CCU</em>, <em>DEL</em>.
+          </div>
+        </div>
+      )}
+
+      {/* ── Flight cards ────────────────────────────────────────────────── */}
+      {hasFlights && flights.map(f => (
         <div key={f.flightNumber} style={{ background:C.card, backdropFilter:'blur(14px)', border:`1px solid ${C.border}`, borderRadius:12, padding:'13px 14px', marginBottom:8, boxShadow:C.shadow }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-            <p style={{ fontSize:13, fontWeight:700, color:C.text, margin:0, fontFamily:'var(--font-interface)' }}>{f.airline}</p>
+            <p style={{ fontSize:13, fontWeight:700, color:C.text, margin:0 }}>{f.airline}</p>
             <span style={{ fontSize:10, color:C.muted }}>{f.flightNumber}</span>
           </div>
           <RouteTimeline from={f.departure} fromSub="" to={f.arrival} toSub="" duration={f.duration}
             subLabel={f.stops === 0 ? 'Direct' : `${f.stops} stop`} accent="var(--accent-teal)" Icon={Plane} />
-          <p style={{ fontSize:14, fontWeight:700, color:C.text, margin:0 }}>
-            From ₹{f.price.toLocaleString('en-IN')}
-            <span style={{ fontSize:10, fontWeight:400, color:C.muted }}> per person</span>
-          </p>
+          {f.price != null && (
+            <p style={{ fontSize:14, fontWeight:700, color:C.text, margin:0 }}>
+              From ₹{f.price.toLocaleString('en-IN')}
+              <span style={{ fontSize:10, fontWeight:400, color:C.muted }}> per person</span>
+            </p>
+          )}
         </div>
       ))}
-      <p style={{ fontSize:10, color:C.muted, lineHeight:1.55, margin:'6px 0 0', fontStyle:'italic' }}>
-        Fetched live on tap — KothaSetu calls a metered API for flights, so it loads only when you ask.
-      </p>
+
+      {hasFlights && (
+        <p style={{ fontSize:10, color:C.muted, lineHeight:1.55, margin:'6px 0 0', fontStyle:'italic' }}>
+          Fetched live on tap — KothaSetu calls a metered API for flights, so it loads only when you ask.
+        </p>
+      )}
     </>
   )
 }
