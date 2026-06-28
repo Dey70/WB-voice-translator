@@ -1,20 +1,20 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Mic, Compass, Bookmark, Home, Sun, Moon, Menu, X, MessageSquare, BookOpen, MapPinned, ShieldAlert, History, HeartHandshake, Landmark, Train } from 'lucide-react'
+import { Mic, Bookmark, Home, Sun, Moon, Menu, X, MessageSquare, BookOpen, MapPinned, ShieldAlert, History, HeartHandshake, Landmark, Train } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 
 const navItems = [
-  { to: '/',             icon: Home,          label: 'Home'         },
-  { to: '/translate',    icon: Mic,           label: 'Translate'    },
-  { to: '/discover',     icon: Compass,       label: 'Discover'     },
-  { to: '/collections',  icon: Bookmark,      label: 'Collections', mobileLabel: 'Saved' },
+  { to: '/',            icon: Home,     label: 'Home'         },
+  { to: '/translate',   icon: Mic,      label: 'Translate'    },
+  { to: '/travel-info', icon: Train,    label: 'Travel Info'  },
+  { to: '/collections', icon: Bookmark, label: 'Collections', mobileLabel: 'Saved' },
 ]
 
 const mobileNavItems = [
-  { to: '/discover', icon: Compass, label: 'Bookings' },
-  { to: '/phrases', icon: BookOpen, label: 'Phrases' },
-  { to: '/translate', icon: Mic, label: 'Translate', primary: true },
-  { to: '/guide', icon: Landmark, label: 'Guide' },
+  { to: '/travel-info', icon: Train,    label: 'Travel Info' },
+  { to: '/phrases',     icon: BookOpen, label: 'Phrases' },
+  { to: '/translate',   icon: Mic,      label: 'Translate', primary: true },
+  { to: '/guide',       icon: Landmark, label: 'Guide' },
 ]
 
 const moreItems = [
@@ -36,63 +36,6 @@ export default function Navbar() {
   const location = useLocation()
   const { darkMode, toggleDarkMode } = useAppStore()
   const [moreOpen, setMoreOpen] = useState(false)
-
-  // Discover page: no top nav, same bottom nav as other pages
-  if (location.pathname === '/discover') return (
-    <>
-      {moreOpen && <button className="more-backdrop" aria-label="Close menu" onClick={() => setMoreOpen(false)} />}
-      <aside id="more-menu" className={`more-menu ${moreOpen ? 'open' : ''}`} aria-hidden={!moreOpen}>
-        <header><div><span>Explore KothaSetu</span><strong>More tools</strong></div><button onClick={() => setMoreOpen(false)} aria-label="Close menu"><X size={19} /></button></header>
-        <div className="more-menu-grid">
-          {moreItems.map(({ to, icon: Icon, label, detail, urgent }) => (
-            <Link key={to} to={to} onClick={() => setMoreOpen(false)} className={urgent ? 'urgent' : ''} tabIndex={moreOpen ? 0 : -1}>
-              <span><Icon size={19} /></span><div><strong>{label}</strong><small>{detail}</small></div>
-            </Link>
-          ))}
-        </div>
-      </aside>
-      <nav className="mobile-nav-bar" aria-label="Main navigation" style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: darkMode ? 'rgba(28, 15, 5, 0.97)' : 'rgba(253, 246, 233, 0.97)',
-        backdropFilter: 'blur(20px)',
-        borderTop: '1px solid var(--border)',
-        zIndex: 50,
-        paddingBottom: 'env(safe-area-inset-bottom, 8px)',
-        transition: 'background 0.3s',
-      }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', width: '100%' }}>
-          {mobileNavItems.map(({ to, icon: Icon, label, primary }) => {
-            const active = isNavActive(location.pathname, to)
-            return (
-              <Link key={to} to={to} className={`mobile-tab-link${primary ? ' primary' : ''}`} aria-current={active ? 'page' : undefined} style={{
-                textDecoration: 'none', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                gap: 3, padding: '10px 0 8px',
-                color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
-              }}>
-                <div className="mobile-tab-icon" style={{
-                  width: 36, height: 28, borderRadius: 10,
-                  background: active ? 'rgba(200,86,10,0.12)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all 0.2s',
-                }}>
-                  <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
-                </div>
-                <span style={{
-                  fontSize: 10, fontWeight: active ? 600 : 400,
-                  textAlign: 'center', whiteSpace: 'nowrap',
-                  color: active ? 'var(--accent-secondary)' : 'var(--text-muted)',
-                }}>{label}</span>
-              </Link>
-            )
-          })}
-          <button className="mobile-tab-link mobile-more" onClick={() => setMoreOpen(true)} aria-expanded={moreOpen}>
-            <div className="mobile-tab-icon"><Menu size={20} /></div><span>More</span>
-          </button>
-        </div>
-      </nav>
-    </>
-  )
 
   if (location.pathname === '/places' || location.pathname === '/places/explore' || location.pathname === '/places/seasons') return (
     <>
@@ -199,13 +142,15 @@ export default function Navbar() {
                 ? 'Translation History'
                 : location.pathname === '/guide'
                   ? 'Guide'
-                  : location.pathname === '/culture' || location.pathname.startsWith('/places')
-                  ? 'Explore'
-                  : location.pathname === '/phrases'
-                    ? 'Phrasebook'
-                    : location.pathname === '/emergency'
-                      ? 'Emergency'
-                  : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
+                  : location.pathname === '/travel-info'
+                    ? 'Travel Information'
+                    : location.pathname === '/culture' || location.pathname.startsWith('/places')
+                      ? 'Explore'
+                      : location.pathname === '/phrases'
+                        ? 'Phrasebook'
+                        : location.pathname === '/emergency'
+                          ? 'Emergency'
+                          : navItems.find(n => n.to === location.pathname)?.label || 'KothaSetu'}
             </span>
           </div>
 

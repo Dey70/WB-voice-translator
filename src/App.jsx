@@ -15,7 +15,6 @@ const TourismSpots  = lazy(() => import('./pages/TourismSpots'))
 const PlacesHub     = lazy(() => import('./pages/PlacesHub'))
 const SeasonalGuide = lazy(() => import('./pages/SeasonalGuide'))
 const CulturalGuide = lazy(() => import('./pages/CulturalGuide'))
-const Discover      = lazy(() => import('./pages/Discover'))
 const Collections   = lazy(() => import('./pages/Collections'))
 const Guide         = lazy(() => import('./pages/Guide'))
 const TravelInfo    = lazy(() => import('./pages/TravelInfo'))
@@ -157,7 +156,6 @@ export default function App() {
             <Route path="/places/explore"element={<TourismSpots />} />
             <Route path="/places/seasons"element={<SeasonalGuide />} />
             <Route path="/culture"       element={<CulturalGuide />} />
-            <Route path="/discover"      element={<Discover />} />
             <Route path="/collections"   element={<Collections />} />
             <Route path="/guide"         element={<Guide />} />
             <Route path="/travel-info"   element={<TravelInfo />} />
