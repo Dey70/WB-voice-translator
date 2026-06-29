@@ -616,6 +616,256 @@ app.get('/api/flights-info', async (req, res) => {
 })
 
 // ── Health check ───────────────────────────────────────────────────────────────
+const GOOGLE_ROUTES_API_URL = 'https://routes.googleapis.com/directions/v2:computeRoutes'
+const GOOGLE_ROUTES_API_KEY = process.env.GOOGLE_ROUTES_API_KEY
+const ROUTE_TIMEOUT_MS = 8000
+const ROUTE_RETRY_DELAY_MS = 350
+const routeCache = new Map()
+const TREK_NOTE = 'This destination has no road access. See trek details below.'
+
+// GET /api/geocode - browser-key-independent fallback for typed destinations.
+app.get('/api/geocode', async (req, res) => {
+  const query = String(req.query.q || '').trim()
+  if (!query) return res.status(400).json({ error: 'Missing destination query.' })
+
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 6000)
+  try {
+    const params = new URLSearchParams({
+      q: query,
+      format: 'jsonv2',
+      countrycodes: 'in',
+      limit: '1',
+      viewbox: '85.8,27.5,89.9,21.5',
+      bounded: '1',
+      addressdetails: '1',
+    })
+    const upstream = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+      headers: { 'User-Agent': 'KothaSetu/1.0 (West Bengal travel route planner)' },
+      signal: controller.signal,
+    })
+    if (!upstream.ok) throw new Error(`Geocoder returned HTTP ${upstream.status}`)
+    const [place] = await upstream.json()
+    if (!place) return res.status(404).json({ error: 'Could not find that destination within West Bengal.' })
+    logRequest(req, 'geocode', { result: place.display_name })
+    return res.json({
+      name: place.name || place.display_name.split(',')[0],
+      district: place.address?.state_district || place.address?.county || place.address?.state || 'West Bengal',
+      lat: Number(place.lat),
+      lng: Number(place.lon),
+    })
+  } catch (error) {
+    logRequest(req, 'geocode-error', { error: error.message })
+    return res.status(503).json({ error: 'Destination search is temporarily unavailable.' })
+  } finally {
+    clearTimeout(timeout)
+  }
+})
+
+function routeCacheKey(...coordinates) {
+  return coordinates.map(value => Number(value).toFixed(4)).join(':')
+}
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const radians = degrees => degrees * Math.PI / 180
+  const earthRadiusKm = 6371
+  const deltaLat = radians(lat2 - lat1)
+  const deltaLng = radians(lng2 - lng1)
+  const a = Math.sin(deltaLat / 2) ** 2
+    + Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(deltaLng / 2) ** 2
+  return earthRadiusKm * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function degradedRoute(originLat, originLng, destinationLat, destinationLng, reason) {
+  const straightLineKm = haversineKm(originLat, originLng, destinationLat, destinationLng)
+  const estimatedMinutes = Math.max(1, Math.round((straightLineKm * 1.3) / 35 * 60))
+  return {
+    distanceKm: Number(straightLineKm.toFixed(1)),
+    durationText: `roughly ${calcDuration(estimatedMinutes)}`,
+    polyline: null,
+    source: 'degraded',
+    estimate: 'straight-line',
+    message: `Approx. ${straightLineKm.toFixed(1)} km straight-line distance; road travel is typically around ${calcDuration(estimatedMinutes)}.`,
+    reason,
+  }
+}
+
+function formatGoogleDuration(duration) {
+  const match = /^(\d+(?:\.\d+)?)s$/.exec(duration || '')
+  return match ? calcDuration(Math.max(1, Math.round(Number(match[1]) / 60))) : (duration || null)
+}
+
+function isValidEncodedPolyline(polyline) {
+  if (typeof polyline !== 'string' || !polyline.length) return false
+  let index = 0
+  while (index < polyline.length) {
+    for (let coordinate = 0; coordinate < 2; coordinate += 1) {
+      let byte
+      let shift = 0
+      do {
+        if (index >= polyline.length || shift > 30) return false
+        byte = polyline.charCodeAt(index++) - 63
+        if (byte < 0 || byte > 63) return false
+        shift += 5
+      } while (byte >= 0x20)
+    }
+  }
+  return true
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function fetchGoogleRoute(payload, simulateFailure) {
+  if (simulateFailure) return { ok: false, status: 429 }
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), ROUTE_TIMEOUT_MS)
+  try {
+    return await fetch(GOOGLE_ROUTES_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': GOOGLE_ROUTES_API_KEY,
+        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeout)
+  }
+}
+
+// POST /api/route
+app.post('/api/route', async (req, res) => {
+  logRequest(req, 'route-request')
+  const { originLat, originLng, destinationLat, destinationLng, destinationAccessType, originPlaceId, destinationPlaceId } = req.body
+  const coordinateNames = ['originLat', 'originLng', 'destinationLat', 'destinationLng']
+  const missing = coordinateNames.filter(name => req.body[name] === undefined || req.body[name] === null || req.body[name] === '')
+  if (missing.length) {
+    return res.status(400).json({ error: `Missing required coordinate field(s): ${missing.join(', ')}` })
+  }
+
+  const coordinates = { originLat, originLng, destinationLat, destinationLng }
+  const nonNumeric = coordinateNames.filter(name => typeof coordinates[name] === 'boolean' || !Number.isFinite(Number(coordinates[name])))
+  if (nonNumeric.length) {
+    return res.status(400).json({ error: `Coordinate field(s) must be numeric: ${nonNumeric.join(', ')}` })
+  }
+
+  const numeric = Object.fromEntries(Object.entries(coordinates).map(([name, value]) => [name, Number(value)]))
+  const outOfBounds = coordinateNames.filter(name => {
+    const [minimum, maximum] = name.endsWith('Lat') ? [21.5, 27.5] : [85.8, 89.9]
+    return numeric[name] < minimum || numeric[name] > maximum
+  })
+  if (outOfBounds.length) {
+    return res.status(400).json({
+      error: `Coordinate field(s) outside the supported West Bengal bounds (lat 21.5-27.5, lng 85.8-89.9): ${outOfBounds.join(', ')}`,
+    })
+  }
+
+  const validAccessTypes = ['road_accessible', 'trek_only', 'road_then_trek']
+  if (!validAccessTypes.includes(destinationAccessType)) {
+    return res.status(400).json({
+      error: `Invalid destinationAccessType "${destinationAccessType}". Allowed values: ${validAccessTypes.join(', ')}`,
+    })
+  }
+
+  if (destinationAccessType === 'trek_only') {
+    logRequest(req, 'route-static-trek', { googleCalled: false })
+    return res.json({ source: 'static', message: TREK_NOTE })
+  }
+
+  const key = routeCacheKey(numeric.originLat, numeric.originLng, numeric.destinationLat, numeric.destinationLng)
+  const simulateFailure = req.query.simulateGoogleFailure === 'true'
+  const cached = routeCache.get(key)
+  if (cached && !simulateFailure) {
+    logRequest(req, 'route-cache', { cacheKey: key })
+    return res.json({
+      ...cached.route,
+      source: 'cache',
+      lastCalculated: cached.calculatedAt,
+      ...(destinationAccessType === 'road_then_trek' ? { trekMessage: TREK_NOTE } : {}),
+    })
+  }
+
+  if (!GOOGLE_ROUTES_API_KEY) {
+    logRequest(req, 'route-not-configured')
+    return res.status(503).json({ error: 'Live routing is not configured on this server.', source: 'offline' })
+  }
+
+  const googlePayload = {
+    origin: originPlaceId
+      ? { placeId: originPlaceId }
+      : { location: { latLng: { latitude: numeric.originLat, longitude: numeric.originLng } } },
+    destination: destinationPlaceId
+      ? { placeId: destinationPlaceId }
+      : { location: { latLng: { latitude: numeric.destinationLat, longitude: numeric.destinationLng } } },
+    travelMode: 'DRIVE',
+    routingPreference: 'TRAFFIC_AWARE',
+  }
+  let upstream
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      upstream = await fetchGoogleRoute(googlePayload, simulateFailure)
+      break
+    } catch (error) {
+      const timedOut = error.name === 'AbortError'
+      if (timedOut && attempt === 1) {
+        logRequest(req, 'route-timeout-retry', { attempt })
+        await delay(ROUTE_RETRY_DELAY_MS)
+        continue
+      }
+      logRequest(req, timedOut ? 'route-timeout' : 'route-offline', { attempt, error: error.message })
+      return res.status(timedOut ? 504 : 503).json({
+        error: timedOut
+          ? 'Live route calculation timed out after one retry. Please retry manually.'
+          : "You're offline -- reconnect to calculate a live route.",
+        source: 'offline',
+        retryable: true,
+      })
+    }
+  }
+
+  if (!upstream.ok) {
+    const route = degradedRoute(
+      numeric.originLat, numeric.originLng, numeric.destinationLat, numeric.destinationLng,
+      simulateFailure ? 'Simulated Google API failure' : `Google Routes API returned HTTP ${upstream.status}`,
+    )
+    logRequest(req, 'route-degraded', { upstreamStatus: upstream.status })
+    return res.json({ ...route, ...(destinationAccessType === 'road_then_trek' ? { trekMessage: TREK_NOTE } : {}) })
+  }
+
+  let data
+  try {
+    data = await upstream.json()
+  } catch (error) {
+    const route = degradedRoute(numeric.originLat, numeric.originLng, numeric.destinationLat, numeric.destinationLng, 'Google returned a malformed response')
+    logRequest(req, 'route-degraded-malformed', { error: error.message })
+    return res.json({ ...route, ...(destinationAccessType === 'road_then_trek' ? { trekMessage: TREK_NOTE } : {}) })
+  }
+
+  const googleRoute = data?.routes?.[0]
+  if (!Number.isFinite(googleRoute?.distanceMeters) || !googleRoute?.duration) {
+    const route = degradedRoute(numeric.originLat, numeric.originLng, numeric.destinationLat, numeric.destinationLng, 'Google returned an empty or incomplete route')
+    logRequest(req, 'route-degraded-empty')
+    return res.json({ ...route, ...(destinationAccessType === 'road_then_trek' ? { trekMessage: TREK_NOTE } : {}) })
+  }
+
+  const encodedPolyline = googleRoute.polyline?.encodedPolyline
+  const route = {
+    distanceKm: Number((googleRoute.distanceMeters / 1000).toFixed(1)),
+    durationText: formatGoogleDuration(googleRoute.duration),
+    polyline: isValidEncodedPolyline(encodedPolyline) ? encodedPolyline : null,
+    source: 'live',
+  }
+  const calculatedAt = new Date().toISOString()
+  routeCache.set(key, { route, calculatedAt })
+  logRequest(req, 'route-live', { cacheKey: key, hasPolyline: Boolean(route.polyline) })
+  return res.json({ ...route, ...(destinationAccessType === 'road_then_trek' ? { trekMessage: TREK_NOTE } : {}) })
+})
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', port: PORT })
 })

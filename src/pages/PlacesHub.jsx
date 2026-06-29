@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarRange, MapPinned, UtensilsCrossed } from 'lucide-react'
+import { CalendarRange, Map, MapPinned, UtensilsCrossed } from 'lucide-react'
 import templeImg from '../assets/temple.jpg'
 import PageHeader from '../components/layout/PageHeader'
 
@@ -96,6 +96,13 @@ export default function PlacesHub() {
 
         {/* Cards */}
         <section className="phv2-cards" aria-label="Explore sections">
+
+          <Link to="/places/routes" className="phv2-card">
+            <div className="phv2-card-top"><span className="phv2-badge phv2-badge--orange"><Map size={11} /> Route planner</span><span className="phv2-count">Live + trek</span></div>
+            <h2>Route Map</h2><p className="phv2-card-bn">North Bengal journeys</p>
+            <p className="phv2-card-desc">Plan road-accessible trips and get honest static guidance for trek-only destinations.</p>
+            <div className="phv2-tags"><span>Live routes</span><span>Manual origin</span><span>Trek guidance</span></div>
+          </Link>
 
           <Link to="/places/explore" className="phv2-card">
             <div className="phv2-card-top">

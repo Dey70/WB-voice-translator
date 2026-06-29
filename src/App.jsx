@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/layout/Navbar'
 import OfflineNotice from './components/layout/OfflineNotice'
 import Onboarding from './components/layout/Onboarding'
@@ -19,6 +19,12 @@ const Collections   = lazy(() => import('./pages/Collections'))
 const Guide         = lazy(() => import('./pages/Guide'))
 const TravelInfo    = lazy(() => import('./pages/TravelInfo'))
 const FoodGuide     = lazy(() => import('./pages/FoodGuide'))
+const RouteMap      = lazy(() => import('./pages/RouteMap'))
+
+function RouteAwareNavbar() {
+  const { pathname } = useLocation()
+  return pathname === '/places/routes' ? null : <Navbar />
+}
 
 // Howrah Bridge silhouette — iconic cantilever bridge of Kolkata
 function HowrahBridge({ color }) {
@@ -142,7 +148,7 @@ export default function App() {
       </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <Navbar />
+        <RouteAwareNavbar />
         <OfflineNotice />
         <div id="main-content">
         <Suspense fallback={<div className="route-loader" role="status" aria-live="polite" aria-label="Loading page">Loading…</div>}>
@@ -157,6 +163,7 @@ export default function App() {
             <Route path="/places/explore"element={<TourismSpots />} />
             <Route path="/places/seasons"element={<SeasonalGuide />} />
             <Route path="/places/food"   element={<FoodGuide />} />
+            <Route path="/places/routes" element={<RouteMap />} />
             <Route path="/culture"       element={<CulturalGuide />} />
             <Route path="/collections"   element={<Collections />} />
             <Route path="/guide"         element={<Guide />} />

@@ -100,6 +100,18 @@ export default defineConfig(({ mode }) => {
   process.env.VITE_SERPAPI_KEY ||= env.VITE_SERPAPI_KEY
 
   return {
+    server: {
+      proxy: {
+        '/route-api': {
+          target: 'http://localhost:3001',
+          rewrite: () => '/api/route',
+        },
+        '/geocode-api': {
+          target: 'http://localhost:3001',
+          rewrite: path => path.replace(/^\/geocode-api/, '/api/geocode'),
+        },
+      },
+    },
     plugins: [
       react(),
       tailwindcss(),
