@@ -102,6 +102,12 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       proxy: {
+        '/api/overview': {
+          target: 'http://localhost:3001',
+        },
+        '/api/flights-info': {
+          target: 'http://localhost:3001',
+        },
         '/route-api': {
           target: 'http://localhost:3001',
           rewrite: () => '/api/route',

@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "backend": "node backend/server.js",
+    "dev:full": "node scripts/dev-full.mjs",
     "prebuild": "npm run validate:data",
     "build": "vite build",
     "android:sync": "npm run build && cap sync android",
@@ -26,6 +28,9 @@
     "@capacitor/status-bar": "^8.0.2",
     "@react-google-maps/api": "^2.20.8",
     "@tailwindcss/vite": "^4.3.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
     "lucide-react": "^1.18.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

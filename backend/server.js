@@ -870,6 +870,12 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', port: PORT })
 })
 
-app.listen(PORT, () => {
-  console.log(`KothaSetu backend running on http://localhost:${PORT}`)
-})
+// Export the Express application so Vercel can run it as a serverless function.
+// Keep the normal listener for local `npm run backend` development.
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`KothaSetu backend running on http://localhost:${PORT}`)
+  })
+}
+
+module.exports = app

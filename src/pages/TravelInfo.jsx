@@ -7,7 +7,9 @@ import {
   Plane, Train, Bus, Building2,
 } from 'lucide-react'
 
-const API_BASE = 'http://localhost:3001'
+// Web deployments use same-origin Vercel Functions. A packaged Capacitor app can
+// supply the public Vercel origin through VITE_API_BASE_URL at build time.
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
 const TODAY    = new Date().toISOString().split('T')[0]
 
 // ── City → IATA lookup (mirrors backend IATA_MAP) ─────────────────────────

@@ -7,7 +7,7 @@ import { destinationAccessType, ROUTE_MAP_DESTINATIONS } from '../data/routeMapD
 const SILIGURI = { lat: 26.7271, lng: 88.3953 }
 const MAP_LIBRARIES = ['geometry']
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '')
 const DARK_MAP_STYLES = [
   { elementType: 'geometry', stylers: [{ color: '#172343' }] },
   { elementType: 'labels.text.fill', stylers: [{ color: '#9aa8c7' }] },
