@@ -120,7 +120,9 @@ export default async function handler(request, response) {
   }
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 10_000)
+  // Mobile requests can arrive after a Vercel cold start; give Azure enough
+  // time to respond while retaining a firm upstream deadline.
+  const timeout = setTimeout(() => controller.abort(), 20_000)
   const query = new URLSearchParams({ from: fromLang, to: toLang, textType: 'plain' })
 
   try {

@@ -1,7 +1,11 @@
 import { useState, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
 import PageHeader from '../components/layout/PageHeader'
-import trainBg from '../assets/train.jpg'
+import riverMountainBg from '../assets/The River Between the Mountain.jpg'
+import howrahImage from '../assets/Howrah2.jpeg'
+import airportImage from '../assets/Airport.jpeg'
+import victoriaImage from '../assets/Victoria.jpeg'
+import yellowTaxiImage from '../assets/Yellow taxi.jpeg'
 import {
   ArrowLeft, ArrowUpDown, Calendar, Loader2,
   Plane, Train, Bus, Building2,
@@ -103,19 +107,19 @@ function Alpona({ accent }) {
 
 // ── Confidence band ────────────────────────────────────────────────────────
 const BANDS = {
-  live:                  { dot:'var(--accent-teal)',    bg:'rgba(13,115,119,.14)', border:'rgba(13,115,119,.32)',  label:'Live data'           },
-  'scheduled-reference': { dot:'var(--accent-primary)', bg:'rgba(200,86,10,.12)',  border:'rgba(200,86,10,.28)',   label:'Scheduled reference' },
-  'curated-estimate':    { dot:'var(--accent-gold)',    bg:'rgba(200,150,12,.11)', border:'rgba(200,150,12,.28)', label:'Curated estimate'    },
+  live:                  { dot:'var(--accent-teal)',    bg:'rgba(8,52,61,.88)',  border:'rgba(45,212,191,.62)', label:'Live data'           },
+  'scheduled-reference': { dot:'var(--accent-primary)', bg:'rgba(65,31,20,.88)', border:'rgba(248,113,71,.58)', label:'Scheduled reference' },
+  'curated-estimate':    { dot:'var(--accent-gold)',    bg:'rgba(61,48,13,.88)', border:'rgba(234,179,8,.58)',  label:'Curated estimate'    },
 }
 
 function ConfidenceBand({ confidence, note }) {
   const c = BANDS[confidence] || { dot:C.muted, bg:C.bg2, border:C.border, label:confidence }
   return (
-    <div style={{ display:'flex', alignItems:'flex-start', gap:10, background:c.bg, border:`1px solid ${c.border}`, borderRadius:10, padding:'10px 13px', marginBottom:14 }}>
+    <div style={{ display:'flex', alignItems:'flex-start', gap:11, background:c.bg, border:`1px solid ${c.border}`, borderRadius:11, padding:'12px 14px', marginBottom:14, backdropFilter:'blur(16px)', boxShadow:'0 4px 18px rgba(0,0,0,.28)' }}>
       <span style={{ width:8, height:8, borderRadius:'50%', background:c.dot, display:'inline-block', marginTop:4, flexShrink:0 }} />
       <div>
         <strong style={{ display:'block', fontSize:10, letterSpacing:'.07em', textTransform:'uppercase', color:c.dot, marginBottom:3 }}>{c.label}</strong>
-        <span style={{ fontSize:12, color:C.sub, lineHeight:1.55 }}>{note}</span>
+        <span style={{ fontSize:12, color:C.text, lineHeight:1.55 }}>{note}</span>
       </div>
     </div>
   )
@@ -281,8 +285,7 @@ function SearchScreen({ onSearch, darkMode }) {
       }}>
         <Plane size={14} color="var(--accent-teal)" style={{ flexShrink:0, marginTop:2 }} />
         <p style={{ margin:0, fontSize:12, color:'var(--accent-teal)', lineHeight:1.6 }}>
-          <strong>Flight search requires cities with airports.</strong>{' '}
-          Type a city name (e.g. <em>Kolkata</em>) and its IATA code (e.g. <strong>CCU</strong>) will appear automatically. Trains, buses &amp; hotels work for any location.
+          <strong>Flights require airport cities.</strong> Enter a city and we'll detect its airport code.
         </p>
       </div>
 
@@ -403,7 +406,7 @@ function ResultsScreen({ overview, onSelect, onBack }) {
       <div style={{ padding:'0 16px 20px' }}>
         <Alpona />
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-          {PLACARDS.map(({ key, label, icon:Icon, confidence, lazy, summaryFn }) => {
+          {PLACARDS.map(({ key, label, icon:Icon, confidence, summaryFn }) => {
             const accent    = CONF_ACCENT[confidence]
             const confLabel = CONF_LABEL[confidence]
             const summary   = summaryFn(overview[key])
@@ -411,22 +414,22 @@ function ResultsScreen({ overview, onSelect, onBack }) {
               <button
                 key={key} onClick={() => onSelect(key)}
                 style={{
-                  background: lazy ? 'rgba(12,18,38,.38)' : C.card,
+                  background:C.card,
                   borderRadius:16, padding:14, cursor:'pointer', textAlign:'left',
                   transition:'box-shadow .2s, border-color .2s, background .2s',
                   backdropFilter:'blur(14px)',
-                  border: lazy ? `1px dashed ${C.borderStrg}` : `1px solid ${C.border}`,
+                  border:`1px solid ${C.border}`,
                   boxShadow: C.shadow,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.boxShadow = C.shadowRaised; e.currentTarget.style.borderColor='var(--accent-primary)' }}
-                onMouseLeave={e => { e.currentTarget.style.boxShadow = C.shadow; e.currentTarget.style.borderColor = lazy ? C.borderStrg : C.border }}
+                onMouseLeave={e => { e.currentTarget.style.boxShadow = C.shadow; e.currentTarget.style.borderColor = C.border }}
               >
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
                   <span style={{ fontSize:9, letterSpacing:'.07em', textTransform:'uppercase', color:accent, fontWeight:700 }}>{confLabel}</span>
                   <span style={{ width:7, height:7, borderRadius:'50%', background:accent, display:'inline-block' }} />
                 </div>
-                <Icon size={22} color={accent} strokeWidth={1.6} style={{ marginBottom:8, opacity: lazy ? 0.45 : 0.9 }} />
-                <p style={{ fontSize:13, fontWeight:700, color: lazy ? C.muted : C.text, margin:'0 0 3px', fontFamily:'var(--font-interface)' }}>{label}</p>
+                <Icon size={22} color={accent} strokeWidth={1.6} style={{ marginBottom:8, opacity:0.9 }} />
+                <p style={{ fontSize:13, fontWeight:700, color:C.text, margin:'0 0 3px', fontFamily:'var(--font-interface)' }}>{label}</p>
                 <p style={{ fontSize:10, color:C.muted, lineHeight:1.4, margin:0 }}>{summary}</p>
               </button>
             )
@@ -678,10 +681,10 @@ function FlightsDetail({ data }) {
 
 // ── SCREEN 3: Detail ───────────────────────────────────────────────────────
 const DETAIL_META = {
-  flights:{ title:'✈ Flights', accent:'var(--accent-teal)'    },
-  trains: { title:'🚂 Trains',  accent:'var(--accent-primary)' },
-  buses:  { title:'🚌 Buses',   accent:'var(--accent-primary)' },
-  hotels: { title:'🏨 Hotels',  accent:'var(--accent-gold)'    },
+  flights:{ title:'Flights', accent:'var(--accent-teal)',    image:airportImage },
+  trains: { title:'Trains',  accent:'var(--accent-primary)', image:howrahImage },
+  buses:  { title:'Buses',   accent:'var(--accent-primary)', image:yellowTaxiImage },
+  hotels: { title:'Hotels',  accent:'var(--accent-gold)',    image:victoriaImage },
 }
 
 function DetailScreen({ mode, overview, flightData, flightLoading, flightError, onBack }) {
@@ -735,6 +738,9 @@ export default function TravelInfo() {
   const [flightLoading, setFlightLoading] = useState(false)
   const [flightError,   setFlightError]   = useState(null)
   const flightFetched                     = useRef(false)
+  const backgroundImage = screen === 'detail'
+    ? (DETAIL_META[activeMode]?.image || riverMountainBg)
+    : riverMountainBg
 
   function handleSearch(data) {
     setOverview(data); setFlightData(null); flightFetched.current = false; setScreen('results')
@@ -768,7 +774,7 @@ export default function TravelInfo() {
 
       {/* Fixed photo background — same pattern as Guide, SeasonalGuide, PhraseBank */}
       <div className="pb-bg" aria-hidden="true">
-        <img src={trainBg} alt="" style={{ objectPosition:'center 60%' }} />
+        <img src={backgroundImage} alt="" style={{ objectPosition:screen === 'detail' ? 'center' : 'center 45%' }} />
         <div className="pb-bg-overlay pb-bg-overlay--overcast" />
       </div>
 

@@ -17,7 +17,10 @@ export async function translateText(text, fromLang, toLang) {
   if (!SUPPORTED_LANGUAGES.has(fromLang) || !SUPPORTED_LANGUAGES.has(toLang)) throw new Error('Unsupported language selection.')
 
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 12_000)
+  // Allow for slower mobile connections and a cold Vercel Function start.
+  // This must remain longer than the server-side Azure timeout so the client
+  // can receive the API's useful error response instead of aborting first.
+  const timeout = setTimeout(() => controller.abort(), 25_000)
   try {
     const response = await fetch(TRANSLATION_ENDPOINT, {
       method: 'POST',
