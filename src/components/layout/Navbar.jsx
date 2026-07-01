@@ -14,6 +14,7 @@ const mobileNavItems = [
   { to: '/travel-info', icon: Train,    label: 'Travel Info' },
   { to: '/phrases',     icon: BookOpen, label: 'Phrases' },
   { to: '/translate',   icon: Mic,      label: 'Translate', primary: true },
+  { to: '/places',      icon: MapPinned,label: 'Explore' },
   { to: '/guide',       icon: Landmark, label: 'Guide' },
 ]
 
@@ -29,6 +30,7 @@ const moreItems = [
 
 const isNavActive = (pathname, to) => {
   if (to === '/') return pathname === '/'
+  if (to === '/places') return pathname.startsWith('/places')
   return pathname === to
 }
 
@@ -92,9 +94,6 @@ export default function Navbar() {
               </Link>
             )
           })}
-          <button className="mobile-tab-link mobile-more" onClick={() => setMoreOpen(true)} aria-expanded={moreOpen}>
-            <div className="mobile-tab-icon"><Menu size={20} /></div><span>More</span>
-          </button>
         </div>
       </nav>
     </>
@@ -237,9 +236,6 @@ export default function Navbar() {
               </Link>
             )
           })}
-          <button className="mobile-tab-link mobile-more" onClick={() => setMoreOpen(true)} aria-expanded={moreOpen}>
-            <div className="mobile-tab-icon"><Menu size={20} /></div><span>More</span>
-          </button>
         </div>
       </nav>
     </>
