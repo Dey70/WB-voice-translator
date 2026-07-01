@@ -280,3 +280,60 @@
 .pb-popup-body .pb-phrase-card {
   background:rgba(255,255,255,.04);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PHRASEBOOK — compact category layout
+   ══════════════════════════════════════════════════════════════ */
+.pb-content { width:min(100%,680px); margin:0 auto; padding:0 16px calc(94px + env(safe-area-inset-bottom,0px)); }
+.pb-topbar { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:12px; padding:14px 0 10px; }
+.pb-header-action {
+  width:42px; height:42px; min-height:auto; padding:0; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  color:#f2dfbd; background:rgba(16,25,44,.72); border:1px solid rgba(242,223,189,.24); text-decoration:none;
+  box-shadow:0 4px 18px rgba(0,0,0,.14);
+}
+.pb-brand { min-width:0; text-align:center; text-decoration:none; color:#fff; display:flex; flex-direction:column; align-items:center; }
+.pb-brand strong { font-family:'Baloo Da 2','Hind Siliguri',sans-serif; font-size:24px; line-height:1.05; font-weight:800; text-shadow:0 2px 12px rgba(0,0,0,.35); }
+.pb-brand span { font-family:'Playfair Display',Georgia,serif; font-size:11px; font-style:italic; color:rgba(255,255,255,.76); margin-top:2px; }
+
+.pb-heading { font-size:28px; margin:8px 0 3px; color:#f4ede1; }
+.pb-stats { margin:0 0 13px; color:rgba(244,237,225,.58); font-size:12px; }
+
+.pb-language-row { display:grid; grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr); align-items:center; gap:9px; margin:0 0 14px; }
+.pb-language-pill {
+  min-width:0; min-height:43px; padding:8px 11px; border-radius:999px; border:1px solid rgba(255,255,255,.3);
+  background:rgba(15,24,43,.58); backdrop-filter:blur(14px); color:#f4ede1; font-size:12px; font-weight:750;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.pb-language-pill span { opacity:.66; margin-right:3px; }
+.pb-language-pill small { margin-left:3px; opacity:.7; }
+.pb-language-swap {
+  width:42px; height:42px; min-height:auto; padding:0; border:0; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  color:#2b2114; background:#f1a52e; box-shadow:0 6px 18px rgba(0,0,0,.2);
+}
+
+.pb-main-search { margin-bottom:12px; background:rgba(15,24,43,.78); border-color:rgba(224,184,118,.2); }
+.pb-category-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:12px; }
+.pb-category-card {
+  min-width:0; min-height:134px; padding:15px 14px; border-radius:18px; text-align:left; cursor:pointer;
+  display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:0;
+  color:#f4ede1; background:rgba(15,24,43,.78); border:1px solid rgba(224,184,118,.18);
+  box-shadow:0 8px 24px rgba(0,0,0,.18); backdrop-filter:blur(14px);
+  transition:transform .16s,border-color .16s,background .16s;
+}
+.pb-category-card:hover,.pb-category-card:focus-visible { transform:translateY(-2px); border-color:rgba(224,184,118,.4); background:rgba(20,31,52,.9); }
+.pb-category-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#eaa136; background:rgba(234,161,54,.12); margin-bottom:16px; }
+.pb-category-card strong { font-size:13px; line-height:1.25; font-weight:750; }
+.pb-category-card small { margin-top:auto; padding-top:9px; color:rgba(244,237,225,.43); font-size:10px; }
+
+.pb-emergency-row {
+  min-height:84px; padding:13px 15px; border-radius:18px; border:1px solid rgba(248,113,71,.4);
+  background:rgba(167,54,32,.82); box-shadow:0 8px 24px rgba(0,0,0,.2); margin-bottom:14px;
+}
+.pb-emergency-icon { width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.12); color:#ffe8d8; flex-shrink:0; }
+.pb-emergency-row strong { color:#fff3e9; font-size:13px; }
+.pb-emergency-row span { color:rgba(255,243,233,.72); }
+
+@media (min-width:700px) {
+  .pb-content { padding-left:28px; padding-right:28px; }
+  .pb-category-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowLeftRight, BedDouble, ChevronDown, CircleHelp, Landmark, Languages,
+  ArrowLeft, ArrowLeftRight, BedDouble, CircleHelp, Landmark, Languages,
   MessageCircle, Search, ShieldAlert, ShoppingBag, TrainFront,
-  UtensilsCrossed, Volume2, VolumeX, WifiOff, X,
+  UtensilsCrossed, Volume2, VolumeX, X,
 } from 'lucide-react'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getLanguage, LANGUAGES } from '../utils/constants'
@@ -21,31 +21,14 @@ const CATEGORY_ICONS = {
   emergency:   ShieldAlert,
 }
 
-/* Single native letter inside each language circle */
-const CIRCLE_SCRIPT = { bn: 'ব', hi: 'ह', ne: 'न', en: 'EN' }
-
-function AlpanaBar() {
-  return (
-    <svg className="bh-alpana" viewBox="0 0 240 18" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-      <line x1="0" y1="9" x2="88" y2="9" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.5" />
-      <circle cx="96"  cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
-      <circle cx="108" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
-      <circle cx="108" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
-      <polygon points="120,4 123,9 120,14 117,9" fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.8" />
-      <circle cx="132" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
-      <circle cx="132" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
-      <circle cx="144" cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
-      <line x1="152" y1="9" x2="240" y2="9" stroke="currentColor" strokeOpacity="0.5" strokeWidth="0.8" />
-    </svg>
-  )
-}
-
 export default function PhraseBank() {
   const [fromLang, setFromLang]         = useState('hi')
   const [toLang, setToLang]             = useState('bn')
   const [openCategory, setOpenCategory] = useState(null)
   const [query, setQuery]               = useState('')
+  const [showSearch, setShowSearch]     = useState(false)
   const [activePhrase, setActivePhrase] = useState(null)
+  const searchRef                        = useRef(null)
   const { speak, stop, isSpeaking, isPreparing, noVoiceAvailable } = useSpeechSynthesis()
 
   const from = getLanguage(fromLang)
@@ -79,13 +62,6 @@ export default function PhraseBank() {
 
   const swapLanguages = () => {
     setFromLang(toLang); setToLang(fromLang)
-    setActivePhrase(null); stop()
-  }
-
-  const tapCircle = (code) => {
-    if (code === fromLang) return
-    if (code === toLang) { swapLanguages(); return }
-    setFromLang(code)
     setActivePhrase(null); stop()
   }
 
@@ -137,108 +113,66 @@ export default function PhraseBank() {
       <div className="pb-content">
 
         {/* ── Header ── */}
-        <div className="bh-header">
-          <Link to="/" className="bh-brand-block" style={{ textDecoration: 'none' }}>
-            <span className="bh-brand">কথাসেতু</span>
-            <AlpanaBar />
+        <div className="pb-topbar">
+          <Link to="/" className="pb-header-action" aria-label="Back to home"><ArrowLeft size={19} /></Link>
+          <Link to="/" className="pb-brand" aria-label="KothaSetu home">
+            <strong>কথাসেতু</strong>
+            <span>Speak. Be understood.</span>
           </Link>
-          <Link to="/discover" className="bh-search-btn" aria-label="Search">
+          <button className="pb-header-action" aria-label="Search phrases" onClick={() => {
+            setShowSearch(value => !value)
+            setTimeout(() => searchRef.current?.focus(), 0)
+          }}>
             <Search size={19} />
-          </Link>
+          </button>
         </div>
 
         {/* ── Hero ── */}
-        <div className="pb-offline-badge"><WifiOff size={11} /> WORKS OFFLINE</div>
-        <h1 className="pb-heading"><em>Tourist</em> phrase bank</h1>
-        <p className="pb-stats">400 curated phrases · 4 languages</p>
+        <h1 className="pb-heading">Phrasebook</h1>
+        <p className="pb-stats">One tap, any phrase · works offline</p>
 
-        {/* ── Language panel — FROM | swap | TO ── */}
-        <div className="pb-lang-panel">
-          <div className="pb-lang-circles-row">
-            {/* FROM circle */}
-            <div className="pb-lang-circle-item">
-              <button
-                className="pb-lang-circle is-from"
-                style={{ '--lc': from.color }}
-                onClick={cycleFrom}
-                aria-label={`Translating from ${from.name} — tap to change`}
-              >
-                <div className="pb-lc-inner-ring" aria-hidden="true" />
-                <span className="pb-lc-script">{CIRCLE_SCRIPT[fromLang] || from.label}</span>
-              </button>
-              <span className="pb-lc-name" style={{ color: from.color }}>{from.name}</span>
-            </div>
-
-            {/* Swap */}
-            <button className="pb-lang-swap" onClick={swapLanguages} aria-label="Swap languages">
-              <ArrowLeftRight size={16} />
-            </button>
-
-            {/* TO circle */}
-            <div className="pb-lang-circle-item">
-              <button
-                className="pb-lang-circle is-to"
-                style={{ '--lc': to.color }}
-                onClick={cycleTo}
-                aria-label={`Translating to ${to.name} — tap to change`}
-              >
-                <div className="pb-lc-inner-ring" aria-hidden="true" />
-                <span className="pb-lc-script">{CIRCLE_SCRIPT[toLang] || to.label}</span>
-              </button>
-              <span className="pb-lc-name" style={{ color: to.color }}>{to.name}</span>
-            </div>
-          </div>
-          <p className="pb-lang-hint-center">Tap a circle to change language</p>
+        {/* ── Compact language selector ── */}
+        <div className="pb-language-row">
+          <button className="pb-language-pill" onClick={cycleFrom} aria-label={`From: ${from.name}`}><span>{from.label}</span> {from.name}<small>▾</small></button>
+          <button className="pb-language-swap" onClick={swapLanguages} aria-label="Swap languages"><ArrowLeftRight size={17} /></button>
+          <button className="pb-language-pill" onClick={cycleTo} aria-label={`To: ${to.name}`}><span>{to.label}</span> {to.name}<small>▾</small></button>
         </div>
 
-        {/* ── Category guidance ── */}
-        <div className="pb-cat-guidance">
-          <ChevronDown size={12} />
-          <span>Pick a category to explore phrases</span>
-        </div>
+        {/* ── Search bar, opened from the header ── */}
+        {showSearch && !openCategory && (
+          <label className="pb-search pb-main-search">
+            <Search size={15} />
+            <input ref={searchRef} value={query} onChange={e => setQuery(e.target.value)} placeholder="Search all phrases…" aria-label="Search phrases" />
+            {query && <button onClick={() => setQuery('')} aria-label="Clear" className="pb-search-clear">×</button>}
+          </label>
+        )}
 
-        <div className="pb-categories" role="list" aria-label="Phrase categories">
-          {PHRASE_CATEGORIES.map(item => {
+        {!query && <div className="pb-category-grid" role="list" aria-label="Phrase categories">
+          {PHRASE_CATEGORIES.filter(item => item.id !== 'emergency').map(item => {
             const Icon = CATEGORY_ICONS[item.id] || Languages
-            const isOpen = openCategory === item.id
+            const count = queryPhrases({ category:item.id, query:'' }).length
             return (
               <button
                 key={item.id}
                 role="listitem"
-                aria-expanded={isOpen}
-                className={`pb-cat-pill ${isOpen ? 'active' : ''}`}
+                aria-expanded={openCategory === item.id}
+                className="pb-category-card"
                 onClick={() => toggleCategory(item.id)}
               >
-                <Icon size={13} />
-                {item.name}
-                {isOpen && <X size={10} className="pb-cat-pill-x" />}
+                <span className="pb-category-icon"><Icon size={20} /></span>
+                <strong>{item.name}</strong>
+                <small>{count} phrases</small>
               </button>
             )
           })}
-        </div>
+        </div>}
 
-        {/* ── Search bar (shown when no popup is open) ── */}
-        {!openCategory && (
-          <>
-            <label className="pb-search">
-              <Search size={15} />
-              <input
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder="Search across all phrases…"
-                aria-label="Search phrases"
-              />
-              {query && <button onClick={() => setQuery('')} aria-label="Clear" className="pb-search-clear">×</button>}
-            </label>
-            <button className="pb-emergency-row" onClick={() => toggleCategory('emergency')}>
-              <ShieldAlert size={15} />
-              <div>
-                <strong>Emergency phrases</strong>
-                <span>SOS · Police · Medical · Lost &amp; found</span>
-              </div>
-              <ChevronDown size={13} className="pb-emergency-chevron" />
-            </button>
-          </>
+        {/* ── Emergency quick access ── */}
+        {!openCategory && !query && (
+          <button className="pb-emergency-row" onClick={() => toggleCategory('emergency')}>
+            <span className="pb-emergency-icon"><ShieldAlert size={20} /></span>
+            <div><strong>Emergency phrases &amp; helplines</strong><span>Police · Hospital · Tourist assistance</span></div>
+          </button>
         )}
 
         {/* ── Inline search results (no popup open) ── */}
