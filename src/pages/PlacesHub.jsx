@@ -1,8 +1,18 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CalendarRange, Map, MapPinned, UtensilsCrossed } from 'lucide-react'
+import {
+  ArrowLeft, CalendarRange, ChevronRight, Landmark, Map, MapPinned,
+  Mountain, PawPrint, Search, Sparkles, UtensilsCrossed,
+} from 'lucide-react'
 import templeImg from '../assets/temple.jpg'
-import PageHeader from '../components/layout/PageHeader'
+
+const QUICK_LINKS = [
+  { label:'Heritage', Icon:Landmark, to:'/places/explore' },
+  { label:'Wildlife', Icon:PawPrint, to:'/places/explore' },
+  { label:'Food', Icon:UtensilsCrossed, to:'/places/food' },
+  { label:'Hills', Icon:Mountain, to:'/places/explore' },
+  { label:'Offbeat', Icon:Sparkles, to:'/places/explore' },
+]
 
 const COPY = {
   en: {
@@ -78,13 +88,19 @@ export default function PlacesHub() {
 
       {/* Content */}
       <div className="phv2-content">
-        <PageHeader />
+        <div className="phv2-topbar">
+          <Link to="/" className="phv2-header-action" aria-label="Back to home"><ArrowLeft size={19} /></Link>
+          <Link to="/" className="phv2-brand" aria-label="KothaSetu home">
+            <strong>কথাসেতু</strong>
+            <span>Speak. Be understood.</span>
+          </Link>
+          <Link to="/places/explore" className="phv2-header-action" aria-label="Search places"><Search size={18} /></Link>
+        </div>
 
         {/* Hero */}
         <header className="phv2-hero">
-          <span className="phv2-eyebrow">{copy.eyebrow}</span>
           <h1 className="phv2-title">{copy.title}</h1>
-          <p className="phv2-subtitle">{copy.subtitle}</p>
+          <p className="phv2-subtitle">Curated by locals, not algorithms · {copy.subtitle}</p>
           <div className="phv2-lang-row">
             {['en', 'bn', 'ne', 'hi'].map(l => (
               <button key={l} className={language === l ? 'active' : ''} onClick={() => setLanguage(l)}>
@@ -94,54 +110,38 @@ export default function PlacesHub() {
           </div>
         </header>
 
+        <nav className="phv2-quick-links" aria-label="Explore by interest">
+          {QUICK_LINKS.map(({ label, Icon, to }) => (
+            <Link key={label} to={to}><span><Icon size={18} /></span><small>{label}</small></Link>
+          ))}
+        </nav>
+
         {/* Cards */}
         <section className="phv2-cards" aria-label="Explore sections">
-
-          <Link to="/places/routes" className="phv2-card">
-            <div className="phv2-card-top"><span className="phv2-badge phv2-badge--orange"><Map size={11} /> Route planner</span><span className="phv2-count">Live + trek</span></div>
-            <h2>Route Map</h2><p className="phv2-card-bn">North Bengal journeys</p>
-            <p className="phv2-card-desc">Plan road-accessible trips and get honest static guidance for trek-only destinations.</p>
-            <div className="phv2-tags"><span>Live routes</span><span>Manual origin</span><span>Trek guidance</span></div>
-          </Link>
+          <h2 className="phv2-section-title">Browse sections</h2>
 
           <Link to="/places/explore" className="phv2-card">
-            <div className="phv2-card-top">
-              <span className="phv2-badge phv2-badge--orange">
-                <MapPinned size={11} /> Vault
-              </span>
-              <span className="phv2-count">{copy.nearbyCount}</span>
-            </div>
-            <h2>{copy.nearby}</h2>
-            <p className="phv2-card-bn">{copy.nearbyBn}</p>
-            <p className="phv2-card-desc">{copy.nearbyDesc}</p>
-            <div className="phv2-tags">
-              <span>Road trips</span>
-              <span>Hidden gems</span>
-              <span>Filters</span>
-            </div>
+            <span className="phv2-card-icon phv2-card-icon--teal"><MapPinned size={21} /></span>
+            <div><h2>{copy.nearby}</h2><p>{copy.nearbyCount} · Curated places, hidden gems and practical access notes</p></div>
+            <ChevronRight size={17} />
           </Link>
 
-          <Link to="/places/seasons" className="phv2-card">
-            <div className="phv2-card-top">
-              <span className="phv2-badge phv2-badge--gold">
-                <CalendarRange size={11} /> Seasonal
-              </span>
-              <span className="phv2-count">{copy.seasonCount}</span>
-            </div>
-            <h2>{copy.season}</h2>
-            <p className="phv2-card-bn">{copy.seasonBn}</p>
-            <p className="phv2-card-desc">{copy.seasonDesc}</p>
-            <div className="phv2-tags">
-              <span>Weather</span>
-              <span>Festivals</span>
-              <span>Best time</span>
-            </div>
+          <Link to="/places/routes" className="phv2-card">
+            <span className="phv2-card-icon phv2-card-icon--orange"><Map size={21} /></span>
+            <div><h2>Route Map</h2><p>Live road routes · manual origins · honest trek guidance</p></div>
+            <ChevronRight size={17} />
           </Link>
 
           <Link to="/places/food" className="phv2-card phv2-card--food">
-            <div className="phv2-card-top"><span className="phv2-badge phv2-badge--teal"><UtensilsCrossed size={11}/> Food trail</span><span className="phv2-count">{copy.foodCount}</span></div>
-            <h2>{copy.food}</h2><p className="phv2-card-bn">{copy.foodBn}</p><p className="phv2-card-desc">{copy.foodDesc}</p>
-            <div className="phv2-tags"><span>Everyday</span><span>Must-try</span><span>Rare finds</span></div>
+            <span className="phv2-card-icon phv2-card-icon--gold"><UtensilsCrossed size={21} /></span>
+            <div><h2>{copy.food}</h2><p>{copy.foodCount} · Everyday plates, must-try dishes and rare traditions</p></div>
+            <ChevronRight size={17} />
+          </Link>
+
+          <Link to="/places/seasons" className="phv2-card">
+            <span className="phv2-card-icon phv2-card-icon--purple"><CalendarRange size={21} /></span>
+            <div><h2>{copy.season}</h2><p>{copy.seasonCount} · Weather, road, festival and best-time guidance</p></div>
+            <ChevronRight size={17} />
           </Link>
 
         </section>
