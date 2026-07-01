@@ -96,7 +96,12 @@ function loadVoices() {
   if (!engine) return Promise.resolve([])
 
   const available = engine.getVoices()
-  if (available.length) { voiceCache = available; return Promise.resolve(available) }
+  // Browsers can expose voices in stages. Always prefer the latest complete
+  // snapshot instead of permanently keeping the first (often partial) list.
+  if (available.length) {
+    voiceCache = available
+    return Promise.resolve(available)
+  }
   if (voiceLoadPromise) return voiceLoadPromise
 
   voiceLoadPromise = new Promise((resolve) => {
@@ -126,9 +131,9 @@ function findVoice(langCode, voices) {
   const base    = codes[0].split('-')[0].toLowerCase()
   const partial = voices.find((v) => v.lang.toLowerCase().split('-')[0] === base)
   if (partial) return { voice: partial, lang: partial.lang }
-  // No voice for target language — fall back to first available so TTS still plays
-  const fallback = voices[0] || null
-  return { voice: fallback, lang: fallback?.lang || codes[0] }
+  // Do not force an unrelated voice. Leaving `voice` unset while preserving
+  // the requested language lets the browser/OS choose its own suitable voice.
+  return { voice: null, lang: codes[0] }
 }
 
 function useWebSpeechSynthesis() {
@@ -178,7 +183,9 @@ function useWebSpeechSynthesis() {
     await new Promise((r) => setTimeout(r, 120))
     if (!mountedRef.current || requestRef.current !== requestId) return false
 
-    const voices            = voiceCache.length ? voiceCache : await loadVoices()
+    // Refresh on every request because mobile browsers may load additional
+    // language voices after the page has already started.
+    const voices            = await loadVoices()
     if (!mountedRef.current || requestRef.current !== requestId) return false
     const { voice, lang }   = findVoice(langCode, voices)
 
