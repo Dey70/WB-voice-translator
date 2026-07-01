@@ -435,7 +435,7 @@
 .tr-topbar { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:12px; padding:14px 0 10px; }
 .tr-header-action {
   width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center;
-  color:#2d2a20; background:#f6edd9; border:1px solid rgba(255,255,255,.45); text-decoration:none;
+  color:#f2dfbd; background:rgba(16,25,44,.72); border:1px solid rgba(242,223,189,.24); text-decoration:none;
   box-shadow:0 4px 18px rgba(0,0,0,.12);
 }
 .tr-brand { min-width:0; text-align:center; text-decoration:none; color:#fff; display:flex; flex-direction:column; align-items:center; }
@@ -463,30 +463,30 @@
 .tr-mic-label { color:#fff; font-size:11px; letter-spacing:.06em; text-transform:uppercase; text-shadow:0 1px 6px rgba(0,0,0,.45); }
 
 .tr-card {
-  padding:12px 17px; border-radius:20px; background:rgba(250,248,242,.94); border:1px solid rgba(255,255,255,.65);
-  box-shadow:0 10px 30px rgba(20,16,8,.16); backdrop-filter:blur(18px); margin-bottom:10px; color:#2e2a23;
+  padding:12px 17px; border-radius:20px; background:rgba(15,24,43,.82); border:1px solid rgba(224,184,118,.2);
+  box-shadow:0 10px 30px rgba(0,0,0,.24); backdrop-filter:blur(18px); margin-bottom:10px; color:#f4ede1;
 }
 .tr-card-badge { padding:0; border:0!important; border-radius:0; background:transparent!important; color:#c8542f!important; font-size:10px; letter-spacing:.07em; text-transform:uppercase; margin-bottom:10px; }
-.tr-textarea { min-height:56px; color:#2e2a23; font-size:16px; }
-.tr-textarea::placeholder { color:rgba(46,42,35,.42); }
-.tr-result-text { min-height:44px; color:#2e2a23!important; font-family:'Baloo Da 2','Hind Siliguri',sans-serif; font-style:normal!important; }
-.tr-card-footer { border-top-color:rgba(46,42,35,.1); color:rgba(46,42,35,.48); }
-.tr-clear-btn { color:rgba(46,42,35,.56); }
-.tr-action-btn { color:#5b5144; background:rgba(110,91,54,.08); border-color:rgba(88,72,44,.17); }
-.tr-no-voice { color:#9a5c20; }
+.tr-textarea { min-height:56px; color:#f4ede1; font-size:16px; }
+.tr-textarea::placeholder { color:rgba(244,237,225,.38); }
+.tr-result-text { min-height:44px; color:#f4ede1!important; font-family:'Baloo Da 2','Hind Siliguri',sans-serif; font-style:normal!important; }
+.tr-card-footer { border-top-color:rgba(244,237,225,.1); color:rgba(244,237,225,.42); }
+.tr-clear-btn { color:rgba(244,237,225,.52); }
+.tr-action-btn { color:rgba(244,237,225,.68); background:rgba(224,184,118,.08); border-color:rgba(224,184,118,.18); }
+.tr-no-voice { color:#d9a441; }
 
 .tr-cta { width:auto; min-width:190px; margin:2px auto 10px; padding:10px 22px; border-radius:999px; background:#c8562f; box-shadow:0 7px 20px rgba(88,40,18,.25); }
 .tr-mode-tabs { justify-content:center; gap:8px; margin:8px 0 0; }
-.tr-mode-tab { padding:10px 18px; border:0; background:rgba(246,237,217,.28); color:rgba(255,255,255,.78); border-radius:999px; font-weight:750; }
-.tr-mode-tab.active { background:#fff; color:#c64f2c; border:0; box-shadow:0 5px 18px rgba(0,0,0,.12); }
+.tr-mode-tab { padding:10px 18px; border:1px solid rgba(224,184,118,.12); background:rgba(15,24,43,.56); color:rgba(244,237,225,.72); border-radius:999px; font-weight:750; }
+.tr-mode-tab.active { background:#c8562f; color:#fff5e6; border-color:rgba(255,255,255,.16); box-shadow:0 5px 18px rgba(0,0,0,.2); }
 
 .cv-root { margin-top:4px; }
-.cv-chat-box { background:rgba(250,248,242,.94); border-color:rgba(255,255,255,.65); }
-.cv-empty p,.cv-msg-meta { color:rgba(46,42,35,.48); }
-.cv-msg-bubble { background:rgba(255,255,255,.76); border-color:rgba(46,42,35,.13); }
-.cv-msg-original { color:#2e2a23; }
-.cv-msg-divider { background:rgba(46,42,35,.1); }
-.cv-translating { color:rgba(46,42,35,.5); }
+.cv-chat-box { background:rgba(15,24,43,.82); border-color:rgba(224,184,118,.2); }
+.cv-empty p,.cv-msg-meta { color:rgba(244,237,225,.44); }
+.cv-msg-bubble { background:rgba(35,45,65,.88); border-color:rgba(224,184,118,.16); }
+.cv-msg-original { color:#f4ede1; }
+.cv-msg-divider { background:rgba(244,237,225,.1); }
+.cv-translating { color:rgba(244,237,225,.46); }
 
 @media (min-width:700px) {
   .tr-content { padding-left:28px; padding-right:28px; }
