@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowLeftRight, CheckCheck, Copy, History, Keyboard,
-  Loader, MessageSquare, Mic, RotateCcw, Volume2, VolumeX,
+  ArrowLeft, ArrowLeftRight, CheckCheck, Copy,
+  Loader, RotateCcw, Search, Volume2, VolumeX,
 } from 'lucide-react'
 import ConversationMode from '../components/translation/ConversationMode'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
@@ -12,9 +12,6 @@ import { useAppStore } from '../store/appStore'
 import { getLanguage, LANGUAGES } from '../utils/constants'
 import { platformServices } from '../services/platform/platformAdapter'
 import trainBg from '../assets/train.jpg'
-
-/* Native letter for each language circle */
-const CIRCLE_SCRIPT = { bn: 'ব', hi: 'ह', ne: 'न', en: 'EN' }
 
 function AlpanaPetals({ color1, color2, size = 120 }) {
   const c = size / 2
@@ -36,22 +33,6 @@ function AlpanaPetals({ color1, color2, size = 120 }) {
   )
 }
 
-function AlpanaBar() {
-  return (
-    <svg className="bh-alpana" viewBox="0 0 240 18" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-      <line x1="0" y1="9" x2="88" y2="9" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.5" />
-      <circle cx="96"  cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
-      <circle cx="108" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
-      <circle cx="108" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
-      <polygon points="120,4 123,9 120,14 117,9" fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.8" />
-      <circle cx="132" cy="9" r="4"   fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.7" />
-      <circle cx="132" cy="9" r="1.5" fill="currentColor" fillOpacity="0.8" />
-      <circle cx="144" cy="9" r="2"   fill="currentColor" fillOpacity="0.7" />
-      <line x1="152" y1="9" x2="240" y2="9" stroke="currentColor" strokeOpacity="0.5" strokeWidth="0.8" />
-    </svg>
-  )
-}
-
 /* Five-bar animated waveform */
 function WaveformBars({ active }) {
   return (
@@ -60,18 +41,6 @@ function WaveformBars({ active }) {
         <span key={i} className={`tr-bar ${active ? 'active' : ''}`} style={{ animationDelay: `${i * 0.1}s` }} />
       ))}
     </div>
-  )
-}
-
-/* Alpana wavy decoration for mic panel top */
-function AlpanaWave() {
-  return (
-    <svg className="tr-alpana-wave" viewBox="0 0 280 20" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0,10 Q35,0 70,10 Q105,20 140,10 Q175,0 210,10 Q245,20 280,10"
-        fill="none" stroke="currentColor" strokeWidth="1" strokeOpacity="0.3" />
-      <path d="M0,14 Q35,4 70,14 Q105,24 140,14 Q175,4 210,14 Q245,24 280,14"
-        fill="none" stroke="currentColor" strokeWidth="0.6" strokeOpacity="0.15" />
-    </svg>
   )
 }
 
@@ -127,13 +96,6 @@ export default function Translator() {
     setError(null)
   }
 
-  const tapCircle = (code) => {
-    if (code === fromLang) return
-    if (code === toLang) { handleSwap(); return }
-    setFromLang(code)
-    setOutputText(''); setError(null)
-  }
-
   const cycleFrom = () => {
     const opts = LANGUAGES.filter(l => l.code !== toLang)
     const idx = opts.findIndex(l => l.code === fromLang)
@@ -176,62 +138,26 @@ export default function Translator() {
       <div className="tr-content">
 
         {/* ── Header ── */}
-        <div className="bh-header">
-          <Link to="/" className="bh-brand-block" style={{ textDecoration: 'none' }}>
-            <span className="bh-brand">কথাসেতু</span>
-            <AlpanaBar />
+        <div className="tr-topbar">
+          <Link to="/" className="tr-header-action" aria-label="Back to home"><ArrowLeft size={19} /></Link>
+          <Link to="/" className="tr-brand" aria-label="KothaSetu home">
+            <strong>কথাসেতু</strong>
+            <span>Speak. Be understood.</span>
           </Link>
-          <Link to="/history" className="tr-history-btn" aria-label="History">
-            <History size={15} />
-            <span>History</span>
-          </Link>
+          <Link to="/history" className="tr-header-action" aria-label="Search translation history"><Search size={18} /></Link>
         </div>
 
-        {/* ── Hero ── */}
-        <h1 className="tr-heading"><em>Voice &amp; text</em> translator</h1>
-        <p className="tr-sub">Speak or type in Bengali, Nepali or Hindi.</p>
-
-        {/* ── Language circles ── */}
-        <div className="pb-lang-panel tr-lang-panel">
-          <div className="pb-lang-circles-row">
-            <div className="pb-lang-circle-item">
-              <button className="pb-lang-circle is-from" style={{ '--lc': from.color }}
-                onClick={cycleFrom} aria-label={`From: ${from.name}`}>
-                <div className="pb-lc-inner-ring" aria-hidden="true" />
-                <span className="pb-lc-script">{CIRCLE_SCRIPT[fromLang] || from.label}</span>
-              </button>
-              <span className="pb-lc-name" style={{ color: from.color }}>{from.name}</span>
-            </div>
-
-            <button className="pb-lang-swap" onClick={handleSwap} aria-label="Swap languages">
-              <ArrowLeftRight size={16} />
-            </button>
-
-            <div className="pb-lang-circle-item">
-              <button className="pb-lang-circle is-to" style={{ '--lc': to.color }}
-                onClick={cycleTo} aria-label={`To: ${to.name}`}>
-                <div className="pb-lc-inner-ring" aria-hidden="true" />
-                <span className="pb-lc-script">{CIRCLE_SCRIPT[toLang] || to.label}</span>
-              </button>
-              <span className="pb-lc-name" style={{ color: to.color }}>{to.name}</span>
-            </div>
-          </div>
-          <p className="pb-lang-hint-center">Tap a circle to change language</p>
-        </div>
-
-        {/* ── Mode tabs ── */}
-        <div className="tr-mode-tabs" role="tablist">
-          {[
-            { id: 'text',  label: 'Type',  Icon: Keyboard },
-            { id: 'voice', label: 'Speak', Icon: Mic },
-            { id: 'convo', label: 'Convo', Icon: MessageSquare },
-          ].map(({ id, label, Icon }) => (
-            <button key={id} role="tab" aria-selected={mode === id}
-              className={`tr-mode-tab ${mode === id ? 'active' : ''}`}
-              onClick={() => { setMode(id); if (isListening) stopListening() }}>
-              <Icon size={13} />{label}
-            </button>
-          ))}
+        {/* ── Language selector ── */}
+        <div className="tr-language-row">
+          <button className="tr-language-pill" onClick={cycleFrom} aria-label={`From: ${from.name}`}>
+            <span>{from.label}</span> {from.name}<small>▾</small>
+          </button>
+          <button className="tr-language-swap" onClick={handleSwap} aria-label="Swap languages">
+            <ArrowLeftRight size={18} />
+          </button>
+          <button className="tr-language-pill" onClick={cycleTo} aria-label={`To: ${to.name}`}>
+            <span>{to.label}</span> {to.name}<small>▾</small>
+          </button>
         </div>
 
         {mode === 'convo' ? (
@@ -241,8 +167,6 @@ export default function Translator() {
           {/* ── Mic panel (voice mode) ── */}
           {mode === 'voice' && (
             <div className="tr-mic-panel">
-              <AlpanaWave />
-
               {/* Mic ring container */}
               <div className="tr-mic-rings-wrap">
                 {/* Ethnic alpana petals — shown when idle */}
@@ -303,7 +227,7 @@ export default function Translator() {
           {/* ── Source card ── */}
           <div className="tr-card">
             <div className="tr-card-badge" style={{ background: from.color + '22', color: from.color, borderColor: from.color + '55' }}>
-              {from.label} <span>{from.nativeName}</span>
+              {mode === 'voice' ? 'You said' : 'Type'} · {from.name}
             </div>
             <textarea
               className="tr-textarea"
@@ -329,7 +253,7 @@ export default function Translator() {
           {/* ── Result card ── */}
           <div className={`tr-card tr-result-card ${outputText ? 'has-result' : ''}`}>
             <div className="tr-card-badge" style={{ background: to.color + '22', color: to.color, borderColor: to.color + '55' }}>
-              {to.label} <span>{to.nativeName}</span>
+              Translated · {to.name}
             </div>
             <div className="tr-result-text" lang={toLang}
               style={{ fontStyle: outputText ? 'normal' : 'italic', color: outputText ? '#F4EDE1' : 'rgba(255,255,255,.35)' }}>
@@ -377,6 +301,21 @@ export default function Translator() {
           </button>
 
         </>)}
+
+        {/* ── Mode tabs ── */}
+        <div className="tr-mode-tabs" role="tablist">
+          {[
+            { id:'voice', label:'Voice' },
+            { id:'text', label:'Text' },
+            { id:'convo', label:'Conversation' },
+          ].map(({ id, label }) => (
+            <button key={id} role="tab" aria-selected={mode === id}
+              className={`tr-mode-tab ${mode === id ? 'active' : ''}`}
+              onClick={() => { setMode(id); if (isListening) stopListening() }}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <style>{`
