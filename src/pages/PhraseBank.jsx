@@ -82,7 +82,11 @@ export default function PhraseBank() {
   const PhraseCard = ({ phrase }) => {
     const playing = (isSpeaking || isPreparing) && activePhrase === phrase.id
     return (
-      <button className={`pb-phrase-card ${playing ? 'playing' : ''}`} onClick={() => playPhrase(phrase)}>
+      <button
+        className={`pb-phrase-card ${playing ? 'playing' : ''}`}
+        onClick={() => playPhrase(phrase)}
+        aria-label={`${playing ? 'Stop' : 'Speak'} ${phrase.title} in ${to.name}`}
+      >
         <div className="pb-phrase-top">
           <span className="pb-phrase-title">{phrase.title}</span>
           <span className="pb-phrase-icon" aria-hidden="true">

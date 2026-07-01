@@ -166,7 +166,7 @@ function useWebSpeechSynthesis() {
     if (mountedRef.current) { setIsSpeaking(false); setIsPreparing(false); setNoVoiceAvailable(false) }
   }, [clearTimers, isSupported])
 
-  const speak = useCallback(async (text, langCode) => {
+  const speak = useCallback((text, langCode) => {
     const content = text?.trim()
     if (!content || !isSupported) {
       if (!isSupported && mountedRef.current) setNoVoiceAvailable(true)
@@ -180,13 +180,13 @@ function useWebSpeechSynthesis() {
     engine.cancel()
     setIsSpeaking(false); setIsPreparing(true); setNoVoiceAvailable(false)
 
-    await new Promise((r) => setTimeout(r, 120))
-    if (!mountedRef.current || requestRef.current !== requestId) return false
-
-    // Refresh on every request because mobile browsers may load additional
-    // language voices after the page has already started.
-    const voices            = await loadVoices()
-    if (!mountedRef.current || requestRef.current !== requestId) return false
+    // Keep speak() inside the original tap event. Mobile Safari can reject
+    // speech started after an async delay because user activation has expired.
+    // getVoices() is synchronous; if it is temporarily empty, preserve the
+    // requested language and let the browser choose its native voice.
+    const available = engine.getVoices()
+    if (available.length) voiceCache = available
+    const voices = available.length ? available : voiceCache
     const { voice, lang }   = findVoice(langCode, voices)
 
     const utterance = platformServices.speechSynthesis.createUtterance(content)
