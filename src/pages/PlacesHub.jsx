@@ -1,18 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowLeft, CalendarRange, ChevronRight, Landmark, Map, MapPinned,
-  Mountain, PawPrint, Search, Sparkles, UtensilsCrossed,
+  ArrowLeft, CalendarRange, ChevronRight, Map, MapPinned,
+  Search, UtensilsCrossed,
 } from 'lucide-react'
 import templeImg from '../assets/temple.jpg'
-
-const QUICK_LINKS = [
-  { label:'Heritage', Icon:Landmark, to:'/places/explore' },
-  { label:'Wildlife', Icon:PawPrint, to:'/places/explore' },
-  { label:'Food', Icon:UtensilsCrossed, to:'/places/food' },
-  { label:'Hills', Icon:Mountain, to:'/places/explore' },
-  { label:'Offbeat', Icon:Sparkles, to:'/places/explore' },
-]
 
 const COPY = {
   en: {
@@ -109,12 +101,6 @@ export default function PlacesHub() {
             ))}
           </div>
         </header>
-
-        <nav className="phv2-quick-links" aria-label="Explore by interest">
-          {QUICK_LINKS.map(({ label, Icon, to }) => (
-            <Link key={label} to={to}><span><Icon size={18} /></span><small>{label}</small></Link>
-          ))}
-        </nav>
 
         {/* Cards */}
         <section className="phv2-cards" aria-label="Explore sections">

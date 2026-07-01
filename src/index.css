@@ -993,17 +993,12 @@ body {
 .phv2-brand strong { font-family:'Baloo Da 2','Hind Siliguri',sans-serif; font-size:24px; line-height:1.05; font-weight:800; text-shadow:0 2px 12px rgba(0,0,0,.35); }
 .phv2-brand span { font-family:'Playfair Display',Georgia,serif; font-size:11px; font-style:italic; color:rgba(255,255,255,.76); margin-top:2px; }
 
-.phv2-hero { margin:8px 0 15px; text-align:left; }
+.phv2-hero { margin:8px 0 12px; text-align:left; }
 .phv2-title { margin:0 0 3px; color:#f4ede1; background:none; -webkit-text-fill-color:currentColor; font-family:'Playfair Display',Georgia,serif; font-size:30px; font-style:normal; line-height:1.1; }
 .phv2-subtitle { margin:0 0 11px; color:rgba(244,237,225,.58); font-size:11px; }
-.phv2-lang-row { justify-content:flex-start; gap:5px; }
-.phv2-lang-row button { padding:5px 10px; border-radius:999px; background:rgba(15,24,43,.58); border-color:rgba(224,184,118,.18); color:rgba(244,237,225,.58); }
-.phv2-lang-row button.active { border-color:rgba(200,86,47,.75); background:#c8562f; }
-
-.phv2-quick-links { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:7px; margin:0 0 20px; }
-.phv2-quick-links a { min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; color:#f4ede1; text-decoration:none; text-align:center; }
-.phv2-quick-links span { width:50px; height:50px; border:2px solid #c8562f; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#eaa136; background:rgba(15,24,43,.64); box-shadow:0 6px 18px rgba(0,0,0,.14); }
-.phv2-quick-links small { max-width:100%; overflow:hidden; text-overflow:ellipsis; font-size:9px; font-weight:700; }
+.phv2-lang-row { width:max-content; justify-content:flex-start; gap:3px; padding:3px; border:1px solid rgba(224,184,118,.14); border-radius:999px; background:rgba(15,24,43,.52); backdrop-filter:blur(12px); }
+.phv2-lang-row button { min-height:29px; height:29px; padding:0 10px; border:0; border-radius:999px; background:transparent; color:rgba(244,237,225,.52); }
+.phv2-lang-row button.active { border:0; background:rgba(200,86,47,.9); color:#fff4e7; box-shadow:0 3px 10px rgba(0,0,0,.18); }
 
 .phv2-cards { gap:9px; }
 .phv2-section-title { margin:0 0 2px; color:#f4ede1; font-family:'Playfair Display',Georgia,serif; font-size:19px; }
@@ -1024,10 +1019,6 @@ body {
 
 @media (min-width:700px) {
   .phv2-content { padding-left:28px; padding-right:28px; }
-}
-@media (max-width:370px) {
-  .phv2-quick-links span { width:44px; height:44px; }
-  .phv2-quick-links small { font-size:8px; }
 }
 .culture-card p { color:var(--text-secondary); font-size:13px; line-height:1.6; }
 .culture-empty { padding:42px 16px; border:1px dashed var(--border); border-radius:14px; color:var(--text-muted); text-align:center; }
