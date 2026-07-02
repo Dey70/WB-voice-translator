@@ -1227,3 +1227,16 @@ body {
   .sg2-lang { flex:1; text-align:center; }
   .sg2-card-name { font-size:17px; }
 }
+
+/* Destination Vault — aligned header and mountain-toned surfaces */
+.dv-content { max-width:680px; }
+.dv-topbar { display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:12px; padding:14px 0 10px; }
+.dv-header-action { width:42px; height:42px; min-height:auto; padding:0; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#f2dfbd; background:rgba(16,25,44,.72); border:1px solid rgba(242,223,189,.24); text-decoration:none; box-shadow:0 4px 18px rgba(0,0,0,.14); }
+.dv-brand { min-width:0; text-align:center; text-decoration:none; color:#fff; display:flex; flex-direction:column; align-items:center; }
+.dv-brand strong { font-family:'Baloo Da 2','Hind Siliguri',sans-serif; font-size:24px; line-height:1.05; font-weight:800; text-shadow:0 2px 12px rgba(0,0,0,.35); }
+.dv-brand span { font-family:'Playfair Display',Georgia,serif; font-size:11px; font-style:italic; color:rgba(255,255,255,.76); margin-top:2px; }
+.dv-pill { border-color:rgba(224,184,118,.18); background:rgba(15,24,43,.7); color:rgba(244,237,225,.75); }
+.dv-search { padding:11px 14px; border-color:rgba(224,184,118,.18); border-radius:13px; background:rgba(15,24,43,.76); color:rgba(244,237,225,.45); }
+.dv-card { border-color:rgba(224,184,118,.17); background:rgba(15,24,43,.84); backdrop-filter:blur(16px); box-shadow:0 10px 30px rgba(0,0,0,.22); }
+.dv-info-row { background:rgba(6,13,27,.5); border-color:rgba(224,184,118,.1); }
+.dv-sheet { background:#111a2f; border-top-color:rgba(224,184,118,.18); }

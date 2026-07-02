@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { AlertTriangle, ChevronDown, Clock3, Globe2, IndianRupee, MapPin, Navigation, Search, Tag, X } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { AlertTriangle, ArrowLeft, ChevronDown, Clock3, Globe2, IndianRupee, MapPin, Navigation, Search, Tag, X } from 'lucide-react'
 import { CATEGORY_NAMES, REGION_NAMES, TOURISM_LOCALE } from '../data/tourismLocale'
 import { getAvailableTourismCategories, getTourismRegionOptions, queryTourismSpots, TOURISM_REGION_IDS } from '../data/repositories/tourismRepository'
 import { platformServices } from '../services/platform/platformAdapter'
-import PageHeader from '../components/layout/PageHeader'
 import mirkBg from '../assets/mirk.jpg'
 
 const LANGUAGES = [
@@ -64,6 +63,7 @@ export default function TourismSpots() {
   const [locationOpen, setLocationOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const [catOpen, setCatOpen] = useState(false)
+  const searchRef = useRef(null)
 
   const copy = TOURISM_LOCALE[language]
   const auditCopy = AUDIT_COPY[language]
@@ -93,7 +93,17 @@ export default function TourismSpots() {
       </div>
 
       <div className="dv-content">
-        <PageHeader />
+        <div className="dv-topbar">
+          <Link to="/places" className="dv-header-action" aria-label="Back to Explore"><ArrowLeft size={19} /></Link>
+          <Link to="/" className="dv-brand" aria-label="KothaSetu home">
+            <strong>কথাসেতু</strong>
+            <span>Speak. Be understood.</span>
+          </Link>
+          <button className="dv-header-action" aria-label="Search places" onClick={() => {
+            searchRef.current?.scrollIntoView({ behavior:'smooth', block:'center' })
+            searchRef.current?.focus()
+          }}><Search size={18} /></button>
+        </div>
 
         {/* Hero */}
         <div className="dv-hero">
@@ -125,7 +135,7 @@ export default function TourismSpots() {
         {/* Search */}
         <label className="dv-search">
           <Search size={14} />
-          <input value={query} onChange={e => setQuery(e.target.value)} placeholder={copy.search} aria-label={copy.search} />
+          <input ref={searchRef} value={query} onChange={e => setQuery(e.target.value)} placeholder={copy.search} aria-label={copy.search} />
           {query && <button onClick={() => setQuery('')} aria-label="Clear search"><X size={13} /></button>}
         </label>
 
