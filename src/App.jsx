@@ -4,6 +4,7 @@ import Navbar from './components/layout/Navbar'
 import OfflineNotice from './components/layout/OfflineNotice'
 import Onboarding from './components/layout/Onboarding'
 import { useAppStore } from './store/appStore'
+import './styles/page-header-consistency.css'
 
 const Translator    = lazy(() => import('./pages/Translator'))
 const Home          = lazy(() => import('./pages/Home'))
@@ -24,6 +25,36 @@ const RouteMap      = lazy(() => import('./pages/RouteMap'))
 function RouteAwareNavbar() {
   const { pathname } = useLocation()
   return pathname === '/places/routes' ? null : <Navbar />
+}
+
+function AnimatedRoutes() {
+  const location = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
+  return (
+    <div key={location.pathname} className="route-transition-frame">
+      <Routes location={location}>
+        <Route path="/"              element={<Home />} />
+        <Route path="/translate"     element={<Translator />} />
+        <Route path="/conversation"  element={<Conversation />} />
+        <Route path="/history"       element={<History />} />
+        <Route path="/phrases"       element={<PhraseBank />} />
+        <Route path="/emergency"     element={<EmergencyMode />} />
+        <Route path="/places"        element={<PlacesHub />} />
+        <Route path="/places/explore"element={<TourismSpots />} />
+        <Route path="/places/seasons"element={<SeasonalGuide />} />
+        <Route path="/places/food"   element={<FoodGuide />} />
+        <Route path="/places/routes" element={<RouteMap />} />
+        <Route path="/culture"       element={<CulturalGuide />} />
+        <Route path="/collections"   element={<Collections />} />
+        <Route path="/guide"         element={<Guide />} />
+        <Route path="/travel-info"   element={<TravelInfo />} />
+      </Routes>
+    </div>
+  )
 }
 
 // Howrah Bridge silhouette — iconic cantilever bridge of Kolkata
@@ -152,23 +183,7 @@ export default function App() {
         <OfflineNotice />
         <div id="main-content">
         <Suspense fallback={<div className="route-loader" role="status" aria-live="polite" aria-label="Loading page">Loading…</div>}>
-          <Routes>
-            <Route path="/"              element={<Home />} />
-            <Route path="/translate"     element={<Translator />} />
-            <Route path="/conversation"  element={<Conversation />} />
-            <Route path="/history"       element={<History />} />
-            <Route path="/phrases"       element={<PhraseBank />} />
-            <Route path="/emergency"     element={<EmergencyMode />} />
-            <Route path="/places"        element={<PlacesHub />} />
-            <Route path="/places/explore"element={<TourismSpots />} />
-            <Route path="/places/seasons"element={<SeasonalGuide />} />
-            <Route path="/places/food"   element={<FoodGuide />} />
-            <Route path="/places/routes" element={<RouteMap />} />
-            <Route path="/culture"       element={<CulturalGuide />} />
-            <Route path="/collections"   element={<Collections />} />
-            <Route path="/guide"         element={<Guide />} />
-            <Route path="/travel-info"   element={<TravelInfo />} />
-          </Routes>
+          <AnimatedRoutes />
         </Suspense>
         </div>
       </div>

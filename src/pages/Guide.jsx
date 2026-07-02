@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, ChevronRight, HeartHandshake, MapPinned, Search, ShieldAlert } from 'lucide-react'
+import { ChevronRight, CloudSun, HeartHandshake, MapPinned, ShieldAlert } from 'lucide-react'
 import bolpurBg from '../assets/Bolpur.jpg'
 import '../styles/guide.css'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 
 const guideSections = [
   {
@@ -15,6 +16,14 @@ const guideSections = [
         note: 'Festivals · dress · local courtesy',
         icon: HeartHandshake,
         tone: 'culture',
+      },
+      {
+        to: '/places/seasons',
+        title: 'Seasonal Guide',
+        description: 'Choose the right time for weather, landscapes and local experiences.',
+        note: 'Best months · weather · what to expect',
+        icon: CloudSun,
+        tone: 'seasonal',
       },
     ],
   },
@@ -47,14 +56,7 @@ export default function Guide() {
       </div>
 
       <div className="guide-hub-shell">
-        <header className="guide-hub-header">
-          <Link to="/" className="guide-header-action" aria-label="Back to home"><ArrowLeft size={19} /></Link>
-          <Link to="/" className="guide-hub-brand" aria-label="KothaSetu home">
-            <strong>কথাসেতু</strong>
-            <span>Speak. Be understood.</span>
-          </Link>
-          <Link to="/places/explore" className="guide-header-action" aria-label="Search places"><Search size={18} /></Link>
-        </header>
+        <VaultGuideHeader backTo="/" />
 
         <section className="guide-hub-intro">
           <span>Travel thoughtfully</span>

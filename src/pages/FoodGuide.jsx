@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { ArrowLeft, MapPin, Search, UtensilsCrossed, X } from 'lucide-react'
 import { FOOD_TIERS } from '../data/localFood'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 import foodBackground from '../assets/Bengali food.jpg'
 import '../styles/food-guide.css'
 
@@ -39,19 +39,7 @@ export default function FoodGuide() {
   return <main className="food-page">
     <div className="food-bg" aria-hidden="true"><img src={foodBackground} alt=""/><div className="food-bg-overcast"/></div>
     <div className="food-shell">
-    <div className="food-topbar">
-      <Link to="/places" className="food-header-action" aria-label="Back to Explore"><ArrowLeft size={19}/></Link>
-      <Link to="/" className="food-brand" aria-label="KothaSetu home"><strong>কথাসেতু</strong><span>Speak. Be understood.</span></Link>
-      <button className="food-header-action" aria-label="Search local food" aria-expanded={showSearch} onClick={() => {
-        if (showSearch) {
-          setQuery('')
-          setShowSearch(false)
-          return
-        }
-        setShowSearch(true)
-        setTimeout(() => searchRef.current?.focus(), 0)
-      }}><Search size={18}/></button>
-    </div>
+    <VaultGuideHeader backTo="/places" searchLabel="Search local food" onSearch={() => { setShowSearch(true); setTimeout(() => searchRef.current?.focus(), 0) }} />
     <section className="food-hero"><h1>Local Food</h1><p>{activeTier.intro}</p></section>
     {showSearch && <label className="food-search"><Search size={15}/><input ref={searchRef} value={query} onChange={event => setQuery(event.target.value)} placeholder="Search food, place, or community"/>{query && <button type="button" onClick={() => setQuery('')} aria-label="Clear food search"><X size={15}/></button>}</label>}
     <nav className="food-tier-tabs" aria-label="Food availability tiers">{FOOD_TIERS.map(item => <button key={item.id} aria-current={tier === item.id ? 'page' : undefined} className={tier === item.id ? `active ${item.id}` : ''} onClick={() => setTier(item.id)}>{item.label}</button>)}</nav>

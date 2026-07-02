@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AlertTriangle, ArrowRight, CalendarRange, MapPin, ChevronDown } from 'lucide-react'
-import PageHeader from '../components/layout/PageHeader'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 import { REGION_NAMES } from '../data/tourismLocale'
 import { REGION_SEASON_CONFIG, SEASON_CONDITIONS, SEASON_KEYS, SEASON_LOCALE } from '../data/seasonalGuide'
 import { LIVE_CONDITION_SOURCES } from '../data/contentAudit'
 import { platformServices } from '../services/platform/platformAdapter'
 import sundarbansBg from '../assets/sundarbans.jpeg'
+import '../styles/guide-pages-theme.css'
 
 const LANGUAGES = ['en', 'bn', 'ne', 'hi']
 
@@ -57,7 +58,7 @@ export default function SeasonalGuide() {
 
       <div className="sg2-page">
         <div className="sg2-content">
-          <PageHeader />
+          <VaultGuideHeader />
 
           {/* Hero */}
           <header className="sg2-hero">

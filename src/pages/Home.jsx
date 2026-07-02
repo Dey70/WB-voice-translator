@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
   ScrollText, Lightbulb, Newspaper, Library, HelpCircle,
-  Flame, Search, X, Heart, ChevronRight,
+  Flame, X, Heart, ChevronRight,
   Cloud, CloudRain, Sun, Droplets, Wind, LoaderCircle,
   MapPin, LocateFixed, Check, TriangleAlert,
 } from 'lucide-react'
 import { platformServices } from '../services/platform/platformAdapter'
 import { TOURISM_SPOTS } from '../data/tourismSpots'
 import teaGarden from '../assets/tea-garden.webp'
+import PageMenuButton from '../components/layout/PageMenuButton'
 
 /* ── Destinations ─────────────────────────────────────── */
 const destinations = [
@@ -121,7 +122,6 @@ function AlpanaBar() {
 
 /* ── Main component ───────────────────────────────────── */
 export default function Home() {
-  const navigate = useNavigate()
   const [spotOffset, setSpotOffset] = useState(0)
 
   /* location */
@@ -239,9 +239,7 @@ export default function Home() {
             <span className="bh-brand">কথাসেতু</span>
             <AlpanaBar />
           </div>
-          <Link to="/discover" className="bh-search-btn" aria-label="Search">
-            <Search size={19} />
-          </Link>
+          <PageMenuButton className="bh-search-btn" />
         </div>
 
         {/* ── Bioscope glass panel ── */}

@@ -2,7 +2,8 @@ import { Bookmark, Heart, MapPin, Trash2 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { DISCOVERY_CARDS } from '../data/discoveryCards'
 import { useAppStore } from '../store/appStore'
-import PageHeader from '../components/layout/PageHeader'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
+import '../styles/guide-pages-theme.css'
 
 export default function Collections() {
   const savedDiscoveries = useAppStore((state) => state.savedDiscoveries)
@@ -11,7 +12,7 @@ export default function Collections() {
 
   return (
     <main className="collections-page immersive-page">
-      <PageHeader />
+      <VaultGuideHeader backTo="/" />
       <header className="collections-header">
         <span><Bookmark size={15} /> Your collections</span>
         <h1>My Bengal Trip</h1>

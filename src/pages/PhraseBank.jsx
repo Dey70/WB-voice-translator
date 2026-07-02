@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
-  ArrowLeft, ArrowLeftRight, BedDouble, CircleHelp, Landmark, Languages,
+  ArrowLeftRight, BedDouble, CircleHelp, Landmark, Languages,
   MessageCircle, Search, ShieldAlert, ShoppingBag, TrainFront,
   UtensilsCrossed, Volume2, VolumeX, X,
 } from 'lucide-react'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 import { getLanguage, LANGUAGES } from '../utils/constants'
 import { PHRASE_CATEGORIES, queryPhrases } from '../data/repositories/phraseRepository'
 import kolkataImg from '../assets/kolkata-heritage.jpg'
@@ -117,19 +117,7 @@ export default function PhraseBank() {
       <div className="pb-content">
 
         {/* ── Header ── */}
-        <div className="pb-topbar">
-          <Link to="/" className="pb-header-action" aria-label="Back to home"><ArrowLeft size={19} /></Link>
-          <Link to="/" className="pb-brand" aria-label="KothaSetu home">
-            <strong>কথাসেতু</strong>
-            <span>Speak. Be understood.</span>
-          </Link>
-          <button className="pb-header-action" aria-label="Search phrases" onClick={() => {
-            setShowSearch(value => !value)
-            setTimeout(() => searchRef.current?.focus(), 0)
-          }}>
-            <Search size={19} />
-          </button>
-        </div>
+        <VaultGuideHeader backTo="/" searchLabel="Search phrases" onSearch={() => { setShowSearch(true); setTimeout(() => searchRef.current?.focus(), 0) }} />
 
         {/* ── Hero ── */}
         <h1 className="pb-heading">Phrasebook</h1>

@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, ChevronDown, Clock3, Globe2, IndianRupee, MapPin, Navigation, Search, Tag, X } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
+import { AlertTriangle, ChevronDown, Clock3, Globe2, IndianRupee, MapPin, Navigation, Search, Tag, X } from 'lucide-react'
 import { CATEGORY_NAMES, REGION_NAMES, TOURISM_LOCALE } from '../data/tourismLocale'
 import { getAvailableTourismCategories, getTourismRegionOptions, queryTourismSpots, TOURISM_REGION_IDS } from '../data/repositories/tourismRepository'
 import { platformServices } from '../services/platform/platformAdapter'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 import mirkBg from '../assets/mirk.jpg'
 
 const LANGUAGES = [
@@ -93,17 +94,7 @@ export default function TourismSpots() {
       </div>
 
       <div className="dv-content">
-        <div className="dv-topbar">
-          <Link to="/places" className="dv-header-action" aria-label="Back to Explore"><ArrowLeft size={19} /></Link>
-          <Link to="/" className="dv-brand" aria-label="KothaSetu home">
-            <strong>কথাসেতু</strong>
-            <span>Speak. Be understood.</span>
-          </Link>
-          <button className="dv-header-action" aria-label="Search places" onClick={() => {
-            searchRef.current?.scrollIntoView({ behavior:'smooth', block:'center' })
-            searchRef.current?.focus()
-          }}><Search size={18} /></button>
-        </div>
+        <VaultGuideHeader backTo="/places" searchLabel="Search places" onSearch={() => { searchRef.current?.scrollIntoView({ behavior:'smooth', block:'center' }); searchRef.current?.focus() }} />
 
         {/* Hero */}
         <div className="dv-hero">

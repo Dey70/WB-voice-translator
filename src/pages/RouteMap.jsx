@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { GoogleMap, Marker, Polyline, useJsApiLoader } from '@react-google-maps/api'
-import { AlertTriangle, ChevronDown, LocateFixed, MapPin, Navigation, RefreshCw, Search, X } from 'lucide-react'
-import PageHeader from '../components/layout/PageHeader'
+import { Link } from 'react-router-dom'
+import { AlertTriangle, BookOpen, ChevronDown, Landmark, LocateFixed, MapPin, MapPinned, Mic, Navigation, RefreshCw, Search, Train, X } from 'lucide-react'
 import { destinationAccessType, ROUTE_MAP_DESTINATIONS } from '../data/routeMapDestinations'
+import dowhillChurchBg from '../assets/Dowhill Church, Kurseong.jpg'
+import '../styles/route-map.css'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 
 const SILIGURI = { lat: 26.7271, lng: 88.3953 }
 const MAP_LIBRARIES = ['geometry']
@@ -181,6 +184,10 @@ export default function RouteMap() {
     return () => clearTimeout(timer)
   }, [requestLocation])
   useEffect(() => {
+    document.body.classList.add('route-map-active')
+    return () => document.body.classList.remove('route-map-active')
+  }, [])
+  useEffect(() => {
     if (mapReady || mapFailed) return undefined
     const timer = setTimeout(() => setMapFailed(true), 12000)
     return () => clearTimeout(timer)
@@ -240,8 +247,9 @@ export default function RouteMap() {
 
   return (
     <main className="rm-page">
+      <div className="rm-page-bg" aria-hidden="true"><img src={dowhillChurchBg} alt="" /><div /></div>
       <div className="rm-shell">
-        <PageHeader />
+        <VaultGuideHeader backTo="/places" searchLabel="Choose a destination" onSearch={() => setDestinationsOpen(true)} />
         <header className="rm-hero">
           <span>North Bengal journey planner</span>
           <h1><em>Route</em> map</h1>
@@ -306,6 +314,13 @@ export default function RouteMap() {
           )}
         </section>}
       </div>
+      <nav className="rm-bottom-nav" aria-label="Main navigation">
+        <Link to="/travel-info"><Train size={19} /><span>Travel Info</span></Link>
+        <Link to="/phrases"><BookOpen size={19} /><span>Phrases</span></Link>
+        <Link to="/translate" className="primary"><span className="rm-bottom-primary"><Mic size={22} /></span><span>Translate</span></Link>
+        <Link to="/places" className="active" aria-current="page"><MapPinned size={20} /><span>Explore</span></Link>
+        <Link to="/guide"><Landmark size={20} /><span>Guide</span></Link>
+      </nav>
     </main>
   )
 }

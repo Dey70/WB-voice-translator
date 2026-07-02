@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertCircle, ArrowLeftRight, Copy, ExternalLink, Globe2, Phone, PhoneCall, ShieldAlert, Volume2, VolumeX } from 'lucide-react'
+import { AlertCircle, ArrowLeftRight, ChevronRight, Copy, ExternalLink, Globe2, MessageSquareText, Phone, PhoneCall, ShieldAlert, Volume2, VolumeX, X } from 'lucide-react'
 import LanguageSelector from '../components/translation/LanguageSelector'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { getLanguage } from '../utils/constants'
@@ -8,7 +8,9 @@ import { CONTENT_AUDIT_DATE_LABEL, CONTENT_AUDITS } from '../data/contentAudit'
 import { getPhraseById, matchPhrases } from '../data/repositories/phraseRepository'
 import { getEmergencyContacts, getOfficialSites } from '../data/repositories/emergencyRepository'
 import { platformServices } from '../services/platform/platformAdapter'
-import PageHeader from '../components/layout/PageHeader'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
+import emergencyBg from '../assets/The River Between the Mountain.jpg'
+import '../styles/emergency-vault.css'
 
 const GROUPS = [
   { id: 'urgent', name: 'Urgent help', phraseIds: ['help', 'police', 'ambulance', 'doctor', 'hospital', 'pain', 'lost', 'passport'] },
@@ -24,6 +26,7 @@ export default function EmergencyMode() {
   const [selectedId, setSelectedId] = useState('help')
   const [copied, setCopied] = useState(false)
   const [resourceScope, setResourceScope] = useState('india')
+  const [openPanel, setOpenPanel] = useState(null)
   const { speak, stop, isSpeaking, isPreparing, noVoiceAvailable } = useSpeechSynthesis()
 
   const from = getLanguage(fromLang)
@@ -55,7 +58,9 @@ export default function EmergencyMode() {
 
   return (
     <main className="emergency-page">
-      <PageHeader />
+      <div className="emergency-vault-bg" aria-hidden="true"><img src={emergencyBg} alt="" /><div /></div>
+      <div className="emergency-vault-content">
+      <VaultGuideHeader />
       <header className="emergency-header">
         <div className="emergency-title">
           <span><ShieldAlert size={17} /> Emergency communication</span>
@@ -80,7 +85,7 @@ export default function EmergencyMode() {
       <section className="emergency-languages" aria-label="Emergency phrase languages">
         <div>
           <span>You speak</span>
-          <LanguageSelector value={fromLang} onChange={(value) => {
+          <LanguageSelector variant="select" value={fromLang} onChange={(value) => {
             setFromLang(value)
             if (value === toLang) setToLang(fromLang)
           }} />
@@ -88,10 +93,17 @@ export default function EmergencyMode() {
         <button onClick={swapLanguages} aria-label="Swap emergency languages"><ArrowLeftRight size={18} /></button>
         <div>
           <span>Local language</span>
-          <LanguageSelector value={toLang} onChange={setToLang} exclude={fromLang} />
+          <LanguageSelector variant="select" value={toLang} onChange={setToLang} exclude={fromLang} />
         </div>
       </section>
 
+      <section className="emergency-pop-grid" aria-label="Emergency tools">
+        <button onClick={() => setOpenPanel('phrases')}><span><MessageSquareText size={20}/></span><div><strong>Emergency phrases</strong><small>Show, speak or copy essential messages</small></div><ChevronRight size={17}/></button>
+        <button onClick={() => setOpenPanel('contacts')}><span><PhoneCall size={20}/></span><div><strong>{resourceCopy.directory}</strong><small>{resourceCopy.directoryText}</small></div><ChevronRight size={17}/></button>
+        <button onClick={() => setOpenPanel('sites')}><span><Globe2 size={20}/></span><div><strong>{resourceCopy.sites}</strong><small>{resourceCopy.sitesText}</small></div><ChevronRight size={17}/></button>
+      </section>
+
+      {openPanel === 'contacts' && <div className="emergency-sheet-backdrop" onClick={() => setOpenPanel(null)}><section className="emergency-sheet" role="dialog" aria-modal="true" aria-label={resourceCopy.directory} onClick={event => event.stopPropagation()}><div className="emergency-sheet-handle"/><header><strong>{resourceCopy.directory}</strong><button onClick={() => setOpenPanel(null)} aria-label="Close"><X size={18}/></button></header><div className="emergency-sheet-body">
       <section className="emergency-directory" aria-label={resourceCopy.directory}>
         <div className="emergency-section-heading">
           <div><PhoneCall size={18} /><span><strong>{resourceCopy.directory}</strong><small>{resourceCopy.directoryText}</small></span></div>
@@ -110,7 +122,9 @@ export default function EmergencyMode() {
         </div>
         <p className="emergency-availability"><AlertCircle size={13} /> {resourceCopy.availability}</p>
       </section>
+      </div></section></div>}
 
+      {openPanel === 'phrases' && <div className="emergency-sheet-backdrop" onClick={() => setOpenPanel(null)}><section className="emergency-sheet" role="dialog" aria-modal="true" aria-label="Emergency phrases" onClick={event => event.stopPropagation()}><div className="emergency-sheet-handle"/><header><strong>Emergency phrases</strong><button onClick={() => setOpenPanel(null)} aria-label="Close"><X size={18}/></button></header><div className="emergency-sheet-body">
       {selected && (
         <section className="emergency-display" aria-live="assertive">
           <div className="emergency-display-label">
@@ -149,7 +163,9 @@ export default function EmergencyMode() {
           </button>
         ))}
       </section>
+      </div></section></div>}
 
+      {openPanel === 'sites' && <div className="emergency-sheet-backdrop" onClick={() => setOpenPanel(null)}><section className="emergency-sheet" role="dialog" aria-modal="true" aria-label={resourceCopy.sites} onClick={event => event.stopPropagation()}><div className="emergency-sheet-handle"/><header><strong>{resourceCopy.sites}</strong><button onClick={() => setOpenPanel(null)} aria-label="Close"><X size={18}/></button></header><div className="emergency-sheet-body">
       <section className="emergency-sites">
         <div className="emergency-section-heading">
           <div><Globe2 size={18} /><span><strong>{resourceCopy.sites}</strong><small>{resourceCopy.sitesText}</small></span></div>
@@ -163,6 +179,8 @@ export default function EmergencyMode() {
         </div>
         <p className="emergency-site-warning"><Globe2 size={13} /> {resourceCopy.siteWarning}</p>
       </section>
+      </div></section></div>}
+      </div>
     </main>
   )
 }

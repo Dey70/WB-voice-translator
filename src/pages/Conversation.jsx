@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { Mic, Volume2, Trash2 } from 'lucide-react'
-import PageHeader from '../components/layout/PageHeader'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
+import '../styles/guide-pages-theme.css'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import { translateText } from '../services/translation'
@@ -178,7 +179,7 @@ export default function Conversation() {
 
   return (
     <main className="conversation-page immersive-page" style={{ maxWidth: 800, margin: '0 auto', padding: '0 16px 32px', display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)' }}>
-      <PageHeader />
+      <VaultGuideHeader backTo="/translate" searchTo="/history" searchLabel="Search translation history" />
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <h1 className="conv-hero-title">Conversation Mode</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14 }}>

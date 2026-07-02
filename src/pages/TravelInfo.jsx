@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useAppStore } from '../store/appStore'
-import PageHeader from '../components/layout/PageHeader'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
+import '../styles/guide-pages-theme.css'
 import riverMountainBg from '../assets/The River Between the Mountain.jpg'
 import howrahImage from '../assets/Howrah2.jpeg'
 import airportImage from '../assets/Airport.jpeg'
@@ -785,7 +786,7 @@ export default function TravelInfo() {
         fontFamily:'var(--font-interface)',
         paddingBottom:'calc(88px + env(safe-area-inset-bottom,0px))',
       }}>
-        <PageHeader />
+        <VaultGuideHeader backTo="/" />
 
         {screen === 'search'  && <SearchScreen onSearch={handleSearch} darkMode={darkMode} />}
         {screen === 'results' && overview && <ResultsScreen overview={overview} onSelect={handleSelectMode} onBack={() => setScreen('search')} />}

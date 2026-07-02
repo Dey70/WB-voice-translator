@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { AlertCircle, CalendarDays, CheckCircle2, Check, ChevronDown, MapPin, Search, Sparkles, X } from 'lucide-react'
-import PageHeader from '../components/layout/PageHeader'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 import { CULTURAL_GUIDE_ITEMS, CULTURE_CATEGORIES, CULTURE_LOCALE, CULTURE_REGIONS } from '../data/culturalGuide'
 import { CULTURAL_GUIDE_EXPANSION } from '../data/culturalGuideExpansion'
 import { FESTIVAL_TIMINGS, FESTIVAL_TIME_LABELS } from '../data/festivalTimings'
 import potteryBg from '../assets/Pottery.jpg'
+import '../styles/guide-pages-theme.css'
 
 const ALL_CULTURAL_ITEMS = [...CULTURAL_GUIDE_ITEMS, ...CULTURAL_GUIDE_EXPANSION]
 
@@ -99,7 +99,7 @@ export default function CulturalGuide() {
 
       <div className="cg-content">
 
-        <PageHeader />
+        <VaultGuideHeader />
 
         {/* Hero */}
         <div className="cg-hero">

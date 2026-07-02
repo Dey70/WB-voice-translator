@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ArrowLeft, CalendarRange, ChevronRight, Map, MapPinned,
-  Search, UtensilsCrossed,
+  CalendarRange, ChevronRight, Map, MapPinned,
+  UtensilsCrossed,
 } from 'lucide-react'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 import templeImg from '../assets/temple.jpg'
 
 const COPY = {
@@ -80,14 +81,7 @@ export default function PlacesHub() {
 
       {/* Content */}
       <div className="phv2-content">
-        <div className="phv2-topbar">
-          <Link to="/" className="phv2-header-action" aria-label="Back to home"><ArrowLeft size={19} /></Link>
-          <Link to="/" className="phv2-brand" aria-label="KothaSetu home">
-            <strong>কথাসেতু</strong>
-            <span>Speak. Be understood.</span>
-          </Link>
-          <Link to="/places/explore" className="phv2-header-action" aria-label="Search places"><Search size={18} /></Link>
-        </div>
+        <VaultGuideHeader backTo="/" />
 
         {/* Hero */}
         <header className="phv2-hero">

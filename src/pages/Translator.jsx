@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
-  ArrowLeft, ArrowLeftRight, CheckCheck, Copy,
-  Loader, RotateCcw, Search, Volume2, VolumeX,
+  ArrowLeftRight, CheckCheck, Copy,
+  Loader, RotateCcw, Volume2, VolumeX,
 } from 'lucide-react'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
 import ConversationMode from '../components/translation/ConversationMode'
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
@@ -138,14 +138,7 @@ export default function Translator() {
       <div className="tr-content">
 
         {/* ── Header ── */}
-        <div className="tr-topbar">
-          <Link to="/" className="tr-header-action" aria-label="Back to home"><ArrowLeft size={19} /></Link>
-          <Link to="/" className="tr-brand" aria-label="KothaSetu home">
-            <strong>কথাসেতু</strong>
-            <span>Speak. Be understood.</span>
-          </Link>
-          <Link to="/history" className="tr-header-action" aria-label="Search translation history"><Search size={18} /></Link>
-        </div>
+        <VaultGuideHeader backTo="/" />
 
         {/* ── Language selector ── */}
         <div className="tr-language-row">

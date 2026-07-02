@@ -5,6 +5,8 @@ import { useAppStore } from '../store/appStore'
 import { getLanguage } from '../utils/constants'
 import { useSpeechSynthesis } from '../hooks/useSpeechSynthesis'
 import train2Bg from '../assets/train2.jpg'
+import VaultGuideHeader from '../components/layout/VaultGuideHeader'
+import '../styles/guide-pages-theme.css'
 
 function AlpanaBar() {
   return (
@@ -65,8 +67,9 @@ export default function History() {
 
       <div className="hs-content">
 
-        {/* Header */}
-        <div className="bh-header">
+        <VaultGuideHeader backTo="/translate" searchTo="/translate" searchLabel="Return to translator" />
+        {/* Legacy header retained structurally but replaced by the shared page header. */}
+        <div className="bh-header" hidden>
           <Link to="/" className="bh-brand-block" style={{ textDecoration: 'none' }}>
             <span className="bh-brand">কথাসেতু</span>
             <AlpanaBar />
